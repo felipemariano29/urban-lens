@@ -21,7 +21,7 @@
 
 O **Urban Lens** é uma plataforma **RAG (Retrieval-Augmented Generation)** local, desenvolvida para apoiar a **inteligência da prefeitura** na análise de dados públicos de segurança urbana. A solução tem como objetivo organizar, tratar, indexar e disponibilizar consultas em linguagem natural sobre dados públicos, permitindo que gestores e analistas obtenham respostas rápidas e contextualizadas para apoiar decisões de prevenção, planejamento territorial e formulação de políticas públicas.
 
-A proposta do projeto utiliza como base dados públicos do **DATA.POLICE.UK**, com foco em análise histórica e apoio estratégico, e não em operação policial em tempo real.
+A proposta do projeto utiliza como base dados públicos do [DATA.POLICE.UK](https://data.police.uk/data/), com foco em análise histórica e apoio estratégico, e não em operação policial em tempo real.
 
 ---
 
