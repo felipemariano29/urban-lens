@@ -14,6 +14,8 @@
 | Lucas Ferreira Neto | ferreiranetolucas@gmail.com | 223026 |
 | Mateus Nauhan Vieira Matos | mateusnauhan@gmail.com | 211931 |
 | Milton Rogerio Dotto Penha Junior | miltonjmiltonj@gmail.com | 222284 |
+| Nicolas Leonardi Barsalini | nicolasbarsalini2017@gmail.com | 222259 |
+| Raphael Nobuyuki Haga Okuyama | raphaelokuyuama123@gmail.com | 222808 |
 
 ---
 
