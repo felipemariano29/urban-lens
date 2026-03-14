@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  minio:
+    image: minio/minio:RELEASE.2025-10-15T17-29-55Z
+    container_name: minio_storage
+    restart: unless-stopped
+    env_file: .env
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000" # Porta da API
+      - "9001:9001" # Porta do Console Web
+    volumes:
+      - minio_data:/data
+    networks:
+      - app_network
+
+  minio-setup:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    container_name: minio_setup
+    depends_on:
+      - minio
+    env_file: .env
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Aguardando o MinIO iniciar...';
+      sleep 5;
+      /usr/bin/mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+      /usr/bin/mc mb myminio/$${MINIO_DEFAULT_BUCKET} --ignore-existing;
+      echo 'Setup concluído!';
+      exit 0;
+      "
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:
