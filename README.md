@@ -85,6 +85,12 @@ Produto voltado para consulta inteligente de dados e documentos, utilizando RAG 
 
 ## 6. Arquitetura da solução
 
+### Diagrama da arquitetura
+
+Abaixo está o diagrama macro da arquitetura proposta para o **Urban Lens**, mostrando o fluxo entre ingestão, processamento em arquitetura Medallion, indexação vetorial, camada de aplicação e componentes de MLOps.
+
+![Diagrama da arquitetura do Urban Lens](./docs/images/urban-lens-architecture.png)
+
 A arquitetura do projeto segue o modelo proposto em sala, contemplando as seguintes camadas:
 
 ### Camada de Dados
