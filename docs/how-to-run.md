@@ -29,7 +29,7 @@ This setup establishes the foundation for future components such as ingestion pi
 ├── README.md
 └── docs
     ├── product-vision.md
-    └── urban_lens_visao_consolidada.pdf
+    ├── urban_lens_visao_consolidada.pdf
     └── how-to-run.md (you are here)   
 ```
 
