@@ -57,7 +57,7 @@ Recommended:
 
 ```bash
 git clone https://github.com/felipemariano29/urban-lens.git
-cd urbanlens
+cd urban-lens
 ```
 
 2. Create your environment file:
