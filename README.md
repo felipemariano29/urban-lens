@@ -174,3 +174,12 @@ A solução é voltada principalmente para:
 - secretarias municipais;
 - observatórios urbanos;
 - equipes de planejamento territorial.
+
+## 📚 Documentation Hub
+
+| Documento | Descrição |
+|----------|------------|
+| [How to run](docs/how-to-run.md) | Setup e subir o ambiente |
+| [Populate DB](docs/how-to-populate-db.md) | Script de inicialiazação do banco de dados |
+| [Product Vision](docs/product-vision.md) | Overview do projeto |
+| [Full Document (PDF)](docs/urban_lens_visao_consolidada.pdf) | Especificação de projeto completa |
