@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Urban Lens Postgres",
+      "Group": "Urban Lens",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "urban_lens",
+      "Username": "admin",
+      "SSLMode": "prefer"
+    }
+  }
+}

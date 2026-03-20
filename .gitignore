@@ -1,1 +1,8 @@
 .env
+.pytest_cache/
+__pycache__/
+*.pyc
+.venv/
+.artifacts/
+dist/
+build/

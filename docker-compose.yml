@@ -8,7 +8,24 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgres-init:/docker-entrypoint-initdb.d
+      - ./sql/init:/docker-entrypoint-initdb.d
+    networks:
+      - app_network
+
+  pgadmin:
+    image: dpage/pgadmin4:9
+    container_name: pgadmin
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file: .env
+    environment:
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
     networks:
       - app_network
 
@@ -50,4 +67,5 @@ networks:
 
 volumes:
   postgres_data:
+  pgadmin_data:
   minio_data:

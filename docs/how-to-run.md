@@ -122,6 +122,16 @@ Credentials are defined in `.env`.
 
 ---
 
+### pgAdmin
+
+* URL: http://localhost:5050
+* Login email: `PGADMIN_DEFAULT_EMAIL`
+* Login password: `PGADMIN_DEFAULT_PASSWORD`
+
+The PostgreSQL server is pre-registered as `Urban Lens Postgres`.
+
+---
+
 ## Useful Commands
 
 ```bash

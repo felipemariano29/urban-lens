@@ -9,7 +9,7 @@ This project uses PostgreSQL with automatic initialization scripts to bootstrap 
 All database scripts must be placed inside the following folder at the root of the project:
 
 ```bash
-postgres-init/
+sql/init/
 ```
 
 ### Example Structure
@@ -17,11 +17,12 @@ postgres-init/
 ```bash
 .
 ├── docker-compose.yml
-├── postgres-init
-│   ├── 0000.sql
-│   ├── 0010.sql
-│   ├── 0020.sql
-│   └── 0030.sql
+├── sql
+│   └── init
+│       ├── 0000.sql
+│       ├── 0010.sql
+│       ├── 0020.sql
+│       └── 0030.sql
 └── README.md
 ```
 
@@ -35,7 +36,7 @@ PostgreSQL automatically executes all scripts located in:
 /docker-entrypoint-initdb.d
 ```
 
-In this project, `postgres-init/` is mounted into that directory.
+In this project, `sql/init/` is mounted into that directory.
 
 ✅ Supported file types:
 - `.sql`
@@ -117,7 +118,7 @@ ON CONFLICT DO NOTHING;
 
 ## 🚀 How to Populate the Database
 
-1. Add your scripts to `postgres-init/`
+1. Add your scripts to `sql/init/`
 2. Follow the naming convention
 3. Start the environment:
 
@@ -176,7 +177,7 @@ make reset
 
 ## ✅ Summary
 
-- Use `postgres-init/` folder
+- Use `sql/init/` folder
 - Name scripts as `0000.sql`, `0010.sql`, etc.
 - Increment by 10
 - Scripts run automatically on first startup
