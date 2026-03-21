@@ -106,8 +106,8 @@ make logs
 
 ### MinIO
 
-* API: http://localhost:9000
-* Console: http://localhost:9001
+* API: http://localhost:${MINIO_API_HOST_PORT:-9002}
+* Console: http://localhost:${MINIO_CONSOLE_HOST_PORT:-9003}
 
 Credentials are defined in `.env`.
 
@@ -116,7 +116,7 @@ Credentials are defined in `.env`.
 ### PostgreSQL
 
 * Host: localhost
-* Port: 5432
+* Port: `${POSTGRES_HOST_PORT:-5433}`
 
 Credentials are defined in `.env`.
 
@@ -124,7 +124,7 @@ Credentials are defined in `.env`.
 
 ### pgAdmin
 
-* URL: http://localhost:5050
+* URL: http://localhost:${PGADMIN_HOST_PORT:-5050}
 * Login email: `PGADMIN_DEFAULT_EMAIL`
 * Login password: `PGADMIN_DEFAULT_PASSWORD`
 
@@ -160,9 +160,10 @@ docker compose logs -f
 
 Check if these ports are occupied:
 
-* 5432 (PostgreSQL)
-* 9000 (MinIO API)
-* 9001 (MinIO Console)
+* `${POSTGRES_HOST_PORT:-5433}` (PostgreSQL)
+* `${MINIO_API_HOST_PORT:-9002}` (MinIO API)
+* `${MINIO_CONSOLE_HOST_PORT:-9003}` (MinIO Console)
+* `${PGADMIN_HOST_PORT:-5050}` (pgAdmin)
 
 ---
 
