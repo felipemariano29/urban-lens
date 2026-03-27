@@ -1,55 +1,73 @@
-# Urban-Lens
+# Urban-Lens Run Guide
 
-Urban-Lens is a local-first platform for urban intelligence, focused on organizing and enabling access to public crime and safety data for analytical and strategic purposes.
+This guide explains how to start the local infrastructure and where to find the correct documentation for the governed data pipeline.
 
-This repository contains the initial operational setup of the project, providing the minimal infrastructure required for local development and team onboarding.
+For Sprint 3, the repository already contains a working Bronze -> Silver -> Gold pipeline implementation plus governance metadata registration. This document is the entry point. The detailed execution flow lives in the documents referenced below.
 
----
+## What This Guide Covers
 
-## Current Scope
+- local infrastructure startup
+- database bootstrap location
+- Python environment setup for pipeline jobs
+- links to the authoritative data-pipeline execution and governance documents
 
-At this stage, the platform includes the following core services:
+## Documentation Map
 
-* **PostgreSQL** → relational database for metadata and governance structures
-* **MinIO** → object storage for future data lake layers (Bronze, Silver, Gold)
+Use these documents together:
 
-This setup establishes the foundation for future components such as ingestion pipelines, vector search, and RAG workflows.
+| Document | Purpose |
+| --- | --- |
+| `docs/how-to-run.md` | Local environment startup and navigation hub |
+| `docs/how-to-populate-db.md` | How PostgreSQL initialization scripts work |
+| `docs/implementation-guide.md` | Step-by-step pipeline execution order |
+| `docs/architecture/medallion-governance.md` | Layer rules, path conventions, quality gates, and allowed data movement |
+| `docs/architecture/metadata-contract.md` | Governance entities, lineage, audit, access, and response contracts |
+| `docs/adr/0001-medallion-layout.md` | Why Gold is segmented across analytics, RAG, and ML |
 
----
+## Current Runtime Scope
+
+The repository currently provides:
+
+- PostgreSQL for governance metadata
+- pgAdmin for database inspection
+- MinIO for object storage
+- MinIO bucket bootstrap via `minio-setup`
+- Python pipeline jobs for Bronze, Silver, Gold, and forecast-model publication
+
+The repository does not currently provision every platform component in Docker Compose. In particular, the broader project vision still mentions services such as FastAPI, Milvus, Ollama, and MLflow, but the Compose file in this repository currently starts only the infrastructure required for storage and governance bootstrap.
 
 ## Repository Structure
 
 ```bash
 .
-├── AGENTS.md
 ├── docker-compose.yml
-├── .env.example
-├── .gitignore
 ├── Makefile
-├── README.md
-└── docs
-    ├── product-vision.md
-    ├── urban_lens_visao_consolidada.pdf
-    └── how-to-run.md (you are here)   
+├── sql/init/
+├── pipelines/
+├── src/urban_lens/
+├── tests/
+└── docs/
+    ├── how-to-run.md
+    ├── how-to-populate-db.md
+    ├── implementation-guide.md
+    └── architecture/
 ```
-
----
 
 ## Prerequisites
 
-Make sure you have the following installed on your machine:
+Make sure these tools are installed locally:
 
-* Docker
-* Docker Compose
-* GNU Make
-* Git
+- Docker
+- Docker Compose
+- GNU Make
+- Git
+- Python 3.11+
+- `pip`
 
 Recommended:
 
-* 8 GB+ RAM
-* 2+ CPU cores
-
----
+- 8 GB+ RAM
+- 2+ CPU cores
 
 ## Environment Setup
 
@@ -60,77 +78,130 @@ git clone https://github.com/felipemariano29/urban-lens.git
 cd urban-lens
 ```
 
-2. Create your environment file:
+2. Create the environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-3. (Optional) Adjust environment variables if needed.
+3. Review the values in `.env` if you need different ports or credentials.
 
----
+4. Install the Python package used by the pipeline jobs:
 
-## Running the Project
+```bash
+python3 -m pip install -e ".[dev]"
+```
 
-Start the services using:
+## Start Local Infrastructure
+
+Start the available containers with:
 
 ```bash
 make up
 ```
 
-Or directly with Docker Compose:
+Or directly:
 
 ```bash
 docker compose up -d
 ```
 
----
+This starts:
 
-## Verifying Services
-
-Check running containers:
-
-```bash
-make ps
-```
-
-View logs:
-
-```bash
-make logs
-```
-
----
+- PostgreSQL
+- pgAdmin
+- MinIO
+- MinIO bucket bootstrap
 
 ## Available Services
 
-### MinIO
-
-* API: http://localhost:${MINIO_API_HOST_PORT:-9002}
-* Console: http://localhost:${MINIO_CONSOLE_HOST_PORT:-9003}
-
-Credentials are defined in `.env`.
-
----
-
 ### PostgreSQL
 
-* Host: localhost
-* Port: `${POSTGRES_HOST_PORT:-5433}`
-
-Credentials are defined in `.env`.
-
----
+- Host: `localhost`
+- Port: `${POSTGRES_HOST_PORT:-5433}`
 
 ### pgAdmin
 
-* URL: http://localhost:${PGADMIN_HOST_PORT:-5050}
-* Login email: `PGADMIN_DEFAULT_EMAIL`
-* Login password: `PGADMIN_DEFAULT_PASSWORD`
+- URL: `http://localhost:${PGADMIN_HOST_PORT:-5050}`
+- Login email: `PGADMIN_DEFAULT_EMAIL`
+- Login password: `PGADMIN_DEFAULT_PASSWORD`
 
 The PostgreSQL server is pre-registered as `Urban Lens Postgres`.
 
----
+### MinIO
+
+- API: `http://localhost:${MINIO_API_HOST_PORT:-9002}`
+- Console: `http://localhost:${MINIO_CONSOLE_HOST_PORT:-9003}`
+
+Credentials are defined in `.env`.
+
+## Governance Schema Bootstrap
+
+PostgreSQL loads SQL files from `sql/init/` on first startup because that directory is mounted into `/docker-entrypoint-initdb.d`.
+
+The governance schema used by the pipeline is:
+
+- `sql/init/001_governance_schema.sql`
+
+For details on naming, ordering, and re-running initialization scripts, see:
+
+- `docs/how-to-populate-db.md`
+
+Important:
+
+- initialization scripts run only when the database volume is created
+- if you need to re-run them, reset the environment with `make reset`
+
+## Data Pipeline Execution
+
+The authoritative runbook for the data pipeline is:
+
+- `docs/implementation-guide.md`
+
+That document defines the exact execution order for:
+
+1. applying the governance schema
+2. ingesting a `DATA.POLICE.UK` `street` CSV into Bronze
+3. processing a monthly snapshot directory
+4. transforming Bronze into Silver
+5. publishing Gold analytics, RAG, and ML datasets
+6. training and publishing forecast outputs
+
+### Current MVP Data Scope
+
+The implemented MVP pipeline currently supports:
+
+- `DATA.POLICE.UK` `street` CSV files
+
+The pipeline currently rejects:
+
+- `outcomes` CSV files
+- `stop-and-search` CSV files
+
+This is intentional and documented in:
+
+- `docs/implementation-guide.md`
+- `docs/architecture/medallion-governance.md`
+
+### Pipeline Entrypoints
+
+The runnable CLI entrypoints are:
+
+- `pipelines/ingest_manual.py`
+- `pipelines/process_snapshot.py`
+- `pipelines/bronze_to_silver.py`
+- `pipelines/silver_to_gold.py`
+- `pipelines/train_forecast_model.py`
+
+### Layer Responsibilities
+
+Use `docs/architecture/medallion-governance.md` as the source of truth for layer behavior:
+
+- Bronze: immutable raw CSV objects plus metadata registration
+- Silver: occurrence-level normalized parquet
+- Gold Analytics: aggregated factual datasets
+- Gold RAG: evidence-oriented text chunks
+- Gold ML: training, scoring, and prediction datasets
 
 ## Useful Commands
 
@@ -138,13 +209,28 @@ The PostgreSQL server is pre-registered as `Urban Lens Postgres`.
 make help
 make up
 make down
-make restart
 make reset
 make logs
-make ps
+docker compose ps
+python3 -m pytest
 ```
 
----
+## Validation
+
+Run the automated tests with:
+
+```bash
+python3 -m pytest
+```
+
+These tests validate:
+
+- CSV normalization
+- dataset-family classification
+- rejection of unsupported file families
+- Gold aggregations
+- ML feature generation
+- end-to-end Bronze -> Silver -> Gold orchestration with fake storage and metadata
 
 ## Troubleshooting
 
@@ -154,60 +240,33 @@ make ps
 docker compose logs -f
 ```
 
----
-
-### Port already in use
-
-Check if these ports are occupied:
-
-* `${POSTGRES_HOST_PORT:-5433}` (PostgreSQL)
-* `${MINIO_API_HOST_PORT:-9002}` (MinIO API)
-* `${MINIO_CONSOLE_HOST_PORT:-9003}` (MinIO Console)
-* `${PGADMIN_HOST_PORT:-5050}` (pgAdmin)
-
----
-
-### Missing `.env` file
+### Missing `.env`
 
 ```bash
 cp .env.example .env
 ```
 
----
-
-### Reset environment
-
-If something is broken:
+### Need to re-run database initialization
 
 ```bash
 make reset
 ```
 
----
+Warning: this removes volumes and deletes local container data.
 
-## Purpose of This Setup
+### Pipeline command fails after infrastructure is up
 
-This repository provides a **minimal, reproducible local environment** to:
+Check:
 
-* standardize development setup
-* enable team onboarding
-* prepare the foundation for data ingestion and analysis pipelines
-* support future expansion of the Urban-Lens platform
+- whether PostgreSQL is reachable through `URBAN_LENS_POSTGRES_DSN`
+- whether MinIO is reachable through `URBAN_LENS_S3_ENDPOINT_URL`
+- whether the bucket configured in `URBAN_LENS_S3_BUCKET` exists
+- whether the governance schema was initialized successfully
 
----
+## Next Reading
 
-## Next Steps (Future Work)
+After this guide, read:
 
-* Data ingestion pipelines
-* Medallion architecture (Bronze / Silver / Gold)
-* Vector database integration
-* RAG pipeline implementation
-* API layer (FastAPI)
-* Local LLM inference (Ollama)
-
----
-
-## Reference Documents
-
-* `docs/product-vision.md`
-* `docs/urban_lens_visao_consolidada.pdf`
+1. `docs/implementation-guide.md`
+2. `docs/architecture/medallion-governance.md`
+3. `docs/architecture/metadata-contract.md`
