@@ -1,0 +1,144 @@
+Type,Date,Part of a policing operation,Policing operation,Latitude,Longitude,Gender,Age range,Self-defined ethnicity,Officer-defined ethnicity,Legislation,Object of search,Outcome,Outcome linked to object of search,Removal of more than just outer clothing
+Person search,2023-11-01T02:01:00+00:00,,,50.716097,-1.875668,Male,over 34,Black/African/Caribbean/Black British - Caribbean,Black,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-01T06:04:00+00:00,,,50.715188,-2.435187,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-01T06:05:00+00:00,,,50.715188,-2.435187,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Summons / charged by post,,False
+Person search,2023-11-01T06:11:00+00:00,,,50.751485,-1.895378,Female,25-34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Stolen goods,A no further action disposal,,False
+Person search,2023-11-01T22:26:00+00:00,,,,,Male,over 34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Article for use in theft,,,False
+Person search,2023-11-01T22:50:00+00:00,,,50.719696,-1.983091,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Police and Criminal Evidence Act 1984 (section 1),Article for use in theft,Community resolution,True,False
+Person search,2023-11-02T10:01:00+00:00,,,50.733121,-1.815388,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Arrest,True,False
+Person search,2023-11-02T10:05:00+00:00,,,50.733121,-1.815388,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,True
+Person search,2023-11-02T10:08:00+00:00,,,50.733121,-1.815388,Male,over 34,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-02T10:10:00+00:00,,,50.746542,-1.910540,Male,18-24,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-02T23:45:00+00:00,,,50.607397,-2.461621,Male,10-17,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-03T14:37:00+00:00,,,50.615703,-2.453477,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-03T17:40:00+00:00,,,50.713370,-2.435737,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-03T17:41:00+00:00,,,50.713370,-2.435737,Male,10-17,Other ethnic group - Not stated,,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-03T17:44:00+00:00,,,50.713370,-2.435737,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-03T17:45:00+00:00,,,50.713370,-2.435737,Female,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-03T17:48:00+00:00,,,50.713370,-2.435737,Male,10-17,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-03T21:55:00+00:00,,,50.734692,-1.777576,Male,18-24,Other ethnic group - Not stated,,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,Arrest,True,False
+Person search,2023-11-03T22:00:00+00:00,,,50.716594,-1.984409,Male,25-34,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-04T01:22:00+00:00,,,50.719533,-1.977991,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-04T01:22:00+00:00,,,50.719533,-1.977991,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-04T01:22:00+00:00,,,50.719533,-1.977991,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Community resolution,True,False
+Person search,2023-11-05T15:24:00+00:00,,,50.720911,-1.887158,Male,over 34,Asian/Asian British - Any other Asian background,Asian,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-05T17:00:00+00:00,,,50.721816,-1.893049,Male,25-34,Other ethnic group - Not stated,,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-05T20:48:00+00:00,,,50.715677,-2.436679,Male,10-17,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),,,,False
+Person search,2023-11-06T15:10:00+00:00,,,50.743167,-1.946136,Male,10-17,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-06T20:14:00+00:00,,,50.757047,-2.035447,Male,over 34,Other ethnic group - Not stated,,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-06T20:45:00+00:00,,,50.734767,-2.758026,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Fireworks,,,False
+Person search,2023-11-06T22:55:00+00:00,,,50.715677,-2.436679,Male,10-17,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-07T09:26:00+00:00,,,50.725480,-1.878845,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,Police and Criminal Evidence Act 1984 (section 1),Stolen goods,,,False
+Person search,2023-11-07T18:22:00+00:00,,,50.722911,-1.865040,Female,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-08T02:15:00+00:00,,,50.716097,-1.875668,Male,25-34,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,True
+Person search,2023-11-08T03:04:00+00:00,,,50.725306,-1.930202,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Community resolution,True,False
+Person search,2023-11-08T09:48:00+00:00,,,50.739615,-1.933795,Male,10-17,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-08T12:36:00+00:00,,,50.956871,-2.514909,Male,18-24,Other ethnic group - Not stated,,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-08T18:11:00+00:00,,,50.616397,-2.455921,Male,10-17,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-08T18:16:00+00:00,,,50.617219,-2.456671,Male,10-17,Black/African/Caribbean/Black British - Any other Black/African/Caribbean background,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-08T18:16:00+00:00,,,50.616397,-2.455921,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-08T22:23:00+00:00,,,50.743371,-1.803074,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Arrest,True,False
+Person search,2023-11-09T02:48:00+00:00,,,50.750870,-1.967558,Female,25-34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-09T09:53:00+00:00,,,50.723082,-1.901249,Male,25-34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Stolen goods,,,False
+Person search,2023-11-09T09:56:00+00:00,,,50.723082,-1.901249,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,Police and Criminal Evidence Act 1984 (section 1),Article for use in theft,A no further action disposal,,False
+Person search,2023-11-10T03:41:00+00:00,,,50.721226,-1.854958,Male,over 34,White - Any other White background,White,Police and Criminal Evidence Act 1984 (section 1),Stolen goods,A no further action disposal,,False
+Person search,2023-11-10T04:55:00+00:00,,,50.724633,-1.869001,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Police and Criminal Evidence Act 1984 (section 1),Stolen goods,,,False
+Person search,2023-11-10T12:14:00+00:00,,,50.745722,-1.816742,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-10T12:14:00+00:00,,,50.745722,-1.816742,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-10T23:09:00+00:00,,,50.614384,-2.472955,Male,18-24,Other ethnic group - Not stated,,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-10T23:45:00+00:00,,,50.609858,-2.453434,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-10T23:57:00+00:00,,,50.615418,-2.452668,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-10T23:59:00+00:00,,,50.634922,-2.431843,Male,25-34,Asian/Asian British - Indian,Asian,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-11T01:39:00+00:00,,,50.747045,-2.739486,Male,18-24,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-11T03:07:00+00:00,,,50.634922,-2.431843,Male,25-34,Asian/Asian British - Indian,Asian,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-11T14:54:00+00:00,,,50.615153,-2.458461,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Firearms Act 1968 (section 47),Firearms,A no further action disposal,,False
+Person search,2023-11-11T14:54:00+00:00,,,50.615153,-2.458461,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Firearms Act 1968 (section 47),Firearms,A no further action disposal,,False
+Person search,2023-11-11T14:54:00+00:00,,,50.615153,-2.458461,Male,18-24,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-11T15:01:00+00:00,,,50.615153,-2.458461,Male,10-17,Other ethnic group - Not stated,White,Firearms Act 1968 (section 47),Firearms,A no further action disposal,,False
+Person search,2023-11-11T15:05:00+00:00,,,50.615153,-2.458461,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Firearms Act 1968 (section 47),Firearms,A no further action disposal,,False
+Person search,2023-11-11T15:05:00+00:00,,,50.615153,-2.458461,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Firearms Act 1968 (section 47),Firearms,,,False
+Person search,2023-11-11T21:09:00+00:00,,,50.718263,-1.874699,Female,18-24,White - Any other White background,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-11T21:15:00+00:00,,,50.719778,-1.878081,Male,25-34,Other ethnic group - Any other ethnic group,Other,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-11T22:55:00+00:00,,,50.717365,-1.883909,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-11T23:34:00+00:00,,,50.730097,-1.831326,Male,25-34,Asian/Asian British - Any other Asian background,Asian,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-12T00:42:00+00:00,,,50.712674,-1.990756,Male,25-34,Asian/Asian British - Bangladeshi,Asian,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-12T01:19:00+00:00,,,50.718263,-1.874699,Female,18-24,White - Any other White background,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-12T02:55:00+00:00,,,50.733736,-2.754835,Male,18-24,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,A no further action disposal,,False
+Person search,2023-11-12T08:00:00+00:00,,,50.840985,-1.838042,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Community resolution,True,False
+Person search,2023-11-12T14:39:00+00:00,,,50.688960,-2.112406,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Arrest,True,False
+Person search,2023-11-12T15:43:00+00:00,,,50.606114,-2.470031,Male,over 34,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-12T21:15:00+00:00,,,50.735436,-1.776411,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Arrest,True,False
+Person search,2023-11-12T21:15:00+00:00,,,50.735436,-1.776411,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-12T22:32:00+00:00,,,50.714067,-1.985161,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,A no further action disposal,,False
+Person search,2023-11-14T18:30:00+00:00,,,50.606374,-2.449769,Female,over 34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,Arrest,True,False
+Person search,2023-11-15T22:47:00+00:00,,,50.734141,-1.849378,Male,25-34,Asian/Asian British - Indian,Asian,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-16T20:28:00+00:00,,,50.720231,-1.791570,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-16T20:30:00+00:00,,,50.720231,-1.791570,Male,18-24,Other ethnic group - Not stated,,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-16T20:30:00+00:00,,,50.737005,-1.852472,Male,18-24,Other ethnic group - Not stated,,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-17T01:23:00+00:00,,,50.740048,-1.878822,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-17T06:16:00+00:00,,,50.743806,-1.878175,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-17T15:19:00+00:00,,,50.732406,-1.863893,Male,18-24,Asian/Asian British - Any other Asian background,Other,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-17T18:40:00+00:00,,,50.585374,-2.472876,Male,10-17,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-17T18:40:00+00:00,,,50.585374,-2.472876,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-17T18:42:00+00:00,,,50.585374,-2.472876,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-17T21:39:00+00:00,,,50.849282,-1.741463,Male,over 34,Other ethnic group - Not stated,White,Firearms Act 1968 (section 47),Firearms,A no further action disposal,,False
+Person search,2023-11-17T23:57:00+00:00,,,51.031807,-2.270671,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Police and Criminal Evidence Act 1984 (section 1),Article for use in theft,,,False
+Person search,2023-11-18T00:30:00+00:00,,,50.721376,-1.884452,Male,over 34,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-18T01:22:00+00:00,,,50.716400,-1.881503,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-18T01:22:00+00:00,,,50.716400,-1.881503,Female,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Khat or Cannabis warning,True,False
+Person search,2023-11-18T01:22:00+00:00,,,50.716400,-1.881503,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-18T01:22:00+00:00,,,50.716400,-1.881503,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-18T06:21:00+00:00,,,50.726980,-1.860905,Male,10-17,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Articles for use in criminal damage,,,False
+Person search,2023-11-18T15:19:00+00:00,,,50.727511,-1.840374,Male,over 34,White - Any other White background,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-18T18:05:00+00:00,,,50.718030,-1.978431,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-18T19:18:00+00:00,,,50.621194,-2.458972,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,Firearms Act 1968 (section 47),Controlled drugs,Community resolution,True,False
+Person search,2023-11-19T00:43:00+00:00,,,50.615703,-2.453477,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,True
+Person search,2023-11-19T02:47:00+00:00,,,,,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-19T03:14:00+00:00,,,50.732590,-2.755398,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-19T05:34:00+00:00,,,50.792343,-1.901841,Male,25-34,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-19T16:16:00+00:00,,,50.718752,-1.982864,Male,18-24,Other ethnic group - Not stated,Asian,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-20T08:06:00+00:00,,,50.878784,-1.877881,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-20T22:26:00+00:00,,,50.731567,-1.952240,Male,18-24,Other ethnic group - Not stated,Asian,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-21T02:36:00+00:00,,,50.636847,-2.424281,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Community resolution,True,False
+Person search,2023-11-21T22:20:00+00:00,,,50.736501,-1.866744,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-22T15:55:00+00:00,,,50.624905,-2.445889,Male,over 34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-22T18:36:00+00:00,,,50.719533,-1.977991,Male,25-34,White - Any other White background,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-23T02:25:00+00:00,,,50.710026,-2.437774,Male,25-34,Mixed/Multiple ethnic groups - White and Asian,White,Police and Criminal Evidence Act 1984 (section 1),Article for use in theft,,,False
+Person search,2023-11-23T11:01:00+00:00,,,50.729774,-1.838312,Male,over 34,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-23T11:02:00+00:00,,,50.731079,-1.845505,Male,over 34,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-23T14:15:00+00:00,,,50.713213,-1.985770,Male,over 34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-23T23:48:00+00:00,,,50.799596,-1.988384,Male,25-34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,Arrest,True,False
+Person search,2023-11-24T03:44:00+00:00,,,50.722010,-1.872125,Male,over 34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,A no further action disposal,,False
+Person search,2023-11-24T23:28:00+00:00,,,50.722301,-1.866628,Female,over 34,Other ethnic group - Any other ethnic group,,Police and Criminal Evidence Act 1984 (section 1),Stolen goods,A no further action disposal,,False
+Person search,2023-11-25T03:48:00+00:00,,,50.597739,-2.479315,Male,10-17,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-25T04:15:00+00:00,,,50.724124,-1.867909,Male,18-24,Other ethnic group - Not stated,,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Arrest,True,True
+Person search,2023-11-25T04:17:00+00:00,,,50.720911,-1.887158,Male,25-34,Asian/Asian British - Indian,,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Arrest,True,False
+Person search,2023-11-25T10:45:00+00:00,,,50.720911,-1.887158,Male,over 34,Black/African/Caribbean/Black British - Caribbean,Black,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-25T12:05:00+00:00,,,,,Male,18-24,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Stolen goods,,,False
+Person search,2023-11-25T12:05:00+00:00,,,50.607758,-2.454559,Male,25-34,Black/African/Caribbean/Black British - African,Black,Police and Criminal Evidence Act 1984 (section 1),Stolen goods,Summons / charged by post,,False
+Person search,2023-11-25T16:40:00+00:00,,,50.718752,-1.982864,Male,10-17,Other ethnic group - Not stated,,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-25T22:35:00+00:00,,,50.724480,-1.906729,Male,18-24,Other ethnic group - Any other ethnic group,,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Arrest,True,False
+Person search,2023-11-25T23:15:00+00:00,,,50.714147,-2.018559,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Arrest,True,False
+Person search,2023-11-26T01:15:00+00:00,,,50.718030,-1.978431,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,Police and Criminal Evidence Act 1984 (section 1),Article for use in theft,A no further action disposal,,False
+Person search,2023-11-26T01:17:00+00:00,,,50.718030,-1.978431,Male,10-17,Black/African/Caribbean/Black British - Any other Black/African/Caribbean background,White,Police and Criminal Evidence Act 1984 (section 1),Article for use in theft,,,False
+Person search,2023-11-26T16:30:00+00:00,,,50.725492,-1.837250,Male,over 34,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,True
+Person search,2023-11-26T22:18:00+00:00,,,,,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Police and Criminal Evidence Act 1984 (section 1),Stolen goods,Arrest,True,False
+Person search,2023-11-27T18:23:00+00:00,,,50.721376,-1.884452,Male,25-34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Article for use in theft,,,False
+Person search,2023-11-27T19:59:00+00:00,,,50.719211,-1.986264,Male,over 34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-27T21:19:00+00:00,,,50.734141,-1.849378,Male,over 34,Black/African/Caribbean/Black British - Any other Black/African/Caribbean background,Black,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-27T23:51:00+00:00,,,50.716888,-1.945414,Male,18-24,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-27T23:55:00+00:00,,,50.716888,-1.945414,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-28T11:52:00+00:00,,,50.752629,-1.842230,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Police and Criminal Evidence Act 1984 (section 1),Stolen goods,Community resolution,True,False
+Person search,2023-11-28T14:10:00+00:00,,,,,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-28T15:10:00+00:00,,,50.717828,-1.870919,Male,18-24,Black/African/Caribbean/Black British - Caribbean,Black,Misuse of Drugs Act 1971 (section 23),Controlled drugs,Community resolution,True,False
+Person search,2023-11-28T16:25:00+00:00,,,50.621645,-2.478739,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,True
+Person search,2023-11-28T19:28:00+00:00,,,,,Male,25-34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Stolen goods,,,False
+Person search,2023-11-28T22:42:00+00:00,,,50.719499,-1.887133,Male,25-34,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Article for use in theft,,,False
+Person search,2023-11-29T13:42:00+00:00,,,50.719314,-1.873408,Female,over 34,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-29T14:57:00+00:00,,,,,Female,over 34,Other ethnic group - Not stated,Other,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-29T14:57:00+00:00,,,,,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-29T14:57:00+00:00,,,,,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False
+Person search,2023-11-29T16:16:00+00:00,,,50.728600,-2.021180,Male,10-17,Other ethnic group - Not stated,White,Police and Criminal Evidence Act 1984 (section 1),Offensive weapons,,,False
+Person search,2023-11-29T20:50:00+00:00,,,50.749330,-1.849060,Male,over 34,White - Any other White background,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,A no further action disposal,,False
+Person search,2023-11-29T21:10:00+00:00,,,50.749330,-1.849060,Female,over 34,Other ethnic group - Not stated,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,True
+Person search,2023-11-29T21:33:00+00:00,,,50.601500,-2.458808,Male,18-24,Asian/Asian British - Chinese,White,Misuse of Drugs Act 1971 (section 23),Controlled drugs,,,False

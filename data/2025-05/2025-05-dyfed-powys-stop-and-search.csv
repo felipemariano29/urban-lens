@@ -1,0 +1,276 @@
+Type,Date,Part of a policing operation,Policing operation,Latitude,Longitude,Gender,Age range,Self-defined ethnicity,Officer-defined ethnicity,Legislation,Object of search,Outcome,Outcome linked to object of search,Removal of more than just outer clothing
+Person search,2025-05-01T13:19:00+00:00,,,51.867524,-4.284737,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,True,False
+Person search,2025-05-01T14:16:00+00:00,,,51.681865,-4.121570,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person and Vehicle search,2025-05-01T19:19:00+00:00,,,52.091155,-4.645797,Male,18-24,White - Any other White background,White,,Controlled drugs,Arrest,True,False
+Person and Vehicle search,2025-05-01T19:19:00+00:00,,,52.091155,-4.645797,Male,18-24,White - Any other White background,White,,Controlled drugs,Arrest,False,False
+Person and Vehicle search,2025-05-01T19:19:00+00:00,,,52.091155,-4.645797,Male,18-24,White - Any other White background,White,,Controlled drugs,Arrest,False,False
+Person search,2025-05-01T19:45:00+00:00,,,52.091155,-4.645797,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Arrest,True,False
+Person search,2025-05-02T02:03:00+00:00,,,51.695267,-4.941015,Male,over 34,Other ethnic group - Not stated,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-02T07:40:00+00:00,,,51.855755,-4.308088,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-02T14:05:00+00:00,,,51.858232,-4.302841,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Vehicle search,2025-05-02T18:30:00+00:00,,,51.802278,-4.967404,Male,,Other ethnic group - Not stated,,,Controlled drugs,Arrest,False,False
+Person search,2025-05-02T22:15:00+00:00,,,52.416068,-4.071592,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-03T01:23:00+00:00,,,51.867524,-4.284737,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-03T02:30:00+00:00,,,52.506369,-3.324147,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Arrest,True,False
+Person search,2025-05-03T10:23:00+00:00,,,51.867524,-4.284737,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Anything to threaten or harm anyone,A no further action disposal,True,False
+Person search,2025-05-03T10:31:00+00:00,,,51.682936,-4.175059,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Anything to threaten or harm anyone,,False,False
+Person search,2025-05-03T17:06:00+00:00,,,51.672413,-4.696525,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,Arrest,False,False
+Person search,2025-05-03T17:57:00+00:00,,,51.673096,-4.697332,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,A no further action disposal,False,False
+Person search,2025-05-03T18:44:00+00:00,,,52.441881,-4.028618,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-03T22:34:00+00:00,,,52.419679,-4.084541,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person and Vehicle search,2025-05-03T23:34:00+00:00,,,51.942180,-3.415330,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-04T00:15:00+00:00,,,52.413551,-4.087884,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,,,Controlled drugs,A no further action disposal,False,False
+Person and Vehicle search,2025-05-04T00:21:00+00:00,,,51.942180,-3.415330,Male,10-17,Other ethnic group - Not stated,White,,Controlled drugs,,False,False
+Person search,2025-05-04T03:04:00+00:00,,,,,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-04T05:03:00+00:00,,,51.867524,-4.284737,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Anything to threaten or harm anyone,A no further action disposal,False,False
+Person search,2025-05-04T06:49:00+00:00,,,51.794935,-3.978866,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,A no further action disposal,False,False
+Person search,2025-05-04T07:22:00+00:00,,,51.711809,-5.046374,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-04T08:10:00+00:00,,,51.942140,-4.561332,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-04T08:10:00+00:00,,,51.942140,-4.561332,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,False,False
+Person search,2025-05-04T11:50:00+00:00,,,51.811614,-4.963810,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,A no further action disposal,False,False
+Person search,2025-05-04T13:50:00+00:00,,,52.083163,-4.655688,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-04T14:00:00+00:00,,,,,Male,,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,A no further action disposal,False,False
+Person search,2025-05-04T14:00:00+00:00,,,,,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person and Vehicle search,2025-05-04T17:19:00+00:00,,,52.497201,-3.427699,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Arrest,False,False
+Person search,2025-05-04T17:22:00+00:00,,,52.510710,-3.329247,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,Arrest,False,False
+Person search,2025-05-04T22:43:00+00:00,,,51.683857,-4.170488,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-05T00:11:00+00:00,,,52.413865,-4.088943,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-05T03:55:00+00:00,,,51.674294,-4.161425,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-05T04:01:00+00:00,,,51.674294,-4.161425,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-05T04:07:00+00:00,,,51.674294,-4.161425,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-05T04:12:00+00:00,,,51.674294,-4.161425,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person and Vehicle search,2025-05-05T07:36:00+00:00,,,,,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-05T15:01:00+00:00,,,51.801688,-4.964754,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Articles for use in criminal damage,A no further action disposal,False,False
+Person search,2025-05-05T15:05:00+00:00,,,51.797748,-4.980060,Female,10-17,Other ethnic group - Not stated,White,,Articles for use in criminal damage,A no further action disposal,False,False
+Person search,2025-05-05T15:10:00+00:00,,,51.797748,-4.980060,Female,10-17,Other ethnic group - Not stated,White,,Articles for use in criminal damage,A no further action disposal,False,False
+Person search,2025-05-05T16:34:00+00:00,,,51.759129,-4.994689,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person and Vehicle search,2025-05-05T18:20:00+00:00,,,51.684413,-4.170095,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-05T19:31:00+00:00,,,51.805240,-3.902092,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person and Vehicle search,2025-05-05T19:56:00+00:00,,,52.514750,-3.306395,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,True,False
+Person and Vehicle search,2025-05-05T19:56:00+00:00,,,52.514750,-3.306395,Male,10-17,White - Any other White background,White,,Controlled drugs,,True,False
+Person and Vehicle search,2025-05-05T19:58:00+00:00,,,52.514750,-3.306395,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-05T20:16:00+00:00,,,51.858198,-4.306412,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-05T22:27:00+00:00,,,51.806825,-3.823640,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Anything to threaten or harm anyone,A no further action disposal,False,False
+Person search,2025-05-05T22:55:00+00:00,,,51.797748,-4.980060,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Articles for use in criminal damage,A no further action disposal,False,False
+Person search,2025-05-05T22:55:00+00:00,,,51.797748,-4.980060,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Articles for use in criminal damage,A no further action disposal,False,False
+Person search,2025-05-06T11:30:00+00:00,,,52.042598,-4.308256,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-06T11:31:00+00:00,,,52.042598,-4.308256,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-06T18:16:00+00:00,,,51.682749,-4.159383,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-06T18:20:00+00:00,,,52.075936,-4.656310,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-06T18:30:00+00:00,,,52.075936,-4.656310,Male,,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-06T18:30:00+00:00,,,52.075936,-4.656310,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Arrest,False,False
+Person search,2025-05-06T18:30:00+00:00,,,52.075936,-4.656310,Other,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-06T19:37:00+00:00,,,52.075936,-4.656310,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-07T11:54:00+00:00,,,51.677628,-4.912587,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,A no further action disposal,False,False
+Person search,2025-05-07T11:54:00+00:00,,,51.677628,-4.912587,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,A no further action disposal,False,False
+Person search,2025-05-07T12:38:00+00:00,,,51.677628,-4.912587,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,A no further action disposal,False,False
+Person search,2025-05-07T13:01:00+00:00,,,51.677628,-4.912587,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,A no further action disposal,False,False
+Person search,2025-05-07T19:05:00+00:00,,,52.084476,-4.662831,Male,over 34,Other ethnic group - Any other ethnic group,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-07T19:12:00+00:00,,,52.504815,-3.325813,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,Community resolution,False,False
+Person search,2025-05-07T19:15:00+00:00,,,52.084476,-4.662831,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-08T00:40:00+00:00,,,51.677724,-4.160735,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,A no further action disposal,False,False
+Person search,2025-05-08T06:14:00+00:00,,,51.675051,-4.922938,Male,,White - English/Welsh/Scottish/Northern Irish/British,White,,Anything to threaten or harm anyone,Arrest,False,False
+Person search,2025-05-08T15:28:00+00:00,,,51.681231,-4.165141,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-09T02:48:00+00:00,,,51.682749,-4.159383,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-09T05:05:00+00:00,,,51.682749,-4.159383,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-09T09:39:00+00:00,,,52.413564,-4.083627,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-09T13:05:00+00:00,,,52.035957,-4.468143,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-09T18:02:00+00:00,,,51.853743,-4.313488,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person search,2025-05-09T21:42:00+00:00,,,52.069209,-4.610090,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-09T22:17:00+00:00,,,51.684052,-4.125925,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-10T00:19:00+00:00,,,,,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person and Vehicle search,2025-05-10T00:23:00+00:00,,,51.704354,-4.931559,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,A no further action disposal,False,False
+Person search,2025-05-10T01:23:00+00:00,,,52.303006,-3.508958,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,A no further action disposal,False,False
+Person search,2025-05-10T03:10:00+00:00,,,51.852668,-4.316004,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-10T05:24:00+00:00,,,51.791029,-4.979733,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Arrest,False,False
+Person and Vehicle search,2025-05-10T06:28:00+00:00,,,51.852668,-4.316004,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Arrest,True,False
+Person search,2025-05-10T08:09:00+00:00,,,51.856457,-4.312190,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person and Vehicle search,2025-05-10T18:22:00+00:00,,,52.443735,-4.027467,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Arrest,False,False
+Person search,2025-05-10T22:30:00+00:00,,,52.516009,-3.314493,Female,10-17,Other ethnic group - Not stated,White,,Offensive weapons,A no further action disposal,False,False
+Person search,2025-05-10T22:54:00+00:00,,,52.660506,-3.143468,Male,10-17,White - Any other White background,White,,Controlled drugs,A no further action disposal,False,False
+Person and Vehicle search,2025-05-11T01:25:00+00:00,,,51.704407,-4.091637,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-11T02:18:00+00:00,,,51.737863,-4.966381,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-11T02:43:00+00:00,,,51.710361,-4.699434,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-11T09:38:00+00:00,,,51.724215,-4.254580,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Anything to threaten or harm anyone,A no further action disposal,False,False
+Person search,2025-05-11T14:35:00+00:00,,,52.075685,-4.165984,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,A no further action disposal,False,False
+Person and Vehicle search,2025-05-11T15:33:00+00:00,,,52.157144,-4.038434,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person and Vehicle search,2025-05-11T15:35:00+00:00,,,,,Other,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-11T15:38:00+00:00,,,52.075685,-4.165984,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,A no further action disposal,False,False
+Person search,2025-05-11T15:42:00+00:00,,,52.075685,-4.165984,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,A no further action disposal,False,False
+Person search,2025-05-11T18:10:00+00:00,,,52.438191,-3.898935,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-11T18:10:00+00:00,,,52.438191,-3.898935,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-11T19:56:00+00:00,,,51.867524,-4.284737,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,A no further action disposal,True,False
+Person search,2025-05-11T23:12:00+00:00,,,52.515932,-3.315773,Female,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-12T10:39:00+00:00,,,51.679843,-4.159476,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T11:13:00+00:00,,,51.675985,-4.164832,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T13:10:00+00:00,,,51.685529,-4.259182,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-12T13:17:00+00:00,,,51.685529,-4.259182,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T14:05:00+00:00,,,52.406200,-4.076437,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T14:05:00+00:00,,,52.406200,-4.076437,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person and Vehicle search,2025-05-12T14:36:00+00:00,,,51.702058,-4.076550,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T15:15:00+00:00,,,51.684840,-4.154217,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T15:19:00+00:00,,,51.696512,-4.938361,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,A no further action disposal,False,False
+Person search,2025-05-12T15:27:00+00:00,,,51.696512,-4.938361,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,A no further action disposal,False,False
+Person search,2025-05-12T16:07:00+00:00,,,51.799053,-4.973299,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Articles for use in criminal damage,A no further action disposal,False,False
+Person search,2025-05-12T17:30:00+00:00,,,51.693555,-4.146325,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T18:00:00+00:00,,,51.684735,-4.256552,Female,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T18:00:00+00:00,,,51.684735,-4.256552,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T18:00:00+00:00,,,51.684735,-4.256552,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T18:00:00+00:00,,,51.684735,-4.256552,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T18:00:00+00:00,,,51.684735,-4.256552,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T18:00:00+00:00,,,51.684735,-4.256552,Female,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T18:40:00+00:00,,,51.813461,-4.974379,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T19:08:00+00:00,,,,,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-12T21:52:00+00:00,,,51.694027,-4.945291,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person search,2025-05-13T02:22:00+00:00,,,51.714142,-5.047964,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-13T02:49:00+00:00,,,51.714142,-5.047964,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-13T13:27:00+00:00,,,51.695267,-4.941015,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,False,False
+Person search,2025-05-13T14:10:00+00:00,,,52.415877,-4.083480,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,,False,False
+Person search,2025-05-13T22:18:00+00:00,,,51.677230,-4.163633,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,True,False
+Person search,2025-05-13T22:42:00+00:00,,,51.682936,-4.175059,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,,False,False
+Person search,2025-05-14T00:00:00+00:00,,,51.675912,-4.930227,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,,False,False
+Person search,2025-05-14T00:00:00+00:00,,,51.675912,-4.930227,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Articles for use in criminal damage,,False,False
+Person search,2025-05-14T00:00:00+00:00,,,51.675912,-4.930227,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,,False,False
+Person and Vehicle search,2025-05-14T01:10:00+00:00,,,51.692384,-4.946226,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,Arrest,True,False
+Person search,2025-05-14T09:39:00+00:00,,,51.718078,-5.020963,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,Arrest,True,False
+Person search,2025-05-14T10:18:00+00:00,,,50.775929,0.276403,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-14T18:21:00+00:00,,,51.681475,-4.167988,Male,18-24,White - Any other White background,White,,Offensive weapons,A no further action disposal,False,False
+Person and Vehicle search,2025-05-14T21:11:00+00:00,,,51.691713,-4.940365,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,Arrest,True,False
+Person search,2025-05-15T02:22:00+00:00,,,51.853810,-4.303953,Other,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-15T03:21:00+00:00,,,51.867524,-4.284737,Other,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,True,False
+Person search,2025-05-15T09:20:00+00:00,,,,,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,A no further action disposal,False,False
+Person search,2025-05-15T09:35:00+00:00,,,,,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-15T13:05:00+00:00,,,52.515050,-3.317471,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,,A no further action disposal,False,False
+Person search,2025-05-15T13:05:00+00:00,,,52.515050,-3.317471,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,A no further action disposal,False,False
+Person search,2025-05-15T14:10:00+00:00,,,52.412790,-4.088701,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-15T14:17:00+00:00,,,52.413551,-4.087884,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person and Vehicle search,2025-05-15T14:42:00+00:00,,,52.247459,-3.381171,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,Community resolution,True,False
+Person search,2025-05-15T17:52:00+00:00,,,52.417163,-4.078849,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-15T19:43:00+00:00,,,52.421603,-4.058924,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-15T22:26:00+00:00,,,52.234031,-3.377752,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,True,False
+Person search,2025-05-15T22:26:00+00:00,,,52.234031,-3.377752,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person search,2025-05-15T22:30:00+00:00,,,51.683498,-4.178717,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-15T23:01:00+00:00,,,51.885809,-5.219125,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-16T01:30:00+00:00,,,,,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person and Vehicle search,2025-05-16T14:49:00+00:00,,,51.756471,-4.681752,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-16T16:20:00+00:00,,,51.862904,-4.311751,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-16T18:34:00+00:00,,,51.863487,-4.316865,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Evidence of offences under the Act,,True,False
+Person search,2025-05-16T18:40:00+00:00,,,51.716622,-4.150675,Other,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-16T19:16:00+00:00,,,51.689785,-4.131877,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-16T20:10:00+00:00,,,52.416068,-4.071592,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-16T20:45:00+00:00,,,52.240928,-4.258747,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-16T20:52:00+00:00,,,52.240928,-4.258747,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-16T21:26:00+00:00,,,51.680960,-4.161786,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person and Vehicle search,2025-05-16T21:45:00+00:00,,,51.897098,-3.492338,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-16T23:20:00+00:00,,,51.740031,-4.700203,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person and Vehicle search,2025-05-17T06:12:00+00:00,,,51.756471,-4.681752,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-17T18:34:00+00:00,,,52.104183,-4.699070,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-17T23:46:00+00:00,,,52.413865,-4.088943,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-18T13:02:00+00:00,,,51.867524,-4.284737,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-18T22:08:00+00:00,,,51.715019,-5.033225,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-19T12:14:00+00:00,,,51.858267,-4.307955,Other,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-19T17:15:00+00:00,,,51.693744,-4.941148,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,,False,False
+Person and Vehicle search,2025-05-19T17:20:00+00:00,,,52.403327,-3.977115,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Crossbows,,False,False
+Person search,2025-05-19T20:28:00+00:00,,,52.417163,-4.078849,Male,10-17,Mixed/Multiple ethnic groups - White and Asian,Other,,Game or poaching equipment,,False,False
+Person search,2025-05-19T23:09:00+00:00,,,51.679688,-4.151759,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person search,2025-05-20T01:10:00+00:00,,,51.702767,-4.933164,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-20T02:16:00+00:00,,,51.675163,-4.165502,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,,Community resolution,True,False
+Person search,2025-05-20T12:01:00+00:00,,,51.677213,-4.139057,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,,False,False
+Person search,2025-05-20T12:01:00+00:00,,,51.677213,-4.139057,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,,False,False
+Person search,2025-05-20T13:41:00+00:00,,,52.083163,-4.655688,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-20T13:41:00+00:00,,,52.083163,-4.655688,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Articles for use in criminal damage,,False,False
+Person search,2025-05-20T14:08:00+00:00,,,52.083163,-4.655688,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,,False,False
+Person search,2025-05-20T14:08:00+00:00,,,52.083163,-4.655688,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Articles for use in criminal damage,,False,False
+Person and Vehicle search,2025-05-20T17:09:00+00:00,,,,,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-20T19:13:00+00:00,,,51.457879,-2.546422,Male,over 34,Other ethnic group - Not stated,White,,Stolen goods,,False,False
+Person search,2025-05-20T22:20:00+00:00,,,51.857611,-4.307936,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-21T03:50:00+00:00,,,51.697126,-4.935752,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-21T06:27:00+00:00,,,51.681501,-4.105308,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person search,2025-05-21T13:16:00+00:00,,,,,Male,over 34,Mixed/Multiple ethnic groups - White and Asian,Asian,,Stolen goods,,False,False
+Person and Vehicle search,2025-05-21T13:17:00+00:00,,,52.187159,-4.128506,Female,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,,False,False
+Person search,2025-05-21T14:40:00+00:00,,,52.078062,-4.659370,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person search,2025-05-21T23:16:00+00:00,,,51.848271,-4.388349,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,True,False
+Person search,2025-05-22T12:10:00+00:00,,,52.515050,-3.317471,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Firearms,,False,False
+Person search,2025-05-22T14:58:00+00:00,,,52.417399,-4.083331,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,True,False
+Person search,2025-05-22T18:25:00+00:00,,,52.416068,-4.071592,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-22T21:50:00+00:00,,,52.082783,-4.658965,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person and Vehicle search,2025-05-22T22:55:00+00:00,,,51.868955,-4.283749,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-22T23:00:00+00:00,,,,,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-23T00:18:00+00:00,,,52.513780,-3.310345,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,Arrest,True,False
+Person search,2025-05-23T01:50:00+00:00,,,52.076219,-4.658136,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-23T01:55:00+00:00,,,52.076219,-4.658136,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Evidence of offences under the Act,,False,False
+Person search,2025-05-23T13:08:00+00:00,,,52.414284,-4.085581,Male,over 34,Other ethnic group - Not stated,Asian,,Controlled drugs,,False,False
+Person search,2025-05-23T15:05:00+00:00,,,52.413551,-4.087884,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-23T16:23:00+00:00,,,51.669458,-4.155482,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person and Vehicle search,2025-05-23T17:29:00+00:00,,,51.819290,-4.497663,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Firearms,,False,False
+Person and Vehicle search,2025-05-23T17:29:00+00:00,,,51.819290,-4.497663,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person and Vehicle search,2025-05-23T18:05:00+00:00,,,51.819408,-4.500166,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person and Vehicle search,2025-05-23T18:05:00+00:00,,,51.819408,-4.500166,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Firearms,,False,False
+Person search,2025-05-23T18:22:00+00:00,,,51.677267,-4.702484,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person and Vehicle search,2025-05-23T19:42:00+00:00,,,52.249152,-3.380960,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-23T20:37:00+00:00,,,52.042598,-4.308256,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-23T23:18:00+00:00,,,52.042598,-4.308256,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-24T01:28:00+00:00,,,51.796211,-3.366699,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person and Vehicle search,2025-05-24T04:52:00+00:00,,,51.796211,-3.366699,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-24T05:10:00+00:00,,,52.417399,-4.083331,Other,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-24T05:10:00+00:00,,,52.417399,-4.083331,Other,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,,False,False
+Person search,2025-05-24T07:16:00+00:00,,,52.058349,-4.685474,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-24T08:08:00+00:00,,,52.037449,-4.469042,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-24T15:05:00+00:00,,,51.857059,-4.302563,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-24T17:20:00+00:00,,,51.819290,-4.497663,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-24T18:15:00+00:00,,,51.855042,-4.310070,Male,25-34,Mixed/Multiple ethnic groups - White and Black African,Black,,Controlled drugs,,True,False
+Person search,2025-05-24T19:47:00+00:00,,,51.711076,-5.057270,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-24T19:47:00+00:00,,,51.711076,-5.057270,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-24T19:47:00+00:00,,,51.711076,-5.057270,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-24T19:47:00+00:00,,,51.711076,-5.057270,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-24T19:47:00+00:00,,,51.711076,-5.057270,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-24T19:47:00+00:00,,,51.711076,-5.057270,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person search,2025-05-24T19:47:00+00:00,,,51.711076,-5.057270,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-24T19:47:00+00:00,,,51.711076,-5.057270,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-24T19:47:00+00:00,,,51.711076,-5.057270,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-24T19:47:00+00:00,,,51.711076,-5.057270,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,A no further action disposal,True,False
+Person search,2025-05-24T19:49:00+00:00,,,51.835325,-5.070868,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person search,2025-05-25T04:08:00+00:00,,,51.867524,-4.284737,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person search,2025-05-25T13:19:00+00:00,,,51.802489,-4.971161,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,,False,False
+Person and Vehicle search,2025-05-25T13:20:00+00:00,,,51.802489,-4.971161,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,,False,False
+Person search,2025-05-25T14:40:00+00:00,,,51.803841,-4.969596,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-26T03:33:00+00:00,,,51.819290,-4.497663,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-26T03:33:00+00:00,,,51.819290,-4.497663,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-26T03:57:00+00:00,,,51.858549,-4.304542,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-26T17:55:00+00:00,,,51.697522,-4.148191,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-27T00:50:00+00:00,,,51.991537,-4.981120,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Articles for use in criminal damage,,False,False
+Person search,2025-05-27T00:50:00+00:00,,,51.991537,-4.981120,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Article for use in theft,,False,False
+Person search,2025-05-27T13:48:00+00:00,,,,,Female,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-27T13:55:00+00:00,,,51.803772,-4.966269,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-27T19:11:00+00:00,,,,,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,True,False
+Person search,2025-05-27T19:40:00+00:00,,,52.507697,-3.338174,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-27T20:05:00+00:00,,,52.240928,-4.258747,Female,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-27T20:05:00+00:00,,,52.240928,-4.258747,Female,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-27T20:10:00+00:00,,,52.240928,-4.258747,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,,Community resolution,True,False
+Person search,2025-05-27T22:13:00+00:00,,,52.240928,-4.258747,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-27T22:23:00+00:00,,,51.693744,-4.941148,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-27T22:24:00+00:00,,,52.240928,-4.258747,Other,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-27T22:33:00+00:00,,,51.798214,-4.080111,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-27T22:33:00+00:00,,,51.798214,-4.080111,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-28T06:14:00+00:00,,,51.693744,-4.941148,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-28T16:00:00+00:00,,,51.680471,-4.160533,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-28T21:20:00+00:00,,,51.716492,-5.027387,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-28T21:20:00+00:00,,,51.716492,-5.027387,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person and Vehicle search,2025-05-28T21:30:00+00:00,,,52.248619,-3.383448,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person search,2025-05-28T23:32:00+00:00,,,51.729416,-5.015868,Female,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-29T01:33:00+00:00,,,51.729416,-5.015868,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,,Community resolution,True,False
+Person search,2025-05-29T02:57:00+00:00,,,51.723671,-4.740209,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person and Vehicle search,2025-05-29T03:17:00+00:00,,,51.729416,-5.015868,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-29T03:25:00+00:00,,,51.729416,-5.015868,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person and Vehicle search,2025-05-29T19:05:00+00:00,,,,,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,Community resolution,True,False
+Person search,2025-05-29T21:49:00+00:00,,,51.673164,-4.702587,Female,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Stolen goods,,False,False
+Person search,2025-05-30T15:48:00+00:00,,,51.682288,-4.161979,Male,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person and Vehicle search,2025-05-30T19:28:00+00:00,,,,,Male,18-24,Other ethnic group - Any other ethnic group,White,,,,False,False
+Person search,2025-05-31T00:20:00+00:00,,,51.855427,-4.311048,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person and Vehicle search,2025-05-31T00:40:00+00:00,,,,,Male,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Crossbows,,False,False
+Person and Vehicle search,2025-05-31T00:40:00+00:00,,,,,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Crossbows,,False,False
+Person search,2025-05-31T02:33:00+00:00,,,51.852778,-4.306309,Male,10-17,White - English/Welsh/Scottish/Northern Irish/British,White,,Controlled drugs,,False,False
+Person search,2025-05-31T03:13:00+00:00,,,51.855427,-4.311048,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,,,False,False
+Person search,2025-05-31T03:13:00+00:00,,,51.855427,-4.311048,Female,18-24,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,False,False
+Person and Vehicle search,2025-05-31T15:30:00+00:00,,,51.802278,-4.967404,Male,over 34,White - English/Welsh/Scottish/Northern Irish/British,White,,,Arrest,True,False
+Person search,2025-05-31T20:32:00+00:00,,,51.853386,-5.117979,Female,25-34,White - English/Welsh/Scottish/Northern Irish/British,White,,Offensive weapons,,True,False
