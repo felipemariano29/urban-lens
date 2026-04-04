@@ -13,7 +13,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
-from urban_lens.contracts import MODEL_FEATURE_COLUMNS, MODEL_NAME, MODEL_TARGET
+from urban_lens.governance.contracts import MODEL_FEATURE_COLUMNS, MODEL_NAME, MODEL_TARGET
 
 
 def split_training_holdout(training_frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -88,7 +88,7 @@ def train_forecast_model(
         predictions = pipeline.predict(holdout_frame[MODEL_FEATURE_COLUMNS])
 
         mae = mean_absolute_error(holdout_frame[MODEL_TARGET], predictions)
-        rmse = mean_squared_error(holdout_frame[MODEL_TARGET], predictions, squared=False)
+        rmse = float(np.sqrt(mean_squared_error(holdout_frame[MODEL_TARGET], predictions)))
         denominator = np.maximum(np.abs(holdout_frame[MODEL_TARGET].to_numpy()), 1.0)
         mape = float(np.mean(np.abs(holdout_frame[MODEL_TARGET].to_numpy() - predictions) / denominator))
 
@@ -109,7 +109,7 @@ def train_forecast_model(
             "model_name": MODEL_NAME,
             "run_id": run.info.run_id,
             "artifact_uri": run.info.artifact_uri,
-            "metrics": {"mae": float(mae), "rmse": float(rmse), "mape": float(mape)},
+            "metrics": {"mae": float(mae), "rmse": rmse, "mape": float(mape)},
             "training_window_start": training_window_start,
             "training_window_end": training_window_end,
             "pipeline": pipeline,

@@ -2,7 +2,8 @@ from fastapi import FastAPI, Depends, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from .database import get_db
+from urban_lens.infrastructure.db import get_db
+
 from .schemas import RunMetadataResponse
 
 app = FastAPI(

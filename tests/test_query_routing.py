@@ -1,4 +1,4 @@
-from urban_lens.query_routing import classify_query_intent
+from urban_lens.chat.routing import classify_query_intent
 
 
 def test_classify_query_intent_routes_predictive_question() -> None:

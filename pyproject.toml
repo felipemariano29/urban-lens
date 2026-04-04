@@ -26,6 +26,13 @@ dev = [
   "pytest>=8.3",
 ]
 
+[project.scripts]
+urban-lens-ingest = "urban_lens.cli.ingest_manual:main"
+urban-lens-process-snapshot = "urban_lens.cli.process_snapshot:main"
+urban-lens-bronze-to-silver = "urban_lens.cli.bronze_to_silver:main"
+urban-lens-silver-to-gold = "urban_lens.cli.silver_to_gold:main"
+urban-lens-train-forecast = "urban_lens.cli.train_forecast_model:main"
+
 [tool.setuptools.package-dir]
 "" = "src"
 

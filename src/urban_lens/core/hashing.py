@@ -1,4 +1,4 @@
-"""Utility helpers shared across pipeline jobs."""
+"""Hashing helpers shared across pipeline workflows."""
 
 from __future__ import annotations
 
@@ -26,4 +26,3 @@ def dataframe_hash(dataframe: pd.DataFrame) -> str:
     normalized = normalized.fillna("<NA>")
     payload = normalized.to_json(orient="records", date_format="iso")
     return sha256_text(payload)
-

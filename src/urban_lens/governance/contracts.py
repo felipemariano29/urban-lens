@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field
 
 BRONZE_LAYER = "bronze"
 SILVER_LAYER = "silver"
@@ -88,8 +89,11 @@ CHAT_QUERY_TYPES = {
 }
 
 
-@dataclass(slots=True)
-class DatasetVersionPayload:
+class GovernancePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class DatasetVersionPayload(GovernancePayload):
     source_name: str
     layer: str
     logical_name: str
@@ -101,31 +105,28 @@ class DatasetVersionPayload:
     valid_from: str | None = None
     valid_to: str | None = None
     status: str = "available"
-    metadata_json: dict[str, Any] = field(default_factory=dict)
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
 
 
-@dataclass(slots=True)
-class PipelineRunPayload:
+class PipelineRunPayload(GovernancePayload):
     pipeline_name: str
     run_type: str
     status: str
     triggered_by: str
-    input_versions: list[str] = field(default_factory=list)
-    output_versions: list[str] = field(default_factory=list)
+    input_versions: list[str] = Field(default_factory=list)
+    output_versions: list[str] = Field(default_factory=list)
     error_summary: str | None = None
 
 
-@dataclass(slots=True)
-class AuditEventPayload:
+class AuditEventPayload(GovernancePayload):
     event_type: str
     actor: str
     object_type: str
     object_id: str
-    details_json: dict[str, Any] = field(default_factory=dict)
+    details_json: dict[str, Any] = Field(default_factory=dict)
 
 
-@dataclass(slots=True)
-class ModelVersionPayload:
+class ModelVersionPayload(GovernancePayload):
     model_name: str
     model_version: str
     target_name: str

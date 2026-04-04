@@ -29,4 +29,3 @@ def classify_query_intent(question: str) -> str:
     if predictive_matches:
         return "predictive_future"
     return "factual_past_or_present"
-

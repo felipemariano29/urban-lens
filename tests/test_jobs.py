@@ -7,9 +7,9 @@ import shutil
 import pandas as pd
 import pytest
 
-from urban_lens.config import AppConfig
-from urban_lens.pipeline.jobs import bronze_to_silver, ingest_to_bronze, process_snapshot_directory, silver_to_gold
-from urban_lens.pipeline.transformations import UnsupportedDatasetKindError
+from urban_lens.core.settings import AppConfig
+from urban_lens.sources.police_uk import UnsupportedDatasetKindError
+from urban_lens.workflows import bronze_to_silver, ingest_to_bronze, process_snapshot_directory, silver_to_gold
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

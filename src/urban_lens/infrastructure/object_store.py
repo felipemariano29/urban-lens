@@ -9,7 +9,7 @@ from pathlib import Path
 import boto3
 import pandas as pd
 
-from urban_lens.config import AppConfig
+from urban_lens.core.settings import AppConfig
 
 
 class MinIOStorage:
@@ -54,4 +54,3 @@ class MinIOStorage:
             Body=payload.encode("utf-8"),
             ContentType="application/json",
         )
-

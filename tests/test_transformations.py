@@ -5,17 +5,17 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from urban_lens.pipeline.transformations import (
+from urban_lens.forecasting.features import build_ml_datasets
+from urban_lens.sources.police_uk import (
+    UnsupportedDatasetKindError,
     build_gold_analytics_by_area_month,
     build_gold_analytics_by_area_month_category,
     build_gold_analytics_by_month_category,
-    build_ml_datasets,
     build_rag_evidence_records,
     classify_police_uk_csv_file,
     discover_supported_snapshot_files,
     detect_police_uk_csv_kind,
     normalize_crime_data,
-    UnsupportedDatasetKindError,
 )
 
 

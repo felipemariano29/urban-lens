@@ -172,7 +172,8 @@ Purpose:
 - implement the pure business logic that converts CSV rows into governed analytical products
 
 Required outputs:
-- `src/urban_lens/pipeline/transformations.py`
+- `src/urban_lens/sources/police_uk/transformations.py`
+- `src/urban_lens/forecasting/features.py`
 - unit tests for normalization, aggregation, and feature generation
 
 Mandatory requirements:
@@ -213,7 +214,7 @@ Purpose:
 - connect storage, metadata registration, lineage, audit, and transformation steps into runnable jobs
 
 Required outputs:
-- `src/urban_lens/pipeline/jobs.py`
+- `src/urban_lens/workflows/`
 - CLI entrypoints in `pipelines/`
 - storage and metadata adapters
 
@@ -234,7 +235,7 @@ Definition of done:
 Parallelization:
 - This task SHALL wait for `T3` and `T4`.
 - After those are stable, this task MAY run in parallel with `T6`.
-- This task SHOULD own `src/urban_lens/pipeline/jobs.py`, `src/urban_lens/storage.py`, `src/urban_lens/metadata.py`, and `pipelines/`.
+- This task SHOULD own `src/urban_lens/workflows/`, `src/urban_lens/infrastructure/`, `src/urban_lens/governance/store.py`, and `pipelines/`.
 
 ### `T6` Gold RAG Output and Chat Routing Contract
 
@@ -339,10 +340,10 @@ Parallelization:
 | `T1` | None | Review-only parallelism | Governance lead | `docs/architecture/metadata-contract.md` |
 | `T2` | `T1` | `T3`, `T4` | Documentation or architecture agent | `docs/architecture/`, `docs/adr/` |
 | `T3` | `T1` | `T2`, `T4` | Database or backend agent | `sql/` |
-| `T4` | `T1` | `T2`, `T3` | Data engineering agent | `src/urban_lens/pipeline/transformations.py`, `tests/test_transformations.py` |
-| `T5` | `T3`, `T4` | `T6` | Data platform agent | `src/urban_lens/pipeline/jobs.py`, `src/urban_lens/storage.py`, `src/urban_lens/metadata.py`, `pipelines/` |
-| `T6` | `T1`, `T2` | `T5` | Backend or RAG agent | `src/urban_lens/query_routing.py`, routing tests |
-| `T7` | `T5` | `T8` | ML agent | `src/urban_lens/ml.py` |
+| `T4` | `T1` | `T2`, `T3` | Data engineering agent | `src/urban_lens/sources/police_uk/transformations.py`, `src/urban_lens/forecasting/features.py`, `tests/test_transformations.py` |
+| `T5` | `T3`, `T4` | `T6` | Data platform agent | `src/urban_lens/workflows/`, `src/urban_lens/infrastructure/`, `src/urban_lens/governance/store.py`, `pipelines/` |
+| `T6` | `T1`, `T2` | `T5` | Backend or RAG agent | `src/urban_lens/chat/routing.py`, routing tests |
+| `T7` | `T5` | `T8` | ML agent | `src/urban_lens/forecasting/training.py` |
 | `T8` | `T5`, `T7` for finalization | Drafting may overlap earlier tasks | Enablement or documentation agent | `docs/implementation-guide.md`, `.env.example` |
 
 ## Recommended Multi-Agent Execution Strategy

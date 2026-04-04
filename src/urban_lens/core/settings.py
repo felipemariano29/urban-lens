@@ -1,10 +1,11 @@
-"""Runtime configuration for Urban-Lens pipeline jobs."""
+"""Runtime configuration for Urban-Lens jobs and services."""
 
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
 from pathlib import Path
+
+from pydantic import BaseModel, ConfigDict
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -14,8 +15,9 @@ def _env_bool(name: str, default: bool) -> bool:
     return raw_value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-@dataclass(slots=True)
-class AppConfig:
+class AppConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     s3_endpoint_url: str
     s3_access_key: str
     s3_secret_key: str
@@ -51,4 +53,3 @@ class AppConfig:
             "region_name": self.s3_region,
             "use_ssl": self.s3_secure,
         }
-

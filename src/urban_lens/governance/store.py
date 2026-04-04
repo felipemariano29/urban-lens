@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any
 
-from urban_lens.contracts import (
+from urban_lens.governance.contracts import (
     AuditEventPayload,
     DatasetVersionPayload,
     ModelVersionPayload,

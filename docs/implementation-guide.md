@@ -20,8 +20,11 @@ Current ingestion scope:
 - `docs/architecture/medallion-governance.md`: medallion architecture and chat runtime policy
 - `docs/adr/0001-medallion-layout.md`: design decision for Gold segmentation
 - `sql/init/001_governance_schema.sql`: PostgreSQL schema for metadata, lineage, audit, access, and model versions
-- `src/urban_lens/pipeline/transformations.py`: pure transformation logic
-- `src/urban_lens/pipeline/jobs.py`: orchestration jobs
+- `src/urban_lens/sources/police_uk/transformations.py`: source classification, normalization, and Gold dataset builders
+- `src/urban_lens/forecasting/features.py`: Gold ML feature generation
+- `src/urban_lens/workflows/`: orchestration jobs split by workflow
+- `src/urban_lens/governance/`: metadata contracts, store, and ORM models
+- `src/urban_lens/infrastructure/`: object storage and database adapters
 - `pipelines/*.py`: CLI entrypoints
 
 ## Environment Variables
