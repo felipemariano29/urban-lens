@@ -32,6 +32,7 @@ The repository currently provides:
 - pgAdmin for database inspection
 - MinIO for object storage
 - MinIO bucket bootstrap via `minio-setup`
+- FastAPI internal API via `rag-api`
 - Python pipeline jobs for Bronze, Silver, Gold, and forecast-model publication
 
 The repository does not currently provision every platform component in Docker Compose. In particular, the broader project vision still mentions services such as FastAPI, Milvus, Ollama, and MLflow, but the Compose file in this repository currently starts only the infrastructure required for storage and governance bootstrap.
@@ -112,6 +113,7 @@ This starts:
 - pgAdmin
 - MinIO
 - MinIO bucket bootstrap
+- rag-api
 
 ## Available Services
 
@@ -134,6 +136,11 @@ The PostgreSQL server is pre-registered as `Urban Lens Postgres`.
 - Console: `http://localhost:${MINIO_CONSOLE_HOST_PORT:-9003}`
 
 Credentials are defined in `.env`.
+
+### rag-api
+
+- Base URL: `http://localhost:${RAG_API_HOST_PORT:-8000}`
+- Health check: `http://localhost:${RAG_API_HOST_PORT:-8000}/health`
 
 ## Governance Schema Bootstrap
 

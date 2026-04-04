@@ -61,6 +61,24 @@ services:
     networks:
       - app_network
 
+  rag-api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    container_name: rag-api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - minio
+    env_file: .env
+    environment:
+      URBAN_LENS_POSTGRES_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+      URBAN_LENS_S3_ENDPOINT_URL: "http://minio:9000"
+    ports:
+      - "${RAG_API_HOST_PORT:-8000}:8000"
+    networks:
+      - app_network
+
 networks:
   app_network:
     driver: bridge
