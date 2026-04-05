@@ -1,0 +1,11 @@
+services:
+  rag-api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    container_name: rag-api-prod
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    ports:
+      - "${RAG_API_HOST_PORT:-8000}:8000"
