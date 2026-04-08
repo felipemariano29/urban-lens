@@ -23,11 +23,15 @@ MODEL_TARGET = "incident_count_next_period"
 MODEL_FEATURE_COLUMNS = [
     "incident_count_current_period",
     "incident_count_lag_1",
+    "incident_count_lag_2",
     "incident_count_lag_3",
     "moving_avg_3",
+    "moving_avg_6",
+    "trend_lag1_vs_lag3",
     "crime_type",
     "lsoa_code",
     "month_number",
+    "quarter",
     "has_previous_outcome_ratio",
     "missing_context_ratio",
 ]
