@@ -1,11 +1,21 @@
-.env
-.pytest_cache/
+# Python
 __pycache__/
 *.pyc
-.venv/
-.artifacts/
-.mlruns/
-.mlruns-validation/
-dist/
-build/
 *.egg-info/
+
+# Environment
+.env
+
+# MLflow
+mlflow.db
+mlruns/
+
+# Local artifacts / data
+.artifacts/
+*.parquet
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
