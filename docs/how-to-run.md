@@ -32,10 +32,11 @@ The repository currently provides:
 - pgAdmin for database inspection
 - MinIO for object storage
 - MinIO bucket bootstrap via `minio-setup`
+- MLflow for experiment tracking and model registry UI
 - FastAPI internal API via `rag-api`
 - Python pipeline jobs for Bronze, Silver, Gold, and forecast-model publication
 
-The repository does not currently provision every platform component in Docker Compose. In particular, the broader project vision still mentions services such as FastAPI, Milvus, Ollama, and MLflow, but the Compose file in this repository currently starts only the infrastructure required for storage and governance bootstrap.
+The repository still does not provision every platform component in Docker Compose. Milvus and Ollama remain outside the local stack, but the repository now starts the governed storage, metadata, and MLflow tracking services required by the implemented data and model pipeline.
 
 ## Repository Structure
 
@@ -113,6 +114,7 @@ This starts:
 - pgAdmin
 - MinIO
 - MinIO bucket bootstrap
+- MLflow
 - rag-api
 
 ## Available Services
@@ -141,6 +143,11 @@ Credentials are defined in `.env`.
 
 - Base URL: `http://localhost:${RAG_API_HOST_PORT:-8000}`
 - Health check: `http://localhost:${RAG_API_HOST_PORT:-8000}/health`
+
+### MLflow
+
+- URL: `http://localhost:${MLFLOW_HOST_PORT:-5000}`
+- Artifacts: stored in MinIO under `s3://<bucket>/mlflow`
 
 ## Governance Schema Bootstrap
 
@@ -236,7 +243,9 @@ These tests validate:
 - dataset-family classification
 - rejection of unsupported file families
 - Gold aggregations
+- cumulative Gold ML dataset generation
 - ML feature generation
+- forecast-model candidate tracking
 - end-to-end Bronze -> Silver -> Gold orchestration with fake storage and metadata
 
 ## Troubleshooting
@@ -268,6 +277,7 @@ Check:
 - whether PostgreSQL is reachable through `URBAN_LENS_POSTGRES_DSN`
 - whether MinIO is reachable through `URBAN_LENS_S3_ENDPOINT_URL`
 - whether the bucket configured in `URBAN_LENS_S3_BUCKET` exists
+- whether MLflow is reachable through `MLFLOW_TRACKING_URI`
 - whether the governance schema was initialized successfully
 
 ## Next Reading

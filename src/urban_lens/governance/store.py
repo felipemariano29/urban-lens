@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from typing import Any
 
 from urban_lens.governance.contracts import (
     AuditEventPayload,
@@ -61,6 +62,54 @@ class MetadataStore:
             )
             connection.commit()
         return dataset_version_id
+
+    def list_dataset_versions(
+        self,
+        *,
+        logical_name: str | None = None,
+        layer: str | None = None,
+        version_prefix: str | None = None,
+        version_lte: str | None = None,
+    ) -> list[dict[str, Any]]:
+        clauses: list[str] = []
+        values: list[object] = []
+
+        if logical_name is not None:
+            clauses.append("logical_name = %s")
+            values.append(logical_name)
+        if layer is not None:
+            clauses.append("layer = %s")
+            values.append(layer)
+        if version_prefix is not None:
+            clauses.append("version LIKE %s")
+            values.append(f"{version_prefix}%")
+        if version_lte is not None:
+            clauses.append("version <= %s")
+            values.append(version_lte)
+
+        query = """
+            SELECT id, layer, logical_name, version, object_path, created_at
+            FROM governance.dataset_versions
+        """
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY version, object_path, created_at"
+
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(query, values)
+            rows = cursor.fetchall()
+
+        return [
+            {
+                "id": row[0],
+                "layer": row[1],
+                "logical_name": row[2],
+                "version": row[3],
+                "object_path": row[4],
+                "created_at": row[5],
+            }
+            for row in rows
+        ]
 
     def register_pipeline_run(self, payload: PipelineRunPayload) -> str:
         pipeline_run_id = str(uuid.uuid4())
