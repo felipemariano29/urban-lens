@@ -1,4 +1,25 @@
 services:
+  mlflow:
+    build:
+      context: .
+      dockerfile: docker/mlflow/Dockerfile
+    container_name: mlflow-prod
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      MLFLOW_HOST: "0.0.0.0"
+      MLFLOW_PORT: "5000"
+      MLFLOW_BACKEND_STORE_URI: "${URBAN_LENS_POSTGRES_DSN}"
+      MLFLOW_ARTIFACT_ROOT: "s3://${URBAN_LENS_S3_BUCKET}/mlflow"
+      AWS_ACCESS_KEY_ID: "${URBAN_LENS_S3_ACCESS_KEY}"
+      AWS_SECRET_ACCESS_KEY: "${URBAN_LENS_S3_SECRET_KEY}"
+      AWS_DEFAULT_REGION: "${URBAN_LENS_S3_REGION:-us-east-1}"
+      MLFLOW_S3_ENDPOINT_URL: "${URBAN_LENS_S3_ENDPOINT_URL}"
+      AWS_S3_FORCE_PATH_STYLE: "true"
+    ports:
+      - "${MLFLOW_HOST_PORT:-5000}:5000"
+
   rag-api:
     build:
       context: .
@@ -7,5 +28,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env.prod
+    environment:
+      MLFLOW_TRACKING_URI: "http://mlflow-prod:5000"
     ports:
       - "${RAG_API_HOST_PORT:-8000}:8000"

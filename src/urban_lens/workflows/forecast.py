@@ -1,14 +1,12 @@
 """Forecast training and publication workflow."""
 from __future__ import annotations
 
-import pandas as pd
+from typing import Any
 
 from urban_lens.core.hashing import dataframe_hash
 from urban_lens.core.settings import AppConfig
-from urban_lens.forecasting.features import build_ml_datasets
 from urban_lens.forecasting.training import score_future_period, train_forecast_model
 from urban_lens.governance.contracts import (
-    GOLD_ANALYTICS_AREA_MONTH_CATEGORY,
     GOLD_LAYER,
     GOLD_ML_PREDICTIONS,
     MODEL_NAME,
@@ -22,36 +20,6 @@ from urban_lens.governance.store import MetadataStore
 from urban_lens.infrastructure.object_store import MinIOStorage
 
 
-def _extract_year_from_object_key(object_key: str) -> str:
-    marker = "year="
-    start = object_key.index(marker) + len(marker)
-    return object_key[start:start + 4]
-
-
-def _load_historical_area_month_category(
-    storage: MinIOStorage,
-    year: str,
-) -> pd.DataFrame:
-    prefix = f"{GOLD_ANALYTICS_AREA_MONTH_CATEGORY}/year={year}/"
-    paginator = storage.client.get_paginator("list_objects_v2")
-
-    frames: list[pd.DataFrame] = []
-    for page in paginator.paginate(Bucket=storage.bucket, Prefix=prefix):
-        for obj in page.get("Contents", []):
-            key = obj["Key"]
-            if key.endswith(".parquet"):
-                frames.append(storage.read_parquet(key))
-
-    if not frames:
-        return pd.DataFrame()
-
-    combined = pd.concat(frames, ignore_index=True)
-    combined = combined.sort_values(
-        ["reference_month", "lsoa_code", "crime_type"]
-    ).reset_index(drop=True)
-    return combined
-
-
 def train_and_register_forecast_model(
     training_object_key: str,
     training_dataset_version_id: str,
@@ -59,9 +27,11 @@ def train_and_register_forecast_model(
     scoring_dataset_version_id: str,
     actor: str,
     config: AppConfig,
-) -> dict[str, str]:
-    storage = MinIOStorage(config)
-    metadata_store = MetadataStore(config.postgres_dsn)
+    storage: MinIOStorage | None = None,
+    metadata_store: MetadataStore | None = None,
+) -> dict[str, Any]:
+    storage = storage or MinIOStorage(config)
+    metadata_store = metadata_store or MetadataStore(config.postgres_dsn)
 
     pipeline_run_id = metadata_store.register_pipeline_run(
         PipelineRunPayload(
@@ -86,31 +56,24 @@ def train_and_register_forecast_model(
         )
     )
 
-    year = _extract_year_from_object_key(training_object_key)
-
-    historical_area_month_category = _load_historical_area_month_category(
-        storage=storage,
-        year=year,
+    training_frame = storage.read_parquet(training_object_key)
+    scoring_frame = storage.read_parquet(scoring_object_key)
+    model_summary = train_forecast_model(
+        training_frame,
+        config.mlflow_tracking_uri,
+        run_params={
+            "pipeline_run_id": pipeline_run_id,
+            "training_dataset_version_id": training_dataset_version_id,
+            "scoring_dataset_version_id": scoring_dataset_version_id,
+            "training_object_key": training_object_key,
+            "scoring_object_key": scoring_object_key,
+        },
     )
-
-    if historical_area_month_category.empty:
-        raise ValueError(
-            f"No historical Gold analytics data found under year={year}."
-        )
-
-    training_frame, scoring_frame = build_ml_datasets(historical_area_month_category)
-
-    if training_frame.empty:
-        raise ValueError(
-            "Combined training frame is still empty after loading historical data."
-        )
-
-    model_summary = train_forecast_model(training_frame, config.mlflow_tracking_uri)
     predictions = score_future_period(model_summary["pipeline"], scoring_frame)
 
     prediction_month = (
-        str(predictions["prediction_reference_month"].max())
-        if not predictions.empty
+        str(scoring_frame["prediction_reference_month"].max())
+        if not scoring_frame.empty
         else "unknown"
     )
     prediction_object_key = (
@@ -143,28 +106,45 @@ def train_and_register_forecast_model(
         pipeline_run_id=pipeline_run_id,
     )
 
-    model_version_id = metadata_store.register_model_version(
-        ModelVersionPayload(
-            model_name=MODEL_NAME,
-            model_version=model_summary["run_id"],
-            target_name=MODEL_TARGET,
-            training_dataset_version_id=training_dataset_version_id,
-            scoring_dataset_version_id=scoring_dataset_version_id,
-            training_window_start=model_summary["training_window_start"],
-            training_window_end=model_summary["training_window_end"],
-            metrics_json=model_summary["metrics"],
-            artifact_uri=model_summary["artifact_uri"],
+    candidate_model_version_ids: list[str] = []
+    selected_model_version_id: str | None = None
+    for candidate_run in model_summary["candidate_runs"]:
+        is_selected = candidate_run["run_id"] == model_summary["run_id"]
+        model_version_id = metadata_store.register_model_version(
+            ModelVersionPayload(
+                model_name=MODEL_NAME,
+                model_version=candidate_run["run_id"],
+                target_name=MODEL_TARGET,
+                training_dataset_version_id=training_dataset_version_id,
+                scoring_dataset_version_id=scoring_dataset_version_id,
+                training_window_start=candidate_run["training_window_start"],
+                training_window_end=candidate_run["training_window_end"],
+                metrics_json={
+                    **candidate_run["metrics"],
+                    "candidate_model": candidate_run["candidate_model"],
+                    "selected": is_selected,
+                },
+                artifact_uri=candidate_run["artifact_uri"],
+                status="selected" if is_selected else "candidate",
+            )
         )
-    )
+        candidate_model_version_ids.append(model_version_id)
+        if is_selected:
+            selected_model_version_id = model_version_id
+
+    if selected_model_version_id is None:
+        raise ValueError("No selected model version was registered.")
 
     metadata_store.register_audit_event(
         AuditEventPayload(
             event_type="model_training_finished",
             actor=actor,
             object_type="model_version",
-            object_id=model_version_id,
+            object_id=selected_model_version_id,
             details_json={
-                "metrics": model_summary["metrics"],
+                "selected_candidate_model": model_summary["candidate_model"],
+                "selected_metrics": model_summary["metrics"],
+                "candidate_model_version_ids": candidate_model_version_ids,
                 "prediction_dataset_version_id": prediction_dataset_version_id,
             },
         )
@@ -178,7 +158,9 @@ def train_and_register_forecast_model(
 
     return {
         "pipeline_run_id": pipeline_run_id,
-        "model_version_id": model_version_id,
+        "model_version_id": selected_model_version_id,
+        "candidate_model_version_ids": candidate_model_version_ids,
+        "selected_candidate_model": model_summary["candidate_model"],
         "prediction_dataset_version_id": prediction_dataset_version_id,
         "prediction_object_key": prediction_object_key,
     }

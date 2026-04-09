@@ -19,9 +19,9 @@ set "POLICE_ROOT=C:\Users\lucas.neto\Documents\Police"
 
 echo.
 echo =========================================================
-echo  Deixe o MLflow rodando em OUTRO terminal antes de seguir
+echo  Garanta que o Docker Compose esteja ativo, incluindo o MLflow
 echo =========================================================
-echo python -m mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000
+echo docker compose up -d postgres minio minio-setup mlflow
 echo.
 pause
 

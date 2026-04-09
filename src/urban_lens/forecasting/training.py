@@ -6,8 +6,9 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
 from sklearn.impute import SimpleImputer
+from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
@@ -74,10 +75,31 @@ def _calculate_metrics(y_true: pd.Series, predictions: np.ndarray) -> dict[str, 
     }
 
 
+def _build_candidate_models() -> dict[str, object]:
+    return {
+        "ridge": Ridge(alpha=1.0),
+        "random_forest": RandomForestRegressor(
+            n_estimators=150,
+            max_depth=12,
+            min_samples_leaf=1,
+            random_state=42,
+            n_jobs=-1,
+        ),
+        "extra_trees": ExtraTreesRegressor(
+            n_estimators=150,
+            max_depth=12,
+            min_samples_leaf=1,
+            random_state=42,
+            n_jobs=-1,
+        ),
+    }
+
+
 def train_forecast_model(
     training_frame: pd.DataFrame,
     tracking_uri: str,
     experiment_name: str = "urban-lens-medallion",
+    run_params: dict[str, object] | None = None,
 ) -> dict[str, Any]:
     import mlflow
     import mlflow.sklearn
@@ -85,26 +107,13 @@ def train_forecast_model(
     train_frame, holdout_frame = split_training_holdout(training_frame)
     preprocessor = _build_preprocessor()
 
-    candidate_models = {
-        "random_forest": RandomForestRegressor(
-            n_estimators=250,
-            max_depth=14,
-            min_samples_leaf=1,
-            random_state=42,
-            n_jobs=-1,
-        ),
-        "gradient_boosting": GradientBoostingRegressor(
-            n_estimators=250,
-            learning_rate=0.05,
-            max_depth=5,
-            random_state=42,
-        ),
-    }
+    candidate_models = _build_candidate_models()
 
     mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment(experiment_name)
 
     best_result = None
+    candidate_runs: list[dict[str, Any]] = []
 
     for model_label, estimator in candidate_models.items():
         pipeline = Pipeline(
@@ -123,15 +132,17 @@ def train_forecast_model(
                 {
                     "model_name": MODEL_NAME,
                     "candidate_model": model_label,
+                    "estimator_class": type(estimator).__name__,
                     "target_name": MODEL_TARGET,
                     "training_rows": len(train_frame),
                     "holdout_rows": len(holdout_frame),
+                    **(run_params or {}),
                 }
             )
             mlflow.log_metrics(metrics)
             mlflow.sklearn.log_model(sk_model=pipeline, artifact_path="model")
 
-            result = {
+            candidate_result = {
                 "model_name": MODEL_NAME,
                 "candidate_model": model_label,
                 "run_id": run.info.run_id,
@@ -139,13 +150,22 @@ def train_forecast_model(
                 "metrics": metrics,
                 "training_window_start": str(train_frame["reference_month"].min()),
                 "training_window_end": str(train_frame["reference_month"].max()),
-                "pipeline": pipeline,
             }
+            candidate_runs.append(candidate_result)
 
-            if best_result is None or result["metrics"]["mae"] < best_result["metrics"]["mae"]:
-                best_result = result
+            if best_result is None or candidate_result["metrics"]["mae"] < best_result["metrics"]["mae"]:
+                best_result = {
+                    **candidate_result,
+                    "pipeline": pipeline,
+                }
 
-    return best_result
+    if best_result is None:
+        raise ValueError("No candidate models were trained.")
+
+    return {
+        **best_result,
+        "candidate_runs": candidate_runs,
+    }
 
 
 def score_future_period(model_pipeline: Pipeline, scoring_frame: pd.DataFrame) -> pd.DataFrame:

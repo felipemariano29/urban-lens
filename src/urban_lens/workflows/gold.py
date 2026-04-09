@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pandas as pd
+
 from urban_lens.core.hashing import dataframe_hash
 from urban_lens.core.settings import AppConfig
 from urban_lens.forecasting.features import build_ml_datasets
@@ -25,6 +27,36 @@ from urban_lens.sources.police_uk import (
     build_gold_analytics_by_month_category,
     build_rag_evidence_records,
 )
+
+
+def _load_cumulative_area_month_category(
+    storage: MinIOStorage,
+    metadata_store: MetadataStore,
+    reference_month: str,
+) -> tuple[pd.DataFrame, list[dict[str, object]]]:
+    year = reference_month[:4]
+    listed_dataset_versions = metadata_store.list_dataset_versions(
+        logical_name="crime_metrics_area_month_category",
+        layer=GOLD_LAYER,
+        version_prefix=f"{year}-",
+        version_lte=reference_month,
+    )
+    dataset_versions_by_object_path: dict[str, dict[str, object]] = {}
+    for dataset_version in listed_dataset_versions:
+        dataset_versions_by_object_path[dataset_version["object_path"]] = dataset_version
+    dataset_versions = sorted(
+        dataset_versions_by_object_path.values(),
+        key=lambda record: (record["version"], record["object_path"]),
+    )
+    frames = [storage.read_parquet(record["object_path"]) for record in dataset_versions]
+    if not frames:
+        return pd.DataFrame(), []
+
+    combined = pd.concat(frames, ignore_index=True)
+    combined = combined.sort_values(
+        ["reference_month", "lsoa_code", "crime_type"]
+    ).reset_index(drop=True)
+    return combined, dataset_versions
 
 
 def silver_to_gold(
@@ -53,7 +85,6 @@ def silver_to_gold(
     area_month = build_gold_analytics_by_area_month(area_month_category)
     month_category = build_gold_analytics_by_month_category(area_month_category)
     rag_records = build_rag_evidence_records(area_month, area_month_category, month_category)
-    training_set, scoring_set = build_ml_datasets(area_month_category)
 
     reference_month = str(area_month_category["reference_month"].max())
     year = reference_month[:4]
@@ -78,16 +109,6 @@ def silver_to_gold(
             rag_records,
             f"{GOLD_RAG_PRODUCT}/year={year}/month={month}/part-000.parquet",
             "crime_chunks",
-        ),
-        GOLD_ML_TRAINING: (
-            training_set,
-            f"{GOLD_ML_TRAINING}/year={year}/month={month}/part-000.parquet",
-            "forecast_training_set",
-        ),
-        GOLD_ML_SCORING: (
-            scoring_set,
-            f"{GOLD_ML_SCORING}/year={year}/month={month}/part-000.parquet",
-            "forecast_scoring_set",
         ),
     }
 
@@ -115,6 +136,57 @@ def silver_to_gold(
             transformation_name=f"silver_to_{logical_name}",
             pipeline_run_id=pipeline_run_id,
         )
+        output_ids.append(dataset_version_id)
+        outputs[f"{logical_name}_dataset_version_id"] = dataset_version_id
+        outputs[f"{logical_name}_object_key"] = object_key
+
+    cumulative_area_month_category, source_dataset_versions = _load_cumulative_area_month_category(
+        storage=storage,
+        metadata_store=metadata_store,
+        reference_month=reference_month,
+    )
+    training_set, scoring_set = build_ml_datasets(cumulative_area_month_category)
+    source_dataset_version_ids = [record["id"] for record in source_dataset_versions]
+
+    ml_artifact_map = {
+        GOLD_ML_TRAINING: (
+            training_set,
+            f"{GOLD_ML_TRAINING}/year={year}/month={month}/part-000.parquet",
+            "forecast_training_set",
+        ),
+        GOLD_ML_SCORING: (
+            scoring_set,
+            f"{GOLD_ML_SCORING}/year={year}/month={month}/part-000.parquet",
+            "forecast_scoring_set",
+        ),
+    }
+    for gold_product, (frame, object_key, logical_name) in ml_artifact_map.items():
+        storage.write_parquet(frame, object_key)
+        dataset_version_id = metadata_store.register_dataset_version(
+            DatasetVersionPayload(
+                source_name="data.police.uk",
+                layer=GOLD_LAYER,
+                logical_name=logical_name,
+                version=reference_month,
+                schema_version="1.0.0",
+                object_path=object_key,
+                row_count=len(frame),
+                content_hash=dataframe_hash(frame),
+                valid_from=reference_month,
+                metadata_json={
+                    "gold_product": gold_product,
+                    "pipeline_run_id": pipeline_run_id,
+                    "source_dataset_version_ids": source_dataset_version_ids,
+                },
+            )
+        )
+        for source_dataset_version_id in source_dataset_version_ids:
+            metadata_store.register_lineage(
+                upstream_dataset_version_id=source_dataset_version_id,
+                downstream_dataset_version_id=dataset_version_id,
+                transformation_name=f"gold_analytics_to_{logical_name}",
+                pipeline_run_id=pipeline_run_id,
+            )
         output_ids.append(dataset_version_id)
         outputs[f"{logical_name}_dataset_version_id"] = dataset_version_id
         outputs[f"{logical_name}_object_key"] = object_key
