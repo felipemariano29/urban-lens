@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from pathlib import Path
 import shutil
 from typing import cast
+import uuid
 
 import pandas as pd
 import pytest
@@ -66,7 +68,7 @@ class FakeMetadataStore:
 
     def register_pipeline_run(self, payload) -> str:
         self._run_counter += 1
-        run_id = f"run-{self._run_counter}"
+        run_id = str(uuid.uuid4())
         self.pipeline_runs[run_id] = {
             "payload": payload,
             "status": payload.status,
@@ -82,7 +84,8 @@ class FakeMetadataStore:
 
     def register_dataset_version(self, payload) -> str:
         self._dataset_counter += 1
-        dataset_version_id = f"dataset-{self._dataset_counter}"
+        json.dumps(payload.metadata_json)
+        dataset_version_id = str(uuid.uuid4())
         self.dataset_versions[dataset_version_id] = {"payload": payload}
         return dataset_version_id
 
@@ -107,7 +110,7 @@ class FakeMetadataStore:
                 continue
             records.append(
                 {
-                    "id": dataset_version_id,
+                    "id": uuid.UUID(dataset_version_id),
                     "layer": payload.layer,
                     "logical_name": payload.logical_name,
                     "version": payload.version,
@@ -124,7 +127,7 @@ class FakeMetadataStore:
         pipeline_run_id: str,
     ) -> str:
         self._lineage_counter += 1
-        lineage_id = f"lineage-{self._lineage_counter}"
+        lineage_id = str(uuid.uuid4())
         self.lineage_edges.append(
             {
                 "id": lineage_id,
@@ -138,13 +141,13 @@ class FakeMetadataStore:
 
     def register_audit_event(self, payload) -> str:
         self._audit_counter += 1
-        event_id = f"audit-{self._audit_counter}"
+        event_id = str(uuid.uuid4())
         self.audit_events.append({"id": event_id, "payload": payload})
         return event_id
 
     def register_model_version(self, payload) -> str:
         self._model_counter += 1
-        model_version_id = f"model-{self._model_counter}"
+        model_version_id = str(uuid.uuid4())
         self.model_versions[model_version_id] = {"payload": payload}
         return model_version_id
 
@@ -158,7 +161,7 @@ def make_config(tmp_path: Path) -> AppConfig:
         s3_region="us-east-1",
         s3_secure=False,
         postgres_dsn="postgresql://urban_lens:urban_lens@localhost:5432/urban_lens",
-        mlflow_tracking_uri="http://localhost:5000",
+        mlflow_tracking_uri="http://localhost:5005",
         artifact_dir=tmp_path,
     )
 
@@ -516,7 +519,7 @@ def test_train_and_register_forecast_model_uses_published_gold_ml_datasets_and_r
         metadata_store=metadata_store,
     )
 
-    assert captured["tracking_uri"] == "http://localhost:5000"
+    assert captured["tracking_uri"] == "http://localhost:5005"
     assert cast(pd.DataFrame, captured["training_frame"]).equals(training_frame)
     assert cast(pd.DataFrame, captured["scoring_frame"]).equals(scoring_frame)
     assert captured["run_params"] == {

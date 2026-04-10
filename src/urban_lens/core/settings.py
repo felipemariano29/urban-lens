@@ -41,7 +41,7 @@ class AppConfig(BaseModel):
                 "URBAN_LENS_POSTGRES_DSN",
                 "postgresql://urban_lens:urban_lens@localhost:5432/urban_lens",
             ),
-            mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000"),
+            mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5005"),
             artifact_dir=Path(os.getenv("URBAN_LENS_ARTIFACT_DIR", ".artifacts")),
         )
 

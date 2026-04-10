@@ -1,6 +1,8 @@
 SHELL := /bin/bash
 SYSTEM_PYTHON ?= python3
 PYTHON ?= $(shell if [ -x .venv/bin/python3 ]; then echo .venv/bin/python3; elif [ -x .venv/bin/python ]; then echo .venv/bin/python; else echo $(SYSTEM_PYTHON); fi)
+PIP_CONFIG_FILE ?= /dev/null
+PIP_INDEX_URL ?= https://pypi.org/simple
 SOURCE_NAME ?= data.police.uk
 ACTOR ?= system
 VERSION ?=
@@ -10,6 +12,7 @@ ENV_EXPORT = __MLFLOW_TRACKING_URI="$${MLFLOW_TRACKING_URI:-}"; \
 	if [ -n "$$__MLFLOW_TRACKING_URI" ]; then export MLFLOW_TRACKING_URI="$$__MLFLOW_TRACKING_URI"; fi; \
 	if [ -n "$$__MLFLOW_HOST_PORT" ]; then export MLFLOW_HOST_PORT="$$__MLFLOW_HOST_PORT"; fi;
 PYTHON_RUN = $(ENV_EXPORT) PYTHONPATH="$(CURDIR)/src:$${PYTHONPATH:-}"
+PIP_RUN = PIP_CONFIG_FILE="$(PIP_CONFIG_FILE)" PIP_INDEX_URL="$(PIP_INDEX_URL)"
 
 COMPOSE := $(shell \
 	if command -v podman-compose >/dev/null 2>&1; then \
@@ -22,7 +25,7 @@ COMPOSE := $(shell \
 		echo ""; \
 	fi)
 
-.PHONY: help check-compose check-env check-python require-% venv install setup fullstack urls up up-core down reset logs logs-mlflow ps ingest ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url
+.PHONY: help check-compose check-env check-python require-% venv install setup fullstack urls up up-core down destroy reset logs logs-mlflow ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url
 
 help:
 	@printf "\n"
@@ -34,7 +37,8 @@ help:
 	@printf "  \033[1;37mmake fullstack\033[0m → Subir stack local completa e mostrar URLs\n"
 	@printf "  \033[1;37mmake up\033[0m        → Subir os containers\n"
 	@printf "  \033[1;37mmake up-core\033[0m   → Subir Postgres + MinIO + MLflow\n"
-	@printf "  \033[1;37mmake down\033[0m      → Parar e remover containers\n"
+	@printf "  \033[1;37mmake down\033[0m      → Parar containers sem remover estado local\n"
+	@printf "  \033[1;37mmake destroy\033[0m   → Remover containers e rede local\n"
 	@printf "  \033[1;37mmake reset\033[0m     → Reset completo (remove volumes)\n"
 	@printf "  \033[1;37mmake logs\033[0m      → Ver logs em tempo real\n\n"
 
@@ -50,8 +54,13 @@ help:
 	@printf "  \033[1;37mmake mlflow-url\033[0m        → Mostrar URL do dashboard MLflow\n\n"
 
 	@printf "\033[1;33m🗂️ Pipeline de Dados\033[0m\n"
+	@printf "  \033[1;37mmake snapshots\033[0m → Listar snapshots disponíveis em data/\n"
 	@printf "  \033[1;37mmake ingest\033[0m SNAPSHOT_DIR=... [ACTOR=system]\n"
 	@printf "                      → Executar pipeline de ingestão de snapshot até Gold\n"
+	@printf "  \033[1;37mmake ingest-all\033[0m [ACTOR=system]\n"
+	@printf "                      → Ingerir todos os snapshots disponíveis em data/\n"
+	@printf "  \033[1;37mmake ingest-year\033[0m YEAR=2025 [ACTOR=system]\n"
+	@printf "                      → Ingerir todos os snapshots de um ano específico\n"
 	@printf "  \033[1;37mmake ingest-file\033[0m CSV_PATH=... FORCE_NAME=... [ACTOR=system]\n"
 	@printf "                      → Ingerir um CSV manualmente no Bronze\n"
 	@printf "  \033[1;37mmake ingest-manual\033[0m CSV_PATH=... FORCE_NAME=... [SOURCE_NAME=data.police.uk] [ACTOR=system]\n"
@@ -108,7 +117,7 @@ require-%:
 
 install: check-python
 	@echo "📦 Instalando dependências Python..."
-	@$(PYTHON) -m pip install -e ".[dev]"
+	@$(PIP_RUN) $(PYTHON) -m pip install -e ".[dev]"
 
 venv:
 	@if [ -x .venv/bin/python3 ] || [ -x .venv/bin/python ]; then \
@@ -136,7 +145,11 @@ up-core: check-compose check-env
 	@$(COMPOSE) up -d postgres minio minio-setup mlflow
 
 down: check-compose check-env
-	@echo "🛑 Parando containers..."
+	@echo "🛑 Parando containers sem remover dados..."
+	@$(COMPOSE) stop
+
+destroy: check-compose check-env
+	@echo "🧹 Removendo containers e rede local..."
 	@$(COMPOSE) down
 
 reset: check-compose check-env
@@ -160,18 +173,50 @@ logs-mlflow: check-compose check-env
 ps: check-compose check-env
 	@$(COMPOSE) ps
 
+snapshots:
+	@if [ ! -d data ]; then \
+		echo "❌ Diretório data/ não encontrado."; \
+		exit 1; \
+	fi
+	@echo "📂 Snapshots disponíveis em data/:"
+	@find data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort
+
 urls: check-env
 	@$(ENV_EXPORT) \
-	echo "pgAdmin: http://localhost:$${PGADMIN_HOST_PORT:-5050}"; \
+		echo "pgAdmin: http://localhost:$${PGADMIN_HOST_PORT:-5050}"; \
 	echo "MinIO API: http://localhost:$${MINIO_API_HOST_PORT:-9000}"; \
 	echo "MinIO Console: http://localhost:$${MINIO_CONSOLE_HOST_PORT:-9001}"; \
-	echo "MLflow: http://localhost:$${MLFLOW_HOST_PORT:-5000}"; \
+		echo "MLflow: http://localhost:$${MLFLOW_HOST_PORT:-5005}"; \
 	echo "RAG API: http://localhost:$${RAG_API_HOST_PORT:-8000}"
 
 mlflow-url: check-env
-	@$(ENV_EXPORT) echo "MLflow: http://localhost:$${MLFLOW_HOST_PORT:-5000}"
+	@$(ENV_EXPORT) echo "MLflow: http://localhost:$${MLFLOW_HOST_PORT:-5005}"
 
 ingest: process-snapshot
+
+ingest-all: check-env check-python
+	@set -euo pipefail; \
+	SNAPSHOTS=$$(find data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort); \
+	if [ -z "$$SNAPSHOTS" ]; then \
+		echo "❌ Nenhum snapshot encontrado em data/."; \
+		exit 1; \
+	fi; \
+	for snapshot in $$SNAPSHOTS; do \
+		echo "📦 Ingerindo data/$$snapshot"; \
+		$(MAKE) ingest SNAPSHOT_DIR="data/$$snapshot" SOURCE_NAME="$(SOURCE_NAME)" ACTOR="$(ACTOR)" PYTHON="$(PYTHON)"; \
+	done
+
+ingest-year: check-env check-python require-YEAR
+	@set -euo pipefail; \
+	SNAPSHOTS=$$(find data -mindepth 1 -maxdepth 1 -type d -name "$(YEAR)-*" -exec basename {} \; | sort); \
+	if [ -z "$$SNAPSHOTS" ]; then \
+		echo "❌ Nenhum snapshot encontrado para o ano $(YEAR) em data/."; \
+		exit 1; \
+	fi; \
+	for snapshot in $$SNAPSHOTS; do \
+		echo "📦 Ingerindo data/$$snapshot"; \
+		$(MAKE) ingest SNAPSHOT_DIR="data/$$snapshot" SOURCE_NAME="$(SOURCE_NAME)" ACTOR="$(ACTOR)" PYTHON="$(PYTHON)"; \
+	done
 
 ingest-file: ingest-manual
 

@@ -122,7 +122,7 @@ This starts:
 ### PostgreSQL
 
 - Host: `localhost`
-- Port: `${POSTGRES_HOST_PORT:-5433}`
+- Port: `${POSTGRES_HOST_PORT:-5432}`
 
 ### pgAdmin
 
@@ -134,7 +134,7 @@ The PostgreSQL server is pre-registered as `Urban Lens Postgres`.
 
 ### MinIO
 
-- API: `http://localhost:${MINIO_API_HOST_PORT:-9002}`
+- API: `http://localhost:${MINIO_API_HOST_PORT:-9012}`
 - Console: `http://localhost:${MINIO_CONSOLE_HOST_PORT:-9003}`
 
 Credentials are defined in `.env`.
@@ -146,7 +146,7 @@ Credentials are defined in `.env`.
 
 ### MLflow
 
-- URL: `http://localhost:${MLFLOW_HOST_PORT:-5000}`
+- URL: `http://localhost:${MLFLOW_HOST_PORT:-5005}`
 - Artifacts: stored in MinIO under `s3://<bucket>/mlflow`
 
 ## Governance Schema Bootstrap

@@ -146,7 +146,7 @@ def silver_to_gold(
         reference_month=reference_month,
     )
     training_set, scoring_set = build_ml_datasets(cumulative_area_month_category)
-    source_dataset_version_ids = [record["id"] for record in source_dataset_versions]
+    source_dataset_version_ids = [str(record["id"]) for record in source_dataset_versions]
 
     ml_artifact_map = {
         GOLD_ML_TRAINING: (

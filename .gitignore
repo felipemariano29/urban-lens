@@ -12,6 +12,7 @@ mlruns/
 
 # Local artifacts / data
 .artifacts/
+docker-data/
 *.parquet
 
 # Editors / OS
@@ -19,3 +20,5 @@ mlruns/
 .idea/
 .DS_Store
 Thumbs.db
+
+.venv/
