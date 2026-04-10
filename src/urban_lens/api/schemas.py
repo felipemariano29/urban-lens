@@ -5,6 +5,9 @@ from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
 
+from urban_lens.rag.contracts import QueryIntent
+from urban_lens.rag.schemas import ChatResponse
+
 
 class RunMetricsSchema(BaseModel):
     mae: Optional[float] = Field(None, description="Mean Absolute Error on the holdout partition.")
@@ -27,3 +30,13 @@ class RunMetadataResponse(BaseModel):
         None,
         description="Training dataset version extracted from the 'training_dataset_version_id' run parameter.",
     )
+
+
+class ChatQueryRequest(BaseModel):
+    question: str = Field(min_length=3)
+    query_intent: QueryIntent | None = None
+    top_k: int = Field(default=5, ge=1, le=20)
+
+
+class ChatQueryResponse(BaseModel):
+    result: ChatResponse

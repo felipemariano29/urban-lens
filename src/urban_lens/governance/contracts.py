@@ -84,6 +84,8 @@ GOVERNANCE_EVENT_TYPES = {
     "model_training_finished",
     "model_inference_requested",
     "model_inference_completed",
+    "retrieval_executed",
+    "low_confidence_warning_emitted",
 }
 
 CHAT_QUERY_TYPES = {
@@ -141,3 +143,28 @@ class ModelVersionPayload(GovernancePayload):
     metrics_json: dict[str, Any]
     artifact_uri: str
     status: str = "ready"
+
+
+class RetrievalEventPayload(GovernancePayload):
+    audit_id: str
+    query: str
+    query_intent: str
+    retrieval_method: str
+    chunks_requested: int
+    chunks_returned: int
+    min_score: float
+    max_score: float
+    mean_score: float
+    retrieval_latency_ms: int
+    status: str
+
+
+class ChunkRetrievalAuditPayload(GovernancePayload):
+    retrieval_event_id: str
+    chunk_id: str
+    dataset_version_id: str
+    rank: int
+    relevance_score: float
+    crime_type: str
+    reference_month: str
+    included_in_response: bool

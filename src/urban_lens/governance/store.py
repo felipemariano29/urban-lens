@@ -8,9 +8,11 @@ from typing import Any
 
 from urban_lens.governance.contracts import (
     AuditEventPayload,
+    ChunkRetrievalAuditPayload,
     DatasetVersionPayload,
     ModelVersionPayload,
     PipelineRunPayload,
+    RetrievalEventPayload,
 )
 
 
@@ -253,3 +255,73 @@ class MetadataStore:
             )
             connection.commit()
         return model_version_id
+
+    def record_retrieval_event(self, payload: RetrievalEventPayload) -> str:
+        retrieval_event_id = str(uuid.uuid4())
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO governance.retrieval_events (
+                    retrieval_event_id,
+                    audit_id,
+                    query,
+                    query_intent,
+                    retrieval_method,
+                    chunks_requested,
+                    chunks_returned,
+                    min_score,
+                    max_score,
+                    mean_score,
+                    retrieval_latency_ms,
+                    status
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    retrieval_event_id,
+                    payload.audit_id,
+                    payload.query,
+                    payload.query_intent,
+                    payload.retrieval_method,
+                    payload.chunks_requested,
+                    payload.chunks_returned,
+                    payload.min_score,
+                    payload.max_score,
+                    payload.mean_score,
+                    payload.retrieval_latency_ms,
+                    payload.status,
+                ),
+            )
+            connection.commit()
+        return retrieval_event_id
+
+    def record_chunk_retrieval(self, payload: ChunkRetrievalAuditPayload) -> str:
+        chunk_audit_id = str(uuid.uuid4())
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO governance.chunk_retrieval_audit (
+                    chunk_audit_id,
+                    retrieval_event_id,
+                    chunk_id,
+                    dataset_version_id,
+                    rank,
+                    relevance_score,
+                    crime_type,
+                    reference_month,
+                    included_in_response
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    chunk_audit_id,
+                    payload.retrieval_event_id,
+                    payload.chunk_id,
+                    payload.dataset_version_id,
+                    payload.rank,
+                    payload.relevance_score,
+                    payload.crime_type,
+                    payload.reference_month,
+                    payload.included_in_response,
+                ),
+            )
+            connection.commit()
+        return chunk_audit_id
