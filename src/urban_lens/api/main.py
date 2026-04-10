@@ -1,33 +1,21 @@
-from fastapi import FastAPI, Depends, Query
-from sqlalchemy.orm import Session
-from typing import List, Optional
+from __future__ import annotations
 
-from urban_lens.infrastructure.db import get_db
+from fastapi import FastAPI
 
-from .schemas import RunMetadataResponse
+from urban_lens.api.routers import metadata
 
 app = FastAPI(
     title="Urban Lens Internal API",
-    description="Internal API for MLflow metadata queries and governance.",
-    version="0.1.0"
+    description=(
+        "Internal API for structured MLflow metadata queries and governance. "
+        "All endpoints require a valid `x-profile-name` header for RBAC enforcement."
+    ),
+    version="0.1.0",
 )
 
-@app.get("/api/v1/metadata/runs", response_model=List[RunMetadataResponse], tags=["MLflow Metadata"])
-def list_runs(
-    experiment_id: Optional[str] = Query(None, description="Filter by MLflow experiment ID"),
-    dataset: Optional[str] = Query(None, description="Filter by dataset name or version"),
-    db: Session = Depends(get_db)
-):
-    mock_run = RunMetadataResponse(
-        run_id="fake-run-123",
-        experiment_id=experiment_id or "default-exp",
-        run_name="baseline-model-run",
-        status="FINISHED",
-        metrics={"mae": 1.5, "rmse": 2.1},
-        dataset_version=dataset or "2024-01"
-    )
-    return [mock_run]
+app.include_router(metadata.router)
 
-@app.get("/health", tags=["System"])
-def health_check():
+
+@app.get("/health", tags=["System"], summary="Liveness probe")
+def health_check() -> dict[str, str]:
     return {"status": "online"}
