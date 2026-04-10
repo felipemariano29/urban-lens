@@ -50,7 +50,7 @@ help:
 	@printf "  \033[1;37mmake mlflow-url\033[0m        → Mostrar URL do dashboard MLflow\n\n"
 
 	@printf "\033[1;33m🗂️ Pipeline de Dados\033[0m\n"
-	@printf "  \033[1;37mmake ingest\033[0m    	 SNAPSHOT_DIR=... [ACTOR=system]\n"
+	@printf "  \033[1;37mmake ingest\033[0m SNAPSHOT_DIR=... [ACTOR=system]\n"
 	@printf "                      → Executar pipeline de ingestão de snapshot até Gold\n"
 	@printf "  \033[1;37mmake ingest-file\033[0m CSV_PATH=... FORCE_NAME=... [ACTOR=system]\n"
 	@printf "                      → Ingerir um CSV manualmente no Bronze\n"
