@@ -3,6 +3,10 @@ from __future__ import annotations
 
 from typing import Any
 
+import os
+import tempfile
+
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
@@ -79,16 +83,19 @@ def _build_candidate_models() -> dict[str, object]:
     return {
         "ridge": Ridge(alpha=1.0),
         "random_forest": RandomForestRegressor(
-            n_estimators=150,
-            max_depth=12,
-            min_samples_leaf=1,
+            n_estimators=50,
+            max_depth=10,
+            min_samples_leaf=5,
+            max_samples=0.2,
             random_state=42,
             n_jobs=-1,
         ),
         "extra_trees": ExtraTreesRegressor(
-            n_estimators=150,
-            max_depth=12,
-            min_samples_leaf=1,
+            n_estimators=50,
+            max_depth=10,
+            min_samples_leaf=5,
+            bootstrap=True,
+            max_samples=0.2,
             random_state=42,
             n_jobs=-1,
         ),
@@ -140,7 +147,10 @@ def train_forecast_model(
                 }
             )
             mlflow.log_metrics(metrics)
-            mlflow.sklearn.log_model(sk_model=pipeline, artifact_path="model")
+            with tempfile.TemporaryDirectory() as tmpdir:
+                model_path = os.path.join(tmpdir, "model.joblib")
+                joblib.dump(pipeline, model_path)
+                mlflow.log_artifact(model_path, artifact_path="model")
 
             candidate_result = {
                 "model_name": MODEL_NAME,

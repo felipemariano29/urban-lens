@@ -1,0 +1,5 @@
+etcd:
+  use:
+    embed: true
+  data:
+    dir: /var/lib/milvus/etcd

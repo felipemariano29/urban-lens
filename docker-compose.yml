@@ -93,6 +93,62 @@ services:
     networks:
       - app_network
 
+  milvus:
+    image: milvusdb/milvus:v2.4.9
+    container_name: milvus-standalone
+    restart: unless-stopped
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      MINIO_ADDRESS: minio-storage:9000
+      MINIO_ACCESS_KEY_ID: "${MINIO_ROOT_USER}"
+      MINIO_SECRET_ACCESS_KEY: "${MINIO_ROOT_PASSWORD}"
+      MINIO_USE_SSL: "false"
+      MINIO_BUCKET_NAME: milvus
+    depends_on:
+      - minio
+      - minio-setup
+    ports:
+      - "${MILVUS_GRPC_PORT:-19530}:19530"
+      - "${MILVUS_REST_PORT:-9091}:9091"
+    volumes:
+      - type: bind
+        source: ./docker-data/milvus
+        target: /var/lib/milvus
+      - ./docker/milvus/user.yaml:/milvus/configs/user.yaml:ro
+    networks:
+      - app_network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_HOST_PORT:-11434}:11434"
+    volumes:
+      - type: bind
+        source: ./docker-data/ollama
+        target: /root/.ollama
+    networks:
+      - app_network
+
+  ollama-setup:
+    image: ollama/ollama:latest
+    container_name: ollama-setup
+    depends_on:
+      - ollama
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Aguardando Ollama iniciar...';
+      sleep 20;
+      OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text;
+      echo 'Setup Ollama concluido!';
+      exit 0;
+      "
+    networks:
+      - app_network
+
   rag-api:
     build:
       context: .
@@ -103,11 +159,15 @@ services:
       - postgres
       - minio
       - mlflow
+      - milvus
+      - ollama
     env_file: .env
     environment:
       URBAN_LENS_POSTGRES_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}"
       URBAN_LENS_S3_ENDPOINT_URL: "http://minio-storage:9000"
       MLFLOW_TRACKING_URI: "http://mlflow-server:5000"
+      URBAN_LENS_MILVUS_URI: "http://milvus-standalone:19530"
+      URBAN_LENS_OLLAMA_BASE_URL: "http://ollama:11434"
     ports:
       - "${RAG_API_HOST_PORT:-8000}:8000"
     networks:

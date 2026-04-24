@@ -34,11 +34,9 @@ def _load_cumulative_area_month_category(
     metadata_store: MetadataStore,
     reference_month: str,
 ) -> tuple[pd.DataFrame, list[dict[str, object]]]:
-    year = reference_month[:4]
     listed_dataset_versions = metadata_store.list_dataset_versions(
         logical_name="crime_metrics_area_month_category",
         layer=GOLD_LAYER,
-        version_prefix=f"{year}-",
         version_lte=reference_month,
     )
     dataset_versions_by_object_path: dict[str, dict[str, object]] = {}

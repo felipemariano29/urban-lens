@@ -15,10 +15,11 @@ dependencies = [
   "psycopg[binary]>=3.2",
   "pyarrow>=18.1",
   "scikit-learn>=1.6",
-  "fastapi>=0.110.0", 
-  "uvicorn>=0.29.0",  
+  "fastapi>=0.110.0",
+  "uvicorn>=0.29.0",
   "sqlalchemy>=2.0.0",
-  "pydantic>=2.6.0",  
+  "pydantic>=2.6.0",
+  "pymilvus>=2.4.1",
 ]
 
 [project.optional-dependencies]
@@ -32,6 +33,8 @@ urban-lens-process-snapshot = "urban_lens.cli.process_snapshot:main"
 urban-lens-bronze-to-silver = "urban_lens.cli.bronze_to_silver:main"
 urban-lens-silver-to-gold = "urban_lens.cli.silver_to_gold:main"
 urban-lens-train-forecast = "urban_lens.cli.train_forecast_model:main"
+urban-lens-index-embeddings = "urban_lens.cli.index_embeddings:main"
+urban-lens-index-docs = "urban_lens.cli.index_docs:main"
 
 [tool.setuptools.package-dir]
 "" = "src"

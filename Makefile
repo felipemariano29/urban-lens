@@ -25,7 +25,7 @@ COMPOSE := $(shell \
 		echo ""; \
 	fi)
 
-.PHONY: help check-compose check-env check-python require-% venv install setup fullstack urls up up-core down destroy reset logs logs-mlflow ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url
+.PHONY: help check-compose check-env check-python require-% venv install setup fullstack urls up up-core down destroy reset logs logs-mlflow ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs test
 
 help:
 	@printf "\n"
@@ -52,6 +52,14 @@ help:
 	@printf "  \033[1;37mmake logs-mlflow\033[0m       → Ver logs do MLflow\n"
 	@printf "  \033[1;37mmake urls\033[0m      → Mostrar URLs dos serviços locais\n"
 	@printf "  \033[1;37mmake mlflow-url\033[0m        → Mostrar URL do dashboard MLflow\n\n"
+
+	@printf "\033[1;33m Embeddings e Indexação\033[0m\n"
+	@printf "  \033[1;37mmake index-embeddings-latest\033[0m [VERSION=2026-01] [ACTOR=system]\n"
+	@printf "                      → Indexar o crime_chunks mais recente no Milvus\n"
+	@printf "  \033[1;37mmake index-embeddings\033[0m RAG_OBJECT_KEY=... RAG_DATASET_VERSION_ID=... [ACTOR=system]\n"
+	@printf "                      → Indexar um crime_chunks específico no Milvus\n"
+	@printf "  \033[1;37mmake index-docs\033[0m [DOCS_DIR=docs/] [ACTOR=system]\n"
+	@printf "                      → Indexar todos os Markdowns de docs/ no Milvus\n\n"
 
 	@printf "\033[1;33m🗂️ Pipeline de Dados\033[0m\n"
 	@printf "  \033[1;37mmake snapshots\033[0m → Listar snapshots disponíveis em data/\n"
@@ -183,11 +191,14 @@ snapshots:
 
 urls: check-env
 	@$(ENV_EXPORT) \
-		echo "pgAdmin: http://localhost:$${PGADMIN_HOST_PORT:-5050}"; \
-	echo "MinIO API: http://localhost:$${MINIO_API_HOST_PORT:-9000}"; \
-	echo "MinIO Console: http://localhost:$${MINIO_CONSOLE_HOST_PORT:-9001}"; \
-		echo "MLflow: http://localhost:$${MLFLOW_HOST_PORT:-5005}"; \
-	echo "RAG API: http://localhost:$${RAG_API_HOST_PORT:-8000}"
+		echo "pgAdmin:        http://localhost:$${PGADMIN_HOST_PORT:-5050}"; \
+	echo "MinIO API:      http://localhost:$${MINIO_API_HOST_PORT:-9000}"; \
+	echo "MinIO Console:  http://localhost:$${MINIO_CONSOLE_HOST_PORT:-9001}"; \
+		echo "MLflow:         http://localhost:$${MLFLOW_HOST_PORT:-5005}"; \
+	echo "Milvus gRPC:    localhost:$${MILVUS_GRPC_PORT:-19530}"; \
+	echo "Milvus REST:    http://localhost:$${MILVUS_REST_PORT:-9091}"; \
+	echo "Ollama:         http://localhost:$${OLLAMA_HOST_PORT:-11434}"; \
+	echo "RAG API:        http://localhost:$${RAG_API_HOST_PORT:-8000}"
 
 mlflow-url: check-env
 	@$(ENV_EXPORT) echo "MLflow: http://localhost:$${MLFLOW_HOST_PORT:-5005}"
@@ -268,3 +279,30 @@ train-forecast: check-env check-python require-TRAINING_OBJECT_KEY require-TRAIN
 		--actor "$(ACTOR)"
 
 experiment-forecast: train-forecast
+
+index-embeddings: check-env check-python require-RAG_OBJECT_KEY require-RAG_DATASET_VERSION_ID
+	@$(PYTHON_RUN) $(PYTHON) -m urban_lens.cli.index_embeddings \
+		--rag-object-key "$(RAG_OBJECT_KEY)" \
+		--rag-dataset-version-id "$(RAG_DATASET_VERSION_ID)" \
+		--batch-size "$(or $(BATCH_SIZE),32)" \
+		--actor "$(ACTOR)"
+
+index-docs: check-python
+	@$(PYTHON_RUN) $(PYTHON) -m urban_lens.cli.index_docs \
+		--docs-dir "$(or $(DOCS_DIR),docs)" \
+		--batch-size "$(or $(BATCH_SIZE),32)" \
+		--actor "$(ACTOR)"
+
+test: check-python
+	@$(PYTHON_RUN) $(PYTHON) -m pytest
+
+index-embeddings-latest: check-env check-python
+	@set -euo pipefail; \
+	DATASET=$$($(PYTHON_RUN) TARGET_VERSION="$(VERSION)" $(PYTHON) -c $$'import os\nfrom urban_lens.core.settings import AppConfig\nfrom urban_lens.governance.store import MetadataStore\nconfig = AppConfig.from_env()\nstore = MetadataStore(config.postgres_dsn)\nrequested_version = os.getenv("TARGET_VERSION") or None\nrows = store.list_dataset_versions(logical_name="crime_chunks", layer="gold")\nif not rows:\n    raise SystemExit("No Gold RAG crime_chunks datasets found.")\nversions = {str(r["version"]): r for r in rows}\nif requested_version:\n    if requested_version not in versions:\n        raise SystemExit(f"crime_chunks dataset not found for version {requested_version}.")\n    selected = versions[requested_version]\nelse:\n    selected = sorted(versions.values(), key=lambda r: str(r["version"]))[-1]\nprint("\\t".join([str(selected["object_path"]), str(selected["id"])]))'); \
+	IFS=$$'\t' read -r RAG_OBJECT_KEY RAG_DATASET_VERSION_ID <<< "$$DATASET"; \
+	echo "Indexando crime_chunks $$RAG_DATASET_VERSION_ID"; \
+	$(PYTHON_RUN) $(PYTHON) -m urban_lens.cli.index_embeddings \
+		--rag-object-key "$$RAG_OBJECT_KEY" \
+		--rag-dataset-version-id "$$RAG_DATASET_VERSION_ID" \
+		--batch-size "$(or $(BATCH_SIZE),32)" \
+		--actor "$(ACTOR)"

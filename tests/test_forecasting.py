@@ -49,17 +49,16 @@ def test_train_forecast_model_logs_metrics_and_returns_pipeline(monkeypatch) -> 
     def log_metrics(metrics: dict[str, float]) -> None:
         logged["metrics"].append(metrics)
 
-    def log_model(*, sk_model, artifact_path: str) -> None:
+    def log_artifact(local_path: str, artifact_path: str | None = None) -> None:
         logged["artifact_paths"].append(artifact_path)
-        logged["pipeline_type"] = type(sk_model).__name__
 
     mlflow_module.set_tracking_uri = set_tracking_uri
     mlflow_module.set_experiment = set_experiment
     mlflow_module.start_run = start_run
     mlflow_module.log_params = log_params
     mlflow_module.log_metrics = log_metrics
+    mlflow_module.log_artifact = log_artifact
     mlflow_module.sklearn = mlflow_sklearn_module
-    mlflow_sklearn_module.log_model = log_model
 
     monkeypatch.setitem(sys.modules, "mlflow", mlflow_module)
     monkeypatch.setitem(sys.modules, "mlflow.sklearn", mlflow_sklearn_module)

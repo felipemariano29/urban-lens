@@ -163,6 +163,9 @@ def make_config(tmp_path: Path) -> AppConfig:
         postgres_dsn="postgresql://urban_lens:urban_lens@localhost:5432/urban_lens",
         mlflow_tracking_uri="http://localhost:5005",
         artifact_dir=tmp_path,
+        milvus_uri="http://localhost:19530",
+        ollama_base_url="http://localhost:11434",
+        embedding_model="nomic-embed-text",
     )
 
 

@@ -84,6 +84,8 @@ GOVERNANCE_EVENT_TYPES = {
     "model_training_finished",
     "model_inference_requested",
     "model_inference_completed",
+    "embedding_indexing_started",
+    "embedding_indexing_finished",
 }
 
 CHAT_QUERY_TYPES = {

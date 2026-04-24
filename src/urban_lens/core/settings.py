@@ -27,6 +27,9 @@ class AppConfig(BaseModel):
     postgres_dsn: str
     mlflow_tracking_uri: str
     artifact_dir: Path
+    milvus_uri: str
+    ollama_base_url: str
+    embedding_model: str
 
     @classmethod
     def from_env(cls) -> "AppConfig":
@@ -43,6 +46,9 @@ class AppConfig(BaseModel):
             ),
             mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5005"),
             artifact_dir=Path(os.getenv("URBAN_LENS_ARTIFACT_DIR", ".artifacts")),
+            milvus_uri=os.getenv("URBAN_LENS_MILVUS_URI", "http://localhost:19530"),
+            ollama_base_url=os.getenv("URBAN_LENS_OLLAMA_BASE_URL", "http://localhost:11434"),
+            embedding_model=os.getenv("URBAN_LENS_EMBEDDING_MODEL", "nomic-embed-text"),
         )
 
     def s3_client_kwargs(self) -> dict[str, object]:

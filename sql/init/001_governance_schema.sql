@@ -54,7 +54,9 @@ CREATE TABLE IF NOT EXISTS governance.audit_events (
         'model_training_started',
         'model_training_finished',
         'model_inference_requested',
-        'model_inference_completed'
+        'model_inference_completed',
+        'embedding_indexing_started',
+        'embedding_indexing_finished'
     )),
     actor TEXT NOT NULL,
     timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
