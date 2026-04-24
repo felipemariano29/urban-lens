@@ -137,6 +137,8 @@ Minimum event types:
 - `model_training_finished`
 - `model_inference_requested`
 - `model_inference_completed`
+- `embedding_indexing_started`
+- `embedding_indexing_finished`
 
 Required fields:
 - `id`
