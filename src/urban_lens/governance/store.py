@@ -43,6 +43,7 @@ class MetadataStore:
                     status,
                     metadata_json
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                ON CONFLICT (layer, logical_name, version, object_path) DO NOTHING
                 """,
                 (
                     dataset_version_id,
@@ -60,6 +61,16 @@ class MetadataStore:
                     json.dumps(payload.metadata_json),
                 ),
             )
+            if cursor.rowcount == 0:
+                cursor.execute(
+                    """
+                    SELECT id FROM governance.dataset_versions
+                    WHERE layer = %s AND logical_name = %s AND version = %s AND object_path = %s
+                    """,
+                    (payload.layer, payload.logical_name, payload.version, payload.object_path),
+                )
+                row = cursor.fetchone()
+                dataset_version_id = str(row[0])
             connection.commit()
         return dataset_version_id
 
@@ -180,7 +191,8 @@ class MetadataStore:
                     transformation_name,
                     pipeline_run_id
                 ) VALUES (%s, %s, %s, %s, %s)
-                """,
+                ON CONFLICT (upstream_dataset_version_id, downstream_dataset_version_id, transformation_name) DO NOTHING
+""",
                 (
                     lineage_id,
                     upstream_dataset_version_id,
