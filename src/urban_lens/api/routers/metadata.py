@@ -8,8 +8,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from mlflow.client import MlflowClient
 from mlflow.entities import Run, ViewType
 
-from urban_lens.api.dependencies import get_mlflow_client, require_admin
+from urban_lens.api.core.auth import UserProfile
+from urban_lens.api.dependencies import get_mlflow_client, require_roles
 from urban_lens.api.schemas import RunMetadataResponse, RunMetricsSchema
+
+require_admin = require_roles("admin", "internal_service")
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +123,7 @@ def list_runs(
         None,
         description="Include only runs that started on or before this date (ISO 8601, e.g. '2024-12-31').",
     ),
-    _profile: str = Depends(require_admin),
+    _profile: UserProfile = Depends(require_admin),
     mlflow_client: MlflowClient = Depends(get_mlflow_client),
 ) -> List[RunMetadataResponse]:
     if start_date and end_date and start_date > end_date:
