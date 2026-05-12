@@ -5,6 +5,8 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from urban_lens.rag.contracts import EvidenceCitation, RagAnswer, RagContextChunk, AccessProfile
+
 
 class RunMetricsSchema(BaseModel):
     mae: Optional[float] = Field(None, description="Mean Absolute Error on the holdout partition.")
@@ -87,3 +89,11 @@ class QueryResponse(BaseModel):
     )
 
     results: List[QueryResult] = Field(..., description="Ranked list of matching evidence chunks.")
+
+
+class ChatQueryResponse(BaseModel):
+    answer: RagAnswer = Field(..., description="Generated RAG answer or governed fallback.")
+    evidences: List[EvidenceCitation] = Field(default_factory=list, description="Sources used by the answer.")
+    context: List[RagContextChunk] = Field(default_factory=list, description="Retrieved context chunks.")
+    profile: AccessProfile = Field(..., description="Normalized access profile applied to the response.")
+    fallback_reason: Optional[str] = Field(None, description="Machine-readable fallback reason, when any.")
