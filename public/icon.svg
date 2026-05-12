@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1200" fill="white"/>
+
+  <!-- Magnifying glass -->
+  <circle cx="600" cy="360" r="220" stroke="#0A2A5E" stroke-width="18" fill="none"/>
+  <line x1="760" y1="520" x2="860" y2="620" stroke="#0A2A5E" stroke-width="28" stroke-linecap="round"/>
+
+  <!-- City -->
+  <rect x="470" y="300" width="50" height="140" fill="#173B72"/>
+  <rect x="540" y="240" width="70" height="200" fill="#0A2A5E"/>
+  <rect x="640" y="290" width="55" height="150" fill="#214B85"/>
+  <rect x="720" y="260" width="40" height="180" fill="#1FA89A"/>
+
+  <!-- Graph -->
+  <polyline points="700,250 740,220 780,240 820,180"
+            fill="none" stroke="#1FA89A" stroke-width="8"/>
+  <circle cx="700" cy="250" r="7" fill="#1FA89A"/>
+  <circle cx="740" cy="220" r="7" fill="#1FA89A"/>
+  <circle cx="780" cy="240" r="7" fill="#1FA89A"/>
+  <circle cx="820" cy="180" r="7" fill="#1FA89A"/>
+
+  <!-- Streets -->
+  <path d="M430 450 L770 450" stroke="#0A2A5E" stroke-width="8"/>
+  <path d="M470 450 L560 580" stroke="#0A2A5E" stroke-width="6"/>
+  <path d="M570 450 L650 580" stroke="#0A2A5E" stroke-width="6"/>
+  <path d="M670 450 L730 580" stroke="#0A2A5E" stroke-width="6"/>
+
+  <!-- Pin -->
+  <path d="M600 470
+           C570 470 550 495 550 525
+           C550 570 600 620 600 620
+           C600 620 650 570 650 525
+           C650 495 630 470 600 470 Z"
+        fill="#0A2A5E"/>
+  <circle cx="600" cy="525" r="20" fill="white"/>
+
+  <!-- Digital squares -->
+  <rect x="360" y="210" width="16" height="16" fill="#4D84B8"/>
+  <rect x="330" y="250" width="20" height="20" fill="#4D84B8"/>
+  <rect x="380" y="260" width="12" height="12" fill="#4D84B8"/>
+  <rect x="340" y="300" width="18" height="18" fill="#4D84B8"/>
+  <rect x="390" y="320" width="14" height="14" fill="#4D84B8"/>
+
+  <!-- Brand text -->
+  <text x="600" y="800"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="110"
+        font-weight="700"
+        fill="#0A2A5E">
+        URBAN
+  </text>
+
+  <text x="820" y="800"
+        text-anchor="start"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="110"
+        font-weight="700"
+        fill="#1FA89A">
+        LENS
+  </text>
+
+  <!-- Tagline -->
+  <text x="600" y="900"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="32"
+        font-weight="600"
+        fill="#0A2A5E">
+        DADOS PUBLICOS — INTELIGÊNCIA URBANA — MELHORES DECISÕES
+  </text>
+</svg>
