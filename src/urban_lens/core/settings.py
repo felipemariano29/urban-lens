@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -37,7 +37,7 @@ class AppConfig(BaseModel):
     milvus_uri: str
     ollama_base_url: str
     embedding_model: str
-    cors_origins: list[str]
+    cors_origins: list[str] = Field(default_factory=lambda: ["*"])
 
     @classmethod
     def from_env(cls) -> "AppConfig":

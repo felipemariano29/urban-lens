@@ -6,6 +6,11 @@ from pymilvus import DataType, MilvusClient
 
 COLLECTION_NAME = "crime_chunks"
 EMBEDDING_DIM = 768
+FILTERABLE_FIELDS = {"chunk_type", "reference_month", "lsoa_code", "crime_type", "dataset_version_id"}
+
+
+def _escape_filter_value(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
 class MilvusVectorStore:
@@ -68,7 +73,11 @@ class MilvusVectorStore:
         client = self._get_client()
         filter_expr = ""
         if filters:
-            clauses = [f'{key} == "{value}"' for key, value in filters.items() if value]
+            clauses = [
+                f'{key} == "{_escape_filter_value(value)}"'
+                for key, value in filters.items()
+                if key in FILTERABLE_FIELDS and value
+            ]
             if clauses:
                 filter_expr = " && ".join(clauses)
         results = client.search(

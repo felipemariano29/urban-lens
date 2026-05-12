@@ -8,7 +8,7 @@ from fastapi import Header, HTTPException, status
 
 _JWT_ALGORITHM = "HS256"
 
-VALID_ROLES = frozenset({"viewer", "operator", "admin", "internal_service"})
+VALID_ROLES = frozenset({"viewer", "operator", "intel_user", "developer", "admin", "internal_service"})
 
 
 @dataclass(frozen=True)

@@ -26,6 +26,8 @@ _TAGS_METADATA = [
         "name": "Query",
         "description": (
             "Semantic similarity search over indexed crime evidence chunks (Milvus vector store). "
+            "`/api/v1/query` returns ranked chunks; `/api/v1/chat/query` also generates a "
+            "local Ollama answer with evidence citations and role-filtered context. "
             "Requires a valid JWT or API Key. Accessible to **all authenticated roles**."
         ),
     },
@@ -64,7 +66,7 @@ app = FastAPI(
         "## Authentication\n\n"
         "All endpoints except `/api/v1/health` require authentication via one of:\n\n"
         "- **Bearer JWT** — `Authorization: Bearer <token>` — payload must include a `role` claim "
-        "(`viewer`, `operator`, `admin`, or `internal_service`).\n"
+        "(`viewer`, `operator`, `intel_user`, `developer`, `admin`, or `internal_service`).\n"
         "- **API Key** — `X-API-Key: <key>` — grants `internal_service` role; "
         "configured via the `URBAN_LENS_INTERNAL_API_KEY` environment variable.\n\n"
         "## Error format\n\n"

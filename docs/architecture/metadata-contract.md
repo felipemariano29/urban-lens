@@ -6,6 +6,9 @@ This contract defines the minimum governance objects that must exist for Urban-L
 
 The contract is intentionally shared across data engineering, backend, RAG, and ML so the same metadata identifiers can be used end-to-end.
 
+Related relational documentation:
+- [Metadata relational model](metadata-relational-model.md)
+
 ## Status
 
 This document is the completion artifact for `T1` in the governance and medallion delivery plan.

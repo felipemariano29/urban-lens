@@ -7,6 +7,9 @@ from urban_lens.api.middleware.correlation import get_correlation_id
 from urban_lens.core.settings import AppConfig
 from urban_lens.infrastructure.embedder import OllamaEmbedder
 from urban_lens.infrastructure.vector_store import MilvusVectorStore
+from urban_lens.rag.access import normalize_profile
+from urban_lens.rag.contracts import RagFilters, RagQuery, RagResponse
+from urban_lens.rag.pipeline import RagPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -74,3 +77,22 @@ def run_query(
         )
 
     return results
+
+
+def run_chat_query(
+    query: str,
+    role: str,
+    top_k: int = 5,
+    filters: RagFilters | None = None,
+    model: str = "llama3",
+) -> RagResponse:
+    config = AppConfig.from_env()
+    profile = normalize_profile(role)
+    request = RagQuery(
+        query=query,
+        top_k=top_k,
+        filters=filters or RagFilters(),
+        profile=profile,
+        model=model,
+    )
+    return RagPipeline(config).run(request)
