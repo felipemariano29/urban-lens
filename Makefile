@@ -1,6 +1,11 @@
 SHELL := /bin/bash
-SYSTEM_PYTHON ?= python3
-PYTHON ?= $(shell if [ -x .venv/bin/python3 ]; then echo .venv/bin/python3; elif [ -x .venv/bin/python ]; then echo .venv/bin/python; else echo $(SYSTEM_PYTHON); fi)
+# Detect Windows and use 'python' instead of 'python3'
+ifeq ($(OS),Windows_NT)
+    SYSTEM_PYTHON ?= python
+else
+    SYSTEM_PYTHON ?= python3
+endif
+PYTHON ?= $(shell if [ -x .venv/bin/python3 ]; then echo .venv/bin/python3; elif [ -x .venv/bin/python ]; then echo .venv/bin/python; elif [ -x .venv/Scripts/python.exe ]; then echo .venv/Scripts/python; else echo $(SYSTEM_PYTHON); fi)
 PIP_CONFIG_FILE ?= /dev/null
 PIP_INDEX_URL ?= https://pypi.org/simple
 SOURCE_NAME ?= data.police.uk
@@ -132,7 +137,7 @@ install: check-python
 	@$(PIP_RUN) $(PYTHON) -m pip install -e ".[dev]"
 
 venv:
-	@if [ -x .venv/bin/python3 ] || [ -x .venv/bin/python ]; then \
+	@if [ -x .venv/bin/python3 ] || [ -x .venv/bin/python ] || [ -x .venv/Scripts/python.exe ]; then \
 		echo "[OK] Ambiente virtual .venv ja existe."; \
 	else \
 		echo "[INFO] Criando ambiente virtual em .venv..."; \
@@ -141,8 +146,12 @@ venv:
 
 setup:
 	@$(MAKE) venv
+ifeq ($(OS),Windows_NT)
+	@$(MAKE) install PYTHON=.venv/Scripts/python
+else
 	@$(MAKE) install PYTHON=.venv/bin/python
-	@$(MAKE) fullstack PYTHON=.venv/bin/python
+endif
+	@$(MAKE) fullstack
 
 fullstack:
 	@$(MAKE) up
