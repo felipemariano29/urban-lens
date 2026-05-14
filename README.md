@@ -1,59 +1,13 @@
 # Urban Lens
 
-Urban Lens is a local enterprise-style RAG platform for urban intelligence. The project ingests public crime data, organizes it in a Medallion architecture, indexes governed evidence in Milvus, serves local LLM answers through FastAPI, and exposes a simple frontend for consultation.
+## Integrantes
 
-## Scope
-
-- Domain: public safety and urban intelligence
-- Primary dataset: [DATA.POLICE.UK](https://data.police.uk/data/)
-- Goal: support analysts and public managers with traceable natural-language answers
-- Non-goal: real-time policing or autonomous operational decisions
-
-## Core Stack
-
-- Data lake: MinIO
-- Governance metadata: PostgreSQL
-- Vector index: Milvus
-- Milvus UI: Attu
-- Local AI: Ollama
-- API: FastAPI
-- Interface: Next.js frontend
-- Experiment tracking: MLflow
-- Runtime: Docker Compose
-- Automation: Makefile
-
-## Current Delivery State
-
-The repository already contains:
-
-- Bronze -> Silver -> Gold pipeline orchestration
-- governance schema and metadata registration
-- Gold outputs for analytics, RAG, and ML
-- embedding generation and Milvus indexing
-- local RAG API with evidence citations
-- frontend integrated with the real API
-- operational documentation and demo runbook for AC2 through Sprint 8
-
-## Key Documents
-
-| Document | Purpose |
-| --- | --- |
-| [docs/how-to-run.md](docs/how-to-run.md) | Local setup, services, and runtime entrypoint |
-| [docs/implementation-guide.md](docs/implementation-guide.md) | Step-by-step execution of the governed pipeline |
-| [docs/architecture/medallion-governance.md](docs/architecture/medallion-governance.md) | Medallion layer rules and product families |
-| [docs/architecture/metadata-contract.md](docs/architecture/metadata-contract.md) | Governance, lineage, audit, and response contracts |
-| [docs/governance-medallion-delivery-plan.md](docs/governance-medallion-delivery-plan.md) | Internal delivery plan and task closure |
-| [docs/ac2-sprint-closure.md](docs/ac2-sprint-closure.md) | AC2 closure mapping for Sprints 1 to 8 |
-| [docs/demo-professor.txt](docs/demo-professor.txt) | Live demo script and validation flow |
-
-## Team
-
-| Name | E-mail | RA |
-| --- | --- | ---: |
+| Nome | E-mail | RA |
+|---|---|---:|
 | Diego Justino da Silva | diegojsilva01@outlook.com | 223705 |
 | Diogo Francia | diogofrancia2@gmail.com | 222558 |
 | Felipe Augusto de Almeida Mariano | felipemariano99@gmail.com | 210045 |
-| Joao Rafael Jordao Pereira | jrafael1504@gmail.com | 211903 |
+| João Rafael Jordão Pereira | jrafael1504@gmail.com | 211903 |
 | Kaique Medeiros Govani | kaique.govani@hotmail.com | 210170 |
 | Lucas Da Silva Marques | lucasses10@gmail.com | 223402 |
 | Lucas de Moraes Silveira | lucasdmsilveira@gmail.com | 211668 |
@@ -62,3 +16,210 @@ The repository already contains:
 | Milton Rogerio Dotto Penha Junior | miltonjmiltonj@gmail.com | 222284 |
 | Nicolas Leonardi Barsalini | nicolasbarsalini2017@gmail.com | 222259 |
 | Raphael Nobuyuki Haga Okuyama | raphaelokuyuama123@gmail.com | 222808 |
+
+---
+
+## 1. Sobre o projeto
+
+O **Urban Lens** é uma plataforma **RAG (Retrieval-Augmented Generation)** local, desenvolvida para apoiar a **inteligência da prefeitura** na análise de dados públicos de segurança urbana. A solução tem como objetivo organizar, tratar, indexar e disponibilizar consultas em linguagem natural sobre dados públicos, permitindo que gestores e analistas obtenham respostas rápidas e contextualizadas para apoiar decisões de prevenção, planejamento territorial e formulação de políticas públicas.
+
+A proposta do projeto utiliza como base dados públicos do [DATA.POLICE.UK](https://data.police.uk/data/), com foco em análise histórica e apoio estratégico, e não em operação policial em tempo real.
+
+---
+
+## 2. Problema de negócio
+
+Prefeituras e núcleos de inteligência urbana frequentemente possuem dificuldade em transformar grandes volumes de dados públicos em informações úteis, auditáveis e acessíveis para tomada de decisão.
+
+Mesmo quando os dados estão disponíveis, eles geralmente se encontram:
+- dispersos;
+- pouco padronizados;
+- difíceis de consultar;
+- sem mecanismos de busca semântica;
+- sem uma interface simples para uso por gestores e analistas.
+
+Dessa forma, o projeto propõe uma plataforma capaz de consolidar esses dados em uma arquitetura governada, com recuperação inteligente de contexto e geração de respostas por meio de um modelo de linguagem local.
+
+---
+
+## 3. Objetivo
+
+Desenvolver uma plataforma completa de **RAG local com governança de dados**, capaz de:
+
+- ingerir dados públicos de segurança urbana;
+- armazená-los em arquitetura **Medallion**;
+- organizar metadados e versionamento;
+- gerar embeddings e indexação vetorial;
+- responder perguntas em linguagem natural;
+- disponibilizar uma interface simples para consulta;
+- manter toda a solução executável localmente com containers.
+
+---
+
+## 4. Domínio escolhido
+
+O domínio escolhido para o projeto é **Inteligência Territorial para Prefeituras**, com foco em análise de segurança urbana baseada em dados públicos.
+
+### Aplicações esperadas
+
+A solução poderá apoiar a prefeitura em tarefas como:
+- priorização territorial;
+- análise histórica de ocorrências;
+- identificação de padrões por bairro ou período;
+- apoio à definição de ações preventivas;
+- geração de relatórios para gestores públicos.
+
+---
+
+## 5. Empresa fictícia
+
+**Urban Lens Analytics**
+
+A empresa fictícia **Urban Lens Analytics** atua no desenvolvimento de soluções de inteligência urbana orientadas por dados, oferecendo ferramentas para análise territorial, observação de tendências e apoio estratégico à administração pública.
+
+### Produto
+
+**Urban Lens**
+
+Produto voltado para consulta inteligente de dados e documentos, utilizando RAG e interface simples para auxiliar o núcleo de inteligência da prefeitura.
+
+---
+
+## 6. Arquitetura da solução
+
+### Diagrama da arquitetura
+
+Abaixo está o diagrama macro da arquitetura proposta para o **Urban Lens**, mostrando o fluxo entre ingestão, processamento em arquitetura Medallion, indexação vetorial, camada de aplicação e componentes de MLOps.
+
+![Diagrama da arquitetura do Urban Lens](./docs/images/urban-lens-architecture.png)
+
+A arquitetura do projeto segue o modelo proposto em sala, contemplando as seguintes camadas:
+
+### Camada de Dados
+
+- **MinIO**: Data Lake com arquitetura Medallion
+  - **Bronze**: dados brutos
+  - **Silver**: dados tratados e padronizados
+  - **Gold**: dados consolidados para consumo analítico
+
+- **PostgreSQL**
+  - metadados;
+  - auditoria;
+  - controle de versionamento.
+
+- **Milvus**
+  - armazenamento vetorial;
+  - embeddings;
+  - recuperação semântica.
+
+- **Attu**
+  - interface visual para inspeção do Milvus;
+  - apoio à validação de coleções e indexação vetorial em ambiente local.
+
+### Camada de IA
+
+- **Ollama**
+  - inferência local com LLM;
+  - modelo de embeddings.
+
+- **Pipeline RAG**
+  - chunking;
+  - embedding;
+  - indexação;
+  - recuperação;
+  - geração de resposta.
+
+### Camada de MLOps
+
+- **MLflow**
+  - tracking de experimentos;
+  - métricas;
+  - versionamento de prompts;
+  - acompanhamento de testes.
+
+### Camada de Aplicação
+
+- **FastAPI**
+  - endpoints da aplicação;
+  - integração com o pipeline RAG;
+  - documentação Swagger como entregável acadêmico.
+
+- **Frontend simples (Next.js)**
+  - interface de consulta para o usuário final;
+  - integração com a API real do projeto.
+
+### Infraestrutura
+
+- **Docker**
+- **Docker Compose**
+- **Makefile**
+
+---
+
+## 7. Tecnologias utilizadas
+
+- Python
+- FastAPI
+- Next.js
+- PostgreSQL
+- MinIO
+- Milvus
+- Attu
+- Ollama
+- MLflow
+- Docker
+- Docker Compose
+- Makefile
+
+---
+
+## 8. Fonte de dados
+
+O projeto utiliza dados públicos do **DATA.POLICE.UK**, que disponibiliza informações históricas relacionadas à segurança pública, como:
+- crimes em nível de rua;
+- outcomes;
+- stop and search;
+- prioridades de neighbourhood;
+- informações por força policial e região.
+
+Esses dados são usados para apoiar análises históricas e territoriais no contexto da inteligência municipal.
+
+---
+
+## 9. Público-alvo
+
+A solução é voltada principalmente para:
+- analistas de inteligência da prefeitura;
+- gestores públicos;
+- secretarias municipais;
+- observatórios urbanos;
+- equipes de planejamento territorial.
+
+---
+
+## 10. Estado atual da entrega
+
+Até a **Sprint 8 / AC2**, o projeto já entrega:
+
+- pipeline Bronze -> Silver -> Gold com governança;
+- catálogo, versionamento e auditoria em PostgreSQL;
+- geração de embeddings e indexação vetorial no Milvus;
+- validação visual do índice via Attu;
+- RAG funcional com busca vetorial, construção de prompt e inferência local;
+- API FastAPI com endpoints documentados;
+- frontend simples integrado à API real;
+- roteiro de demonstração com datasets leves para execução ao vivo.
+
+---
+
+## 11. Documentation Hub
+
+| Documento | Descrição |
+|----------|------------|
+| [How to run](docs/how-to-run.md) | Setup, serviços locais e execução do ambiente |
+| [Implementation Guide](docs/implementation-guide.md) | Execução ponta a ponta do pipeline governado |
+| [AC2 Sprint Closure](docs/ac2-sprint-closure.md) | Mapeamento formal das Sprints 1 a 8 para evidências do repositório |
+| [Delivery Plan](docs/governance-medallion-delivery-plan.md) | Plano interno de execução e status das tarefas |
+| [Demo Professor](docs/demo-professor.txt) | Roteiro prático da demonstração ao vivo |
+| [Product Vision](docs/product-vision.md) | Visão de produto |
+| [Full Document (PDF)](docs/urban_lens_visao_consolidada.pdf) | Especificação consolidada do projeto |
