@@ -151,13 +151,13 @@ services:
         source: ./docker-data/ollama
         target: /root/.ollama
     # GPU support commented out - uncomment if you have NVIDIA GPU with proper WSL drivers
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     networks:
       - app_network
 
