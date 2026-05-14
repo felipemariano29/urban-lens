@@ -1,0 +1,224 @@
+DEMO AO VIVO - PROFESSOR
+
+Pasta leve pronta para a ingestao ao vivo:
+- data/demo-2026-01
+- arquivos incluidos:
+  - 2026-01-city-of-london-street.csv
+  - 2026-01-cumbria-street.csv
+
+Outras pastas leves disponiveis por periodo:
+- data/demo-2023-12
+- data/demo-2024-01
+- data/demo-2024-06
+- data/demo-2025-01
+- data/demo-2025-06
+
+Objetivo da demonstracao:
+- mostrar ingestao de um snapshot pequeno
+- mostrar indexacao vetorial com embeddings locais
+- provar que o Milvus recebeu os vetores
+- mostrar busca semantica
+- mostrar RAG por script
+- mostrar o fluxo manual pela API
+- mostrar a interface consumindo a API real
+
+O que deixar pronto antes do professor chegar:
+- containers ja iniciados
+- frontend ja iniciado
+- uma consulta curta feita antes para "aquecer" o Ollama
+- abas abertas:
+  - terminal
+  - http://localhost:3001
+  - http://localhost:8000/docs
+  - http://localhost:3000
+
+Comandos de preparacao:
+- make up
+- make frontend
+- make urls
+
+Autenticacao para chamadas da API:
+- antes de testar endpoints no Swagger ou em chamadas manuais, use este header:
+  - `X-API-Key: urban-lens-api-key-2026`
+- no Swagger:
+  - clique em `Authorize`
+  - preencha o campo de API key com `urban-lens-api-key-2026`
+- em PowerShell ou curl:
+  - envie o header `X-API-Key` com esse mesmo valor
+
+Ordem recomendada da demonstracao:
+
+1. Mostrar que a infraestrutura esta no ar
+- rodar:
+  - make urls
+- falar:
+  - "Aqui estao os servicos locais da stack: FastAPI, Milvus, Attu, Ollama, MinIO e frontend."
+
+2. Mostrar a ingestao da pasta leve
+- rodar:
+  - make ingest SNAPSHOT_DIR=data/demo-2026-01 ACTOR=prof-demo
+- falar:
+  - "Agora eu processo uma pastinha leve de dados brutos. O pipeline leva os CSVs para Bronze, normaliza em Silver e publica os artefatos Gold."
+
+3. Mostrar a indexacao vetorial
+- rodar:
+  - make index-embeddings-latest VERSION=2026-01 ACTOR=prof-demo BATCH_SIZE=8
+- falar:
+  - "Agora os crime_chunks Gold sao enviados para o Ollama para gerar embeddings e depois sao indexados no Milvus."
+
+4. Validar que o Milvus recebeu dados
+- validacao visual recomendada:
+  - abrir http://localhost:3001
+  - conferir a conexao automatica com `milvus-standalone:19530`
+  - abrir a collection `crime_chunks`
+  - mostrar row count, schema e alguns campos indexados
+- validacao 1:
+  - docker compose exec rag-api python -c "from urban_lens.infrastructure.vector_store import MilvusVectorStore; print(MilvusVectorStore('http://milvus-standalone:19530').count())"
+- resultado esperado:
+  - um numero maior que 0
+- validacao 2:
+  - GET http://localhost:8000/api/v1/health
+- o health deve indicar Milvus e Ollama como saudaveis ou, no minimo, acessiveis
+- validacao 3:
+  - rodar uma busca semantica logo em seguida
+
+5. Mostrar busca semantica "na mao"
+- opcao visual:
+  - abrir http://localhost:8000/docs
+  - clicar em `Authorize` e informar `urban-lens-api-key-2026`
+  - usar POST /api/v1/query
+- body sugerido 1:
+{
+  "query": "burglary in City of London in 2026-01",
+  "top_k": 3
+}
+- body sugerido 2:
+{
+  "query": "anti social behaviour in Cumbria in 2026-01",
+  "top_k": 3
+}
+- body sugerido 3 com filtro:
+{
+  "query": "burglary incidents",
+  "filters": {
+    "reference_month": "2026-01",
+    "crime_type": "burglary"
+  },
+  "top_k": 3
+}
+- o que comentar:
+  - "Aqui eu ainda nao gero resposta com LLM; estou provando a recuperacao semantica no indice vetorial."
+
+6. Mostrar o fluxo RAG por script
+- rodar:
+  - .\.venv\Scripts\python.exe demo_rag.py
+- o script ja faz:
+  - health check
+  - POST /api/v1/query
+  - POST /api/v1/chat/query
+- o que comentar:
+  - "Aqui o fluxo completo faz embedding da pergunta, busca no Milvus, monta contexto e chama o modelo local no Ollama."
+
+7. Mostrar o fluxo RAG manual pela API
+- usar POST /api/v1/chat/query no Swagger
+- garantir antes que o Swagger esta autorizado com `X-API-Key: urban-lens-api-key-2026`
+- body sugerido:
+{
+  "query": "What are the main crime patterns in City of London and Cumbria in 2026-01?",
+  "filters": {
+    "reference_month": "2026-01"
+  },
+  "top_k": 5,
+  "model": "llama3"
+}
+- segunda opcao:
+{
+  "query": "Quais evidencias mostram burglaries em City of London em 2026-01?",
+  "filters": {
+    "reference_month": "2026-01",
+    "crime_type": "burglary"
+  },
+  "top_k": 5,
+  "model": "llama3"
+}
+- o que comentar:
+  - "Agora eu provo o contrato completo do RAG pela API: pergunta, contexto recuperado, resposta gerada e evidencias citadas."
+
+8. Mostrar o endpoint de metadata
+- usar GET /api/v1/metadata
+- garantir antes que o Swagger esta autorizado com `X-API-Key: urban-lens-api-key-2026`
+- exemplo:
+  - /api/v1/metadata?source=gold/rag/crime_chunks
+- o que comentar:
+  - "Aqui eu mostro a parte de catalogo e governanca dos artefatos publicados."
+
+9. Mostrar a interface
+- abrir http://localhost:3000
+- fazer a pergunta:
+  - "What are the main crime patterns in City of London and Cumbria in 2026-01?"
+- mostrar:
+  - resposta
+  - evidencias
+  - filtros
+- segunda pergunta boa para a interface:
+  - "Show burglary incidents in City of London"
+
+Buscas semanticas sugeridas para esta pasta leve:
+- "burglary in City of London in 2026-01"
+- "other theft in City of London in 2026-01"
+- "anti social behaviour in Cumbria in 2026-01"
+- "violence and sexual offences in Cumbria in 2026-01"
+
+Justificativa dessas queries:
+- City of London tem bastante "other theft", "shoplifting" e "burglary"
+- Cumbria tem bastante "violence and sexual offences", "public order", "anti-social behaviour" e "burglary"
+- isso reduz o risco de a consulta retornar chunks pouco relevantes na demonstracao
+
+Fluxo manual pronto em PowerShell, se voce preferir nao usar o Swagger:
+
+$headers = @{
+  "X-API-Key" = "urban-lens-api-key-2026"
+  "Content-Type" = "application/json"
+}
+
+$queryBody = @{
+  query = "burglary in City of London in 2026-01"
+  top_k = 3
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post -Uri "http://localhost:8000/api/v1/query" -Headers $headers -Body $queryBody
+
+$chatBody = @{
+  query = "What are the main crime patterns in City of London and Cumbria in 2026-01?"
+  filters = @{
+    reference_month = "2026-01"
+  }
+  top_k = 5
+  model = "llama3"
+} | ConvertTo-Json -Depth 5
+
+Invoke-RestMethod -Method Post -Uri "http://localhost:8000/api/v1/chat/query" -Headers $headers -Body $chatBody
+
+Invoke-RestMethod -Method Get -Uri "http://localhost:8000/api/v1/metadata?source=gold/rag/crime_chunks" -Headers @{ "X-API-Key" = "urban-lens-api-key-2026" }
+
+Plano B se algo ficar lento:
+- se a ingestao atrasar, explique que a pasta foi reduzida exatamente para permitir a demonstracao ao vivo
+- se a indexacao atrasar, mostre primeiro a contagem da colecao e depois a consulta semantica
+- se o Attu nao abrir a conexao automaticamente, entre manualmente com `milvus-standalone:19530`
+- se o frontend falhar, siga com Swagger + demo_rag.py
+- se o Ollama demorar, rode primeiro /query e depois /chat/query
+
+Ordem mais segura, se voce quiser minimizar risco:
+- make urls
+- make process-snapshot SNAPSHOT_DIR=data/demo-2026-01 ACTOR=prof-demo
+- make index-embeddings-latest VERSION=2026-01 ACTOR=prof-demo BATCH_SIZE=8
+- abrir Attu e validar `crime_chunks`
+- validar count no Milvus
+- POST /api/v1/query no Swagger
+- .\.venv\Scripts\python.exe demo_rag.py
+- POST /api/v1/chat/query no Swagger
+- GET /api/v1/metadata
+- frontend
+
+Resumo para falar no encerramento:
+- "Eu mostrei ingestao de dados, publicacao Gold, geracao de embeddings locais via Ollama, indexacao vetorial no Milvus, busca semantica, resposta RAG, API documentada e interface consumindo a API real."
