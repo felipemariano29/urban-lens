@@ -56,17 +56,72 @@ def milvus_hits_to_context(raw_hits: list[dict[str, Any]], profile: AccessProfil
                 metadata=metadata,
             )
         )
-    return filter_context(chunks, profile)
+    return diversify_context(filter_context(chunks, profile))
+
+
+def diversify_context(chunks: list[RagContextChunk]) -> list[RagContextChunk]:
+    """Prefer a more varied context before prompt assembly.
+
+    Milvus often returns several near-duplicate chunks for the same area/month/crime.
+    This first pass keeps the strongest chunk for each logical signature while also
+    capping repetition by chunk_type. A second pass fills remaining slots with the
+    leftover highest-scoring chunks so recall is not lost completely.
+    """
+
+    if len(chunks) <= 2:
+        return chunks
+
+    selected: list[RagContextChunk] = []
+    leftovers: list[RagContextChunk] = []
+    signature_counts: dict[tuple[str, str, str, str], int] = {}
+    chunk_type_counts: dict[str, int] = {}
+
+    for chunk in chunks:
+        metadata = chunk.metadata
+        signature = (
+            str(metadata.get("chunk_type") or ""),
+            str(metadata.get("reference_month") or ""),
+            str(metadata.get("lsoa_code") or ""),
+            str(metadata.get("crime_type") or ""),
+        )
+        chunk_type = str(metadata.get("chunk_type") or "")
+        if signature_counts.get(signature, 0) >= 1 or chunk_type_counts.get(chunk_type, 0) >= 2:
+            leftovers.append(chunk)
+            continue
+        selected.append(chunk)
+        signature_counts[signature] = signature_counts.get(signature, 0) + 1
+        chunk_type_counts[chunk_type] = chunk_type_counts.get(chunk_type, 0) + 1
+
+    for chunk in leftovers:
+        if len(selected) >= len(chunks):
+            break
+        selected.append(chunk)
+    return selected
 
 
 def build_context_text(chunks: list[RagContextChunk], max_chars: int) -> str:
     blocks: list[str] = []
     used = 0
     for index, chunk in enumerate(chunks, start=1):
+        metadata = chunk.metadata
+        block_lines = [
+            f"[E{index}]",
+            f"source={chunk.source}",
+            f"reference={chunk.reference}",
+            f"score={chunk.score:.3f}",
+        ]
+        if metadata.get("chunk_type"):
+            block_lines.append(f"chunk_type={metadata['chunk_type']}")
+        if metadata.get("reference_month"):
+            block_lines.append(f"reference_month={metadata['reference_month']}")
+        if metadata.get("lsoa_code"):
+            block_lines.append(f"lsoa_code={metadata['lsoa_code']}")
+        if metadata.get("crime_type"):
+            block_lines.append(f"crime_type={metadata['crime_type']}")
         block = (
-            f"[E{index}] source={chunk.source}; reference={chunk.reference}; "
-            f"score={chunk.score:.3f}; timestamp={chunk.timestamp.isoformat()}\n"
-            f"{chunk.content}"
+            "\n".join(block_lines)
+            + "\ncontent:\n"
+            + chunk.content
         )
         if used + len(block) > max_chars:
             break
