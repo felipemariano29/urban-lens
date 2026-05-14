@@ -12,7 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { CRIME_TYPES, type QueryFilters, type HistoryItem } from '@/lib/types'
+import {
+  CRIME_TYPE_OPTIONS,
+  type QueryFilters,
+  type HistoryItem,
+} from '@/lib/types'
 import { validateLsoaCode, validateReferenceMonth } from '@/hooks/use-urban-lens'
 import { FilterIcon, HistoryIcon, ClockIcon, TrashIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -49,10 +53,9 @@ export function Sidebar({
       : null
 
   return (
-    <aside className="w-72 border-r bg-sidebar flex flex-col h-full">
+    <aside className="h-full w-72 shrink-0 border-r bg-sidebar flex flex-col">
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-6">
-          {/* Filtros */}
           <section>
             <div className="flex items-center gap-2 mb-4">
               <FilterIcon className="size-4 text-muted-foreground" />
@@ -60,17 +63,16 @@ export function Sidebar({
             </div>
 
             <div className="space-y-4">
-              {/* Tipo de crime */}
               <div className="space-y-2">
                 <Label htmlFor="crime-type" className="text-xs">
                   Tipo de crime
                 </Label>
                 <Select
-                  value={filters.crime_type || 'Todos'}
+                  value={filters.crime_type || '__all__'}
                   onValueChange={(value) =>
                     onFiltersChange({
                       ...filters,
-                      crime_type: value === 'Todos' ? null : value,
+                      crime_type: value === '__all__' ? null : value,
                     })
                   }
                   disabled={disabled}
@@ -79,19 +81,21 @@ export function Sidebar({
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {CRIME_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
+                    {CRIME_TYPE_OPTIONS.map((option) => (
+                      <SelectItem
+                        key={option.value || '__all__'}
+                        value={option.value || '__all__'}
+                      >
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Código LSOA */}
               <div className="space-y-2">
                 <Label htmlFor="lsoa-code" className="text-xs">
-                  Código LSOA
+                  Codigo LSOA
                 </Label>
                 <Input
                   id="lsoa-code"
@@ -112,10 +116,9 @@ export function Sidebar({
                 )}
               </div>
 
-              {/* Mês de referência */}
               <div className="space-y-2">
                 <Label htmlFor="reference-month" className="text-xs">
-                  Mês de referência
+                  Mes de referencia
                 </Label>
                 <Input
                   id="reference-month"
@@ -136,7 +139,6 @@ export function Sidebar({
                 )}
               </div>
 
-              {/* Top-K */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs">Top-k resultados</Label>
@@ -160,12 +162,11 @@ export function Sidebar({
             </div>
           </section>
 
-          {/* Histórico */}
           <section>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <HistoryIcon className="size-4 text-muted-foreground" />
-                <h2 className="font-semibold text-sm">Histórico</h2>
+                <h2 className="font-semibold text-sm">Historico</h2>
               </div>
               {history.length > 0 && (
                 <Button
@@ -173,7 +174,7 @@ export function Sidebar({
                   size="icon-sm"
                   onClick={onClearHistory}
                   className="size-6"
-                  title="Limpar histórico"
+                  title="Limpar historico"
                 >
                   <TrashIcon className="size-3" />
                 </Button>
@@ -185,15 +186,15 @@ export function Sidebar({
                 Nenhuma consulta recente
               </p>
             ) : (
-              <div className="space-y-1">
+              <div className="min-w-0 space-y-1">
                 {history.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => onHistorySelect(item)}
                     disabled={disabled}
-                    className="w-full text-left p-2 rounded-md hover:bg-sidebar-accent transition-colors group disabled:opacity-50"
+                    className="group flex w-full min-w-0 max-w-full flex-col overflow-hidden rounded-md p-2 text-left transition-colors hover:bg-sidebar-accent disabled:opacity-50"
                   >
-                    <p className="text-sm truncate group-hover:text-sidebar-accent-foreground">
+                    <p className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm group-hover:text-sidebar-accent-foreground">
                       {item.query}
                     </p>
                     <div className="flex items-center gap-1 mt-1">

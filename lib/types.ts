@@ -34,6 +34,53 @@ export interface QueryResponse {
   results: QueryResult[]
 }
 
+export interface RagAnswer {
+  text: string
+  status: 'answered' | 'insufficient_evidence'
+  model: string
+}
+
+export interface RagChunkMetadata {
+  chunk_type?: string
+  reference_month?: string
+  lsoa_code?: string
+  crime_type?: string
+  title?: string
+  dataset_version_id?: string
+  run_id?: string
+  experiment_id?: string
+  artifact_uri?: string
+  [key: string]: unknown
+}
+
+export interface EvidenceCitation {
+  id: string
+  source: string
+  reference: string
+  score: number
+  timestamp: string
+  excerpt: string
+  metadata: RagChunkMetadata
+}
+
+export interface RagContextChunk {
+  id: string
+  content: string
+  score: number
+  source: string
+  reference: string
+  timestamp: string
+  metadata: RagChunkMetadata
+}
+
+export interface ChatQueryResponse {
+  answer: RagAnswer
+  evidences: EvidenceCitation[]
+  context: RagContextChunk[]
+  profile: 'intel_user' | 'developer' | 'admin'
+  fallback_reason: string | null
+}
+
 export interface HealthDependencies {
   catalog: 'ok' | 'unavailable'
   rag_embedder: 'ok' | 'unavailable'
@@ -51,6 +98,9 @@ export interface HistoryItem {
   id: string
   query: string
   filters: QueryFilters
+  topK: number
+  response: ChatQueryResponse | null
+  latency: number | null
   timestamp: Date
 }
 
@@ -64,23 +114,28 @@ export interface APIError {
   }>
 }
 
-// Crime types from DATA.POLICE.UK
-export const CRIME_TYPES = [
-  'Todos',
-  'Anti-social behaviour',
-  'Bicycle theft',
-  'Burglary',
-  'Criminal damage and arson',
-  'Drugs',
-  'Other crime',
-  'Other theft',
-  'Possession of weapons',
-  'Public order',
-  'Robbery',
-  'Shoplifting',
-  'Theft from the person',
-  'Vehicle crime',
-  'Violence and sexual offences',
-] as const
+export interface CrimeTypeOption {
+  label: string
+  value: string | null
+}
 
-export type CrimeType = (typeof CRIME_TYPES)[number]
+export const CRIME_TYPE_OPTIONS: CrimeTypeOption[] = [
+  { label: 'Todos', value: null },
+  { label: 'Anti-social behaviour', value: 'anti_social_behaviour' },
+  { label: 'Bicycle theft', value: 'bicycle_theft' },
+  { label: 'Burglary', value: 'burglary' },
+  { label: 'Criminal damage and arson', value: 'criminal_damage_and_arson' },
+  { label: 'Drugs', value: 'drugs' },
+  { label: 'Other crime', value: 'other_crime' },
+  { label: 'Other theft', value: 'other_theft' },
+  { label: 'Possession of weapons', value: 'possession_of_weapons' },
+  { label: 'Public order', value: 'public_order' },
+  { label: 'Robbery', value: 'robbery' },
+  { label: 'Shoplifting', value: 'shoplifting' },
+  { label: 'Theft from the person', value: 'theft_from_the_person' },
+  { label: 'Vehicle crime', value: 'vehicle_crime' },
+  {
+    label: 'Violence and sexual offences',
+    value: 'violence_and_sexual_offences',
+  },
+]

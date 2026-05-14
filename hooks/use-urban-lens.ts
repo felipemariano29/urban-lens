@@ -2,15 +2,18 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import useSWR from 'swr'
+
+import { buildFrontendApiUrl } from '@/lib/api/client'
 import type {
   AppState,
+  ChatQueryResponse,
   QueryFilters,
-  QueryResult,
   HealthResponse,
   HistoryItem,
 } from '@/lib/types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1'
+const HISTORY_STORAGE_KEY = 'urban-lens:query-history'
+const HISTORY_LIMIT = 10
 
 // Fetcher para SWR
 const fetcher = async (url: string) => {
@@ -24,10 +27,10 @@ const fetcher = async (url: string) => {
 // Hook para health check
 export function useHealthCheck() {
   const { data, error, isLoading, mutate } = useSWR<HealthResponse>(
-    `${API_BASE_URL}/health`,
+    buildFrontendApiUrl('/health'),
     fetcher,
     {
-      refreshInterval: 60000, // Poll a cada 60 segundos
+      refreshInterval: 60000,
       revalidateOnFocus: false,
       shouldRetryOnError: true,
       errorRetryCount: 3,
@@ -49,14 +52,13 @@ export function useHealthCheck() {
 // Hook principal para queries
 export function useQuery() {
   const [state, setState] = useState<AppState>('idle')
-  const [results, setResults] = useState<QueryResult[]>([])
+  const [response, setResponse] = useState<ChatQueryResponse | null>(null)
   const [error, setError] = useState<{ code: number; message: string } | null>(null)
   const [latency, setLatency] = useState<number | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const executeQuery = useCallback(
     async (query: string, filters: QueryFilters, topK: number) => {
-      // Cancelar requisição anterior se existir
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
@@ -65,14 +67,13 @@ export function useQuery() {
 
       setState('loading')
       setError(null)
-      setResults([])
+      setResponse(null)
       setLatency(null)
 
       const startTime = performance.now()
 
       try {
-        // Montar body - omitir filters se todos forem null
-        const hasFilters = Object.values(filters).some((v) => v !== null)
+        const hasFilters = Object.values(filters).some((value) => value !== null)
         const body: Record<string, unknown> = {
           query,
           top_k: topK,
@@ -80,13 +81,15 @@ export function useQuery() {
 
         if (hasFilters) {
           body.filters = {
-            crime_type: filters.crime_type || undefined,
-            lsoa_code: filters.lsoa_code || undefined,
-            reference_month: filters.reference_month || undefined,
+            ...(filters.crime_type ? { crime_type: filters.crime_type } : {}),
+            ...(filters.lsoa_code ? { lsoa_code: filters.lsoa_code } : {}),
+            ...(filters.reference_month
+              ? { reference_month: filters.reference_month }
+              : {}),
           }
         }
 
-        const response = await fetch(`${API_BASE_URL}/query`, {
+        const apiResponse = await fetch(buildFrontendApiUrl('/chat/query'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -98,29 +101,25 @@ export function useQuery() {
         const endTime = performance.now()
         setLatency(Math.round(endTime - startTime))
 
-        if (!response.ok) {
-          const errorMessage = getErrorMessage(response.status)
-          setError({ code: response.status, message: errorMessage })
+        if (!apiResponse.ok) {
+          setError({
+            code: apiResponse.status,
+            message: getErrorMessage(apiResponse.status),
+          })
           setState('error')
-          return
+          return null
         }
 
-        const data = await response.json()
-
-        if (data.results && data.results.length > 0) {
-          // Ordenar por score decrescente
-          const sortedResults = [...data.results].sort(
-            (a: QueryResult, b: QueryResult) => b.score - a.score
-          )
-          setResults(sortedResults)
-          setState('results')
-        } else {
-          setResults([])
-          setState('empty')
+        const data: ChatQueryResponse = await apiResponse.json()
+        setResponse(data)
+        setState('results')
+        return {
+          response: data,
+          latency: Math.round(endTime - startTime),
         }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
-          return
+          return null
         }
 
         const endTime = performance.now()
@@ -131,7 +130,21 @@ export function useQuery() {
           message: 'Erro interno. Tente novamente em instantes.',
         })
         setState('error')
+        return null
       }
+    },
+    []
+  )
+
+  const restoreResult = useCallback(
+    (storedResponse: ChatQueryResponse, storedLatency: number | null = null) => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      setResponse(storedResponse)
+      setLatency(storedLatency)
+      setError(null)
+      setState('results')
     },
     []
   )
@@ -141,12 +154,11 @@ export function useQuery() {
       abortControllerRef.current.abort()
     }
     setState('idle')
-    setResults([])
+    setResponse(null)
     setError(null)
     setLatency(null)
   }, [])
 
-  // Cleanup ao desmontar
   useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
@@ -157,32 +169,108 @@ export function useQuery() {
 
   return {
     state,
-    results,
+    response,
     error,
     latency,
     executeQuery,
+    restoreResult,
     reset,
   }
 }
 
-// Hook para histórico da sessão
+// Hook para historico persistido no navegador
 export function useHistory() {
   const [history, setHistory] = useState<HistoryItem[]>([])
+  const hasLoadedHistoryRef = useRef(false)
 
-  const addToHistory = useCallback((query: string, filters: QueryFilters) => {
-    setHistory((prev) => {
-      const newItem: HistoryItem = {
-        id: crypto.randomUUID(),
-        query,
-        filters,
-        timestamp: new Date(),
+  useEffect(() => {
+    try {
+      const rawHistory = window.localStorage.getItem(HISTORY_STORAGE_KEY)
+      if (!rawHistory) {
+        hasLoadedHistoryRef.current = true
+        return
       }
 
-      // Manter apenas as últimas 10 perguntas
-      const updated = [newItem, ...prev].slice(0, 10)
-      return updated
-    })
+      const parsedHistory = JSON.parse(rawHistory)
+      if (!Array.isArray(parsedHistory)) {
+        hasLoadedHistoryRef.current = true
+        return
+      }
+
+      const normalizedHistory = parsedHistory
+        .filter((item): item is Omit<HistoryItem, 'timestamp'> & { timestamp: string } => {
+          return (
+            typeof item === 'object' &&
+            item !== null &&
+            typeof item.id === 'string' &&
+            typeof item.query === 'string' &&
+            typeof item.timestamp === 'string' &&
+            typeof item.filters === 'object' &&
+            item.filters !== null
+          )
+        })
+        .map((item) => ({
+          ...item,
+          topK: typeof item.topK === 'number' ? item.topK : 5,
+          latency: typeof item.latency === 'number' ? item.latency : null,
+          response:
+            typeof item.response === 'object' && item.response !== null
+              ? item.response
+              : null,
+          timestamp: new Date(item.timestamp),
+        }))
+        .filter((item) => !Number.isNaN(item.timestamp.getTime()))
+        .slice(0, HISTORY_LIMIT)
+
+      setHistory(normalizedHistory)
+    } catch {
+      window.localStorage.removeItem(HISTORY_STORAGE_KEY)
+    } finally {
+      hasLoadedHistoryRef.current = true
+    }
   }, [])
+
+  useEffect(() => {
+    if (!hasLoadedHistoryRef.current) {
+      return
+    }
+
+    window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history))
+  }, [history])
+
+  const addToHistory = useCallback(
+    (
+      query: string,
+      filters: QueryFilters,
+      topK: number,
+      response: ChatQueryResponse | null,
+      latency: number | null
+    ) => {
+      setHistory((prev) => {
+        const nextHistory = prev.filter(
+          (item) =>
+            !(
+              item.query === query &&
+              item.topK === topK &&
+              JSON.stringify(item.filters) === JSON.stringify(filters)
+            )
+        )
+
+        const newItem: HistoryItem = {
+          id: crypto.randomUUID(),
+          query,
+          filters,
+          topK,
+          response,
+          latency,
+          timestamp: new Date(),
+        }
+
+        return [newItem, ...nextHistory].slice(0, HISTORY_LIMIT)
+      })
+    },
+    []
+  )
 
   const clearHistory = useCallback(() => {
     setHistory([])
@@ -195,23 +283,21 @@ export function useHistory() {
   }
 }
 
-// Helper para mensagens de erro
 function getErrorMessage(code: number): string {
   switch (code) {
     case 401:
-      return 'Sessão expirada. Atualize a página para continuar.'
+      return 'Sessao expirada. Atualize a pagina para continuar.'
     case 403:
-      return 'Você não tem permissão para realizar esta consulta.'
+      return 'Voce nao tem permissao para realizar esta consulta.'
     case 422:
-      return 'Consulta inválida. Verifique os filtros e tente novamente.'
+      return 'Consulta invalida. Verifique os filtros e tente novamente.'
     case 502:
-      return 'Serviço de busca indisponível. Verifique se o Milvus e o Ollama estão rodando.'
+      return 'API RAG indisponivel. Verifique FastAPI, Milvus e Ollama.'
     default:
       return 'Erro interno. Tente novamente em instantes.'
   }
 }
 
-// Validadores
 export function validateLsoaCode(code: string): boolean {
   if (!code) return true
   return /^E\d{8}$/.test(code)

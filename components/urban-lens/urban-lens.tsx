@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { TopBar } from './top-bar'
-import { Sidebar } from './sidebar'
+import { useCallback, useState } from 'react'
+
+import { useHistory, useQuery, validateLsoaCode, validateReferenceMonth } from '@/hooks/use-urban-lens'
+import type { HistoryItem, QueryFilters } from '@/lib/types'
+
 import { QueryInput } from './query-input'
 import { ResultsArea } from './results-area'
-import { useQuery, useHistory, validateLsoaCode, validateReferenceMonth } from '@/hooks/use-urban-lens'
-import type { QueryFilters, HistoryItem } from '@/lib/types'
+import { Sidebar } from './sidebar'
+import { TopBar } from './top-bar'
 
 const DEFAULT_FILTERS: QueryFilters = {
   crime_type: null,
@@ -17,16 +19,13 @@ const DEFAULT_FILTERS: QueryFilters = {
 const DEFAULT_TOP_K = 5
 
 export function UrbanLens() {
-  // Estado do formulário
   const [query, setQuery] = useState('')
   const [filters, setFilters] = useState<QueryFilters>(DEFAULT_FILTERS)
   const [topK, setTopK] = useState(DEFAULT_TOP_K)
 
-  // Hooks
-  const { state, results, error, latency, executeQuery, reset } = useQuery()
+  const { state, response, error, latency, executeQuery, restoreResult, reset } = useQuery()
   const { history, addToHistory, clearHistory } = useHistory()
 
-  // Validação
   const isLsoaValid = !filters.lsoa_code || validateLsoaCode(filters.lsoa_code)
   const isMonthValid =
     !filters.reference_month || validateReferenceMonth(filters.reference_month)
@@ -36,48 +35,53 @@ export function UrbanLens() {
     isMonthValid &&
     state !== 'loading'
 
-  // Handlers
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (!canSubmit) return
 
-    // Adicionar ao histórico
-    addToHistory(query, filters)
+    addToHistory(query, filters, topK, null, null)
 
-    // Executar query
-    executeQuery(query, filters, topK)
+    const result = await executeQuery(query, filters, topK)
+    if (!result) return
+
+    addToHistory(query, filters, topK, result.response, result.latency)
   }, [canSubmit, query, filters, topK, addToHistory, executeQuery])
 
   const handleReset = useCallback(() => {
     reset()
-    // Mantém query e filtros
   }, [reset])
 
   const handleRetry = useCallback(() => {
     if (query.trim()) {
-      executeQuery(query, filters, topK)
-    } else {
-      reset()
+      void executeQuery(query, filters, topK)
+      return
     }
+
+    reset()
   }, [query, filters, topK, executeQuery, reset])
 
   const handleHistorySelect = useCallback(
     (item: HistoryItem) => {
       setQuery(item.query)
       setFilters(item.filters)
+      setTopK(item.topK)
+
+      if (item.response) {
+        restoreResult(item.response, item.latency)
+        return
+      }
+
+      void executeQuery(item.query, item.filters, item.topK)
     },
-    []
+    [executeQuery, restoreResult]
   )
 
   const isDisabled = state === 'loading'
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Barra Superior */}
+    <div className="flex h-screen flex-col bg-background">
       <TopBar />
 
-      {/* Conteúdo Principal */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         <Sidebar
           filters={filters}
           onFiltersChange={setFilters}
@@ -89,10 +93,8 @@ export function UrbanLens() {
           disabled={isDisabled}
         />
 
-        {/* Área Principal */}
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Campo de Pergunta */}
-          <div className="p-6 border-b bg-card">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="border-b bg-card p-6">
             <QueryInput
               value={query}
               onChange={setQuery}
@@ -102,11 +104,10 @@ export function UrbanLens() {
             />
           </div>
 
-          {/* Área de Resultados */}
-          <div className="flex-1 overflow-hidden p-6">
+          <div className="flex-1 min-h-0 overflow-hidden p-6">
             <ResultsArea
               state={state}
-              results={results}
+              response={response}
               error={error}
               latency={latency}
               onReset={handleReset}
