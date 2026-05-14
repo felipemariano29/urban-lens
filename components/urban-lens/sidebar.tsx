@@ -3,7 +3,6 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -53,9 +52,9 @@ export function Sidebar({
       : null
 
   return (
-    <aside className="h-full w-72 shrink-0 border-r bg-sidebar flex flex-col">
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
+    <aside className="flex h-full w-80 min-w-80 shrink-0 flex-col border-r bg-sidebar">
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-6 p-4">
           <section>
             <div className="flex items-center gap-2 mb-4">
               <FilterIcon className="size-4 text-muted-foreground" />
@@ -153,6 +152,7 @@ export function Sidebar({
                   max={20}
                   step={1}
                   disabled={disabled}
+                  className="px-2"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>1</span>
@@ -209,7 +209,7 @@ export function Sidebar({
             )}
           </section>
         </div>
-      </ScrollArea>
+      </div>
     </aside>
   )
 }
