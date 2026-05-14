@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { EvidenceCitation } from '@/lib/types'
+import { formatEvidenceTitle, summarizeMetadata } from '@/lib/presentation'
 import { cn } from '@/lib/utils'
 import { ChevronUpIcon, ChevronDownIcon, QuoteIcon } from 'lucide-react'
 
@@ -44,7 +45,8 @@ export function ResultCard({ evidence, rank }: ResultCardProps) {
   const [expanded, setExpanded] = useState(false)
   const { score, excerpt, metadata } = evidence
 
-  const title = evidence.source || metadata.title || `Evidencia ${rank}`
+  const title = formatEvidenceTitle(evidence, rank)
+  const metadataSummary = summarizeMetadata(metadata)
   const needsTruncation = excerpt.length > TRUNCATE_LENGTH
   const displayContent =
     needsTruncation && !expanded
@@ -87,29 +89,17 @@ export function ResultCard({ evidence, rank }: ResultCardProps) {
             <span className="font-medium">Capturada em:</span>{' '}
             {formatTimestamp(evidence.timestamp)}
           </span>
-          {metadata.crime_type && (
-            <span>
-              <span className="font-medium">Tipo:</span> {String(metadata.crime_type)}
-            </span>
-          )}
-          {metadata.lsoa_code && (
-            <span>
-              <span className="font-medium">LSOA:</span> {String(metadata.lsoa_code)}
-            </span>
-          )}
-          {metadata.reference_month && (
-            <span>
-              <span className="font-medium">Ref.:</span>{' '}
-              {String(metadata.reference_month)}
-            </span>
-          )}
-          {metadata.dataset_version_id && (
-            <span>
-              <span className="font-medium">Dataset:</span>{' '}
-              {String(metadata.dataset_version_id)}
-            </span>
-          )}
         </div>
+
+        {metadataSummary.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {metadataSummary.map((item) => (
+              <Badge key={`${item.label}:${item.value}`} variant="outline" className="bg-muted/40">
+                <span className="text-muted-foreground">{item.label}:</span> {item.value}
+              </Badge>
+            ))}
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="pt-0">

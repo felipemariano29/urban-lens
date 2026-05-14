@@ -10,6 +10,12 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { ResultCard } from './result-card'
 import type { AppState, ChatQueryResponse } from '@/lib/types'
 import {
+  extractCrimeTypesFromAnswer,
+  formatProfilePt,
+  normalizeAnswerText,
+  summarizeEvidence,
+} from '@/lib/presentation'
+import {
   SearchIcon,
   AlertTriangleIcon,
   RotateCcwIcon,
@@ -68,6 +74,8 @@ export function ResultsArea({
   const displayedEvidences = response.evidences.slice(0, displayCount)
   const hasMore = displayCount < response.evidences.length
   const isFallback = response.answer.status === 'insufficient_evidence'
+  const evidenceSummary = summarizeEvidence(response)
+  const answerCrimeTypes = extractCrimeTypesFromAnswer(response.answer.text)
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -82,7 +90,7 @@ export function ResultsArea({
           <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
             <span>{response.evidences.length} evidencia(s)</span>
             <span>{response.context.length} chunk(s) recuperado(s)</span>
-            <span>perfil {response.profile}</span>
+            <span>perfil {formatProfilePt(response.profile)}</span>
             <span>modelo {response.answer.model}</span>
             {latency && <span>{latency}ms</span>}
           </div>
@@ -107,9 +115,22 @@ export function ResultsArea({
               </div>
             </CardHeader>
             <CardContent className="pt-0 space-y-3">
-              <p className="text-sm leading-7 text-foreground/90 whitespace-pre-wrap">
-                {response.answer.text}
-              </p>
+              <AnswerSummary response={response} />
+              <FormattedAnswer text={response.answer.text} />
+              {answerCrimeTypes.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Tipos de crime citados
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {answerCrimeTypes.slice(0, 6).map((crimeType) => (
+                      <Badge key={crimeType} variant="outline" className="bg-primary/5">
+                        {crimeType}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
               {response.fallback_reason && (
                 <p className="text-xs text-muted-foreground">
                   Motivo tecnico: {response.fallback_reason}
@@ -141,6 +162,83 @@ export function ResultsArea({
           )}
         </div>
       </ScrollArea>
+    </div>
+  )
+}
+
+function AnswerSummary({ response }: { response: ChatQueryResponse }) {
+  const summary = summarizeEvidence(response)
+
+  return (
+    <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 text-sm md:grid-cols-3">
+      <SummaryBlock
+        label="Periodo"
+        value={summary.months.length > 0 ? summary.months.join(', ') : 'Nao identificado'}
+      />
+      <SummaryBlock
+        label="Escopo das evidencias"
+        value={summary.chunkTypes.length > 0 ? summary.chunkTypes.slice(0, 2).join(' | ') : 'Nao identificado'}
+      />
+      <SummaryBlock
+        label="Areas citadas"
+        value={summary.lsoaCodes.length > 0 ? summary.lsoaCodes.slice(0, 3).join(', ') : 'Nao identificado'}
+      />
+    </div>
+  )
+}
+
+function SummaryBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p className="text-sm font-medium text-foreground/90">{value}</p>
+    </div>
+  )
+}
+
+function FormattedAnswer({ text }: { text: string }) {
+  const normalized = normalizeAnswerText(text)
+  const lines = normalized
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  const blocks: Array<{ type: 'paragraph' | 'list'; items: string[] }> = []
+
+  for (const line of lines) {
+    const isListItem = /^[-*]\s+/.test(line)
+    const content = line.replace(/^[-*]\s+/, '')
+    const lastBlock = blocks[blocks.length - 1]
+
+    if (isListItem) {
+      if (lastBlock?.type === 'list') {
+        lastBlock.items.push(content)
+      } else {
+        blocks.push({ type: 'list', items: [content] })
+      }
+      continue
+    }
+
+    blocks.push({ type: 'paragraph', items: [content] })
+  }
+
+  return (
+    <div className="space-y-3">
+      {blocks.map((block, index) =>
+        block.type === 'list' ? (
+          <ul key={index} className="list-disc space-y-1 pl-5 text-sm leading-7 text-foreground/90">
+            {block.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        ) : (
+          <p key={index} className="text-sm leading-7 text-foreground/90 whitespace-pre-wrap">
+            {block.items[0]}
+          </p>
+        )
+      )}
     </div>
   )
 }
