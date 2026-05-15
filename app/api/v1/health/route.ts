@@ -1,19 +1,25 @@
 import { NextResponse } from 'next/server'
 
-// Mock health endpoint para demonstração
-// Em produção, isso seria proxy para a API real
-export async function GET() {
-  // Simular verificação de saúde dos serviços
-  const mockResponse = {
-    status: 'healthy' as const,
-    version: '0.1.0',
-    timestamp: new Date().toISOString(),
-    dependencies: {
-      catalog: 'ok' as const,
-      rag_embedder: 'ok' as const,
-      rag_vector_store: 'ok' as const,
-    },
-  }
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000'
 
-  return NextResponse.json(mockResponse)
+export async function GET() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/v1/health`, {
+      signal: AbortSignal.timeout(5000),
+    })
+    const data = await response.json()
+    return NextResponse.json(data, { status: response.status })
+  } catch {
+    return NextResponse.json(
+      {
+        status: 'degraded',
+        dependencies: {
+          catalog: 'unavailable',
+          rag_embedder: 'unavailable',
+          rag_vector_store: 'unavailable',
+        },
+      },
+      { status: 200 }
+    )
+  }
 }

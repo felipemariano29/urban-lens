@@ -12,12 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { CRIME_TYPES, type QueryFilters, type HistoryItem } from '@/lib/types'
+import { CRIME_TYPES, type QueryFilters, type HistoryItem, type QueryMode } from '@/lib/types'
 import { validateLsoaCode, validateReferenceMonth } from '@/hooks/use-urban-lens'
-import { FilterIcon, HistoryIcon, ClockIcon, TrashIcon } from 'lucide-react'
+import { FilterIcon, HistoryIcon, ClockIcon, TrashIcon, SearchIcon, MessageSquareIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
+  mode: QueryMode
+  onModeChange: (mode: QueryMode) => void
   filters: QueryFilters
   onFiltersChange: (filters: QueryFilters) => void
   topK: number
@@ -29,6 +31,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({
+  mode,
+  onModeChange,
   filters,
   onFiltersChange,
   topK,
@@ -52,6 +56,44 @@ export function Sidebar({
     <aside className="w-72 border-r bg-sidebar flex flex-col h-full">
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-6">
+          {/* Modo de consulta */}
+          <section>
+            <h2 className="font-semibold text-sm mb-3">Modo</h2>
+            <div className="grid grid-cols-2 gap-1 rounded-lg border p-1 bg-muted/40">
+              <button
+                onClick={() => onModeChange('search')}
+                disabled={disabled}
+                className={cn(
+                  'flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors',
+                  mode === 'search'
+                    ? 'bg-background shadow-sm text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <SearchIcon className="size-3" />
+                Busca
+              </button>
+              <button
+                onClick={() => onModeChange('chat')}
+                disabled={disabled}
+                className={cn(
+                  'flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors',
+                  mode === 'chat'
+                    ? 'bg-background shadow-sm text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <MessageSquareIcon className="size-3" />
+                Chat RAG
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {mode === 'search'
+                ? 'Retorna chunks similares por vetor.'
+                : 'Gera resposta com citações via LLM.'}
+            </p>
+          </section>
+
           {/* Filtros */}
           <section>
             <div className="flex items-center gap-2 mb-4">

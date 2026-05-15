@@ -24,11 +24,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/v1/query`, {
+    // LLM generation can be slow — 60s timeout
+    const response = await fetch(`${BACKEND_URL}/api/v1/chat/query`, {
       method: 'POST',
       headers: buildHeaders(),
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(60000),
     })
 
     const data = await response.json()
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     if (err instanceof Error && err.name === 'TimeoutError') {
       return NextResponse.json(
-        { error: 'TIMEOUT', message: 'Backend did not respond in time.' },
+        { error: 'TIMEOUT', message: 'O modelo demorou mais de 60s para responder.' },
         { status: 504 }
       )
     }

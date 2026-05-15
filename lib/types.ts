@@ -1,6 +1,7 @@
 // Urban-Lens Types
 
 export type AppState = 'idle' | 'loading' | 'results' | 'error' | 'empty'
+export type QueryMode = 'search' | 'chat'
 
 export interface QueryFilters {
   crime_type: string | null
@@ -62,6 +63,50 @@ export interface APIError {
     loc: string[]
     msg: string
   }>
+}
+
+// Chat / RAG types
+export interface RagAnswer {
+  text: string
+  status: 'answered' | 'insufficient_evidence'
+  model: string
+}
+
+export interface EvidenceCitation {
+  id: string
+  source: string
+  reference: string
+  score: number
+  timestamp: string
+  excerpt: string
+  metadata: Record<string, unknown>
+}
+
+export interface RagContextChunk {
+  id: string
+  content: string
+  score: number
+  source: string
+  reference: string
+  timestamp: string
+  metadata: Record<string, unknown>
+}
+
+export type AccessProfile = 'intel_user' | 'developer' | 'admin'
+
+export interface ChatQueryRequest {
+  query: string
+  filters?: Partial<QueryFilters> | null
+  top_k?: number
+  model?: string
+}
+
+export interface ChatQueryResponse {
+  answer: RagAnswer
+  evidences: EvidenceCitation[]
+  context: RagContextChunk[]
+  profile: AccessProfile
+  fallback_reason: string | null
 }
 
 // Crime types from DATA.POLICE.UK
