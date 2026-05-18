@@ -35,7 +35,7 @@ else
 endif
 COMPOSE_MODE ?= cpu
 COMPOSE_DIR := infra/compose
-COMPOSE_FILES := -f $(COMPOSE_DIR)/docker-compose.yml
+COMPOSE_FILES := --env-file .env -f $(COMPOSE_DIR)/docker-compose.yml
 ifeq ($(COMPOSE_MODE),gpu)
 	COMPOSE_FILES += -f $(COMPOSE_DIR)/docker-compose.gpu.yml
 endif
