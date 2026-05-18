@@ -537,13 +537,17 @@ class MetadataStore:
     ) -> dict[str, int]:
         minute_count = 0
         day_count = 0
+        minute_tokens = 0
+        day_tokens = 0
         now = datetime.now(UTC)
 
         with self._connect() as connection, connection.cursor() as cursor:
             if window_minutes is not None:
                 cursor.execute(
                     """
-                    SELECT COUNT(*)
+                    SELECT
+                        COUNT(*),
+                        COALESCE(SUM(COALESCE((metadata_json->>'total_tokens')::int, 0)), 0)
                     FROM governance.request_audit
                     WHERE client_id = %s
                       AND completed_at >= %s
@@ -552,11 +556,14 @@ class MetadataStore:
                 )
                 row = cursor.fetchone()
                 minute_count = int(row[0]) if row else 0
+                minute_tokens = int(row[1]) if row else 0
 
             if window_days is not None:
                 cursor.execute(
                     """
-                    SELECT COUNT(*)
+                    SELECT
+                        COUNT(*),
+                        COALESCE(SUM(COALESCE((metadata_json->>'total_tokens')::int, 0)), 0)
                     FROM governance.request_audit
                     WHERE client_id = %s
                       AND completed_at >= %s
@@ -565,8 +572,14 @@ class MetadataStore:
                 )
                 row = cursor.fetchone()
                 day_count = int(row[0]) if row else 0
+                day_tokens = int(row[1]) if row else 0
 
-        return {"minute_count": minute_count, "day_count": day_count}
+        return {
+            "minute_count": minute_count,
+            "day_count": day_count,
+            "minute_tokens": minute_tokens,
+            "day_tokens": day_tokens,
+        }
 
     def list_api_clients(
         self,

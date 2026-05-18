@@ -103,4 +103,5 @@ def chat_query(
             detail="RAG backend returned an error. Please try again later.",
         )
 
+    request.state.audit_context["token_usage"] = result.token_usage.model_dump()
     return ChatQueryResponse(**result.model_dump())

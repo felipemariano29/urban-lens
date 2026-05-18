@@ -98,9 +98,9 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         method = request.method
-        route = _extract_route_pattern(request)
+        in_progress_route = "unresolved"
 
-        REQUEST_IN_PROGRESS.labels(method=method, route=route).inc()
+        REQUEST_IN_PROGRESS.labels(method=method, route=in_progress_route).inc()
         start_time = time.perf_counter()
 
         try:
@@ -111,6 +111,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             raise
         finally:
             duration = time.perf_counter() - start_time
+            route = _extract_route_pattern(request)
             role = _extract_role(request)
             plan = _extract_plan(request)
 
@@ -128,7 +129,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
                 role=role,
             ).observe(duration)
 
-            REQUEST_IN_PROGRESS.labels(method=method, route=route).dec()
+            REQUEST_IN_PROGRESS.labels(method=method, route=in_progress_route).dec()
 
         return response
 

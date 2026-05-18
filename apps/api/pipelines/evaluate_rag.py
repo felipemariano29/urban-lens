@@ -157,9 +157,10 @@ def evaluate_question(pipeline: RagPipeline, question: EvalQuestion) -> EvalResu
             RagQuery(
                 query=question.question,
                 filters=RagFilters(),
-                profile=AccessProfile(roles=["admin"]),
+                profile=AccessProfile.admin,
                 top_k=5,
                 min_score=0.2,
+                model=pipeline.config.chat_model,
             )
         )
         latency_ms = (time.perf_counter() - start) * 1000

@@ -3,13 +3,17 @@ from __future__ import annotations
 import hashlib
 import hmac
 import os
+import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
 import jwt
 from fastapi import Header, HTTPException, Request, status
 
+from urban_lens.api.middleware.metrics import record_api_key_auth, record_rate_limit_hit
+
 _JWT_ALGORITHM = "HS256"
+logger = logging.getLogger(__name__)
 
 VALID_ROLES = frozenset({"viewer", "operator", "intel_user", "developer", "admin", "internal_service"})
 
@@ -42,9 +46,11 @@ def get_current_profile(
         if internal_api_key and x_api_key == internal_api_key:
             profile = UserProfile(role="internal_service", auth_type="internal_api_key")
             request.state.user_profile = profile
+            record_api_key_auth(status="success", plan="internal")
             return profile
         profile = _authenticate_governed_api_key(x_api_key)
         request.state.user_profile = profile
+        record_api_key_auth(status="success", plan=profile.plan_code or "none")
         return profile
 
     if authorization is None:
@@ -97,26 +103,35 @@ def _authenticate_governed_api_key(api_key: str) -> UserProfile:
     store = MetadataStore(AppConfig.from_env().postgres_dsn)
     record = store.get_api_key_record(key_prefix)
     if record is None:
+        record_api_key_auth(status="invalid_prefix")
         raise _invalid_api_key()
 
     if record["api_key_status"] != "active":
+        record_api_key_auth(status="inactive", plan=str(record.get("plan_code") or "none"))
         raise _invalid_api_key()
     if record["client_status"] != "active":
+        record_api_key_auth(status="client_inactive", plan=str(record.get("plan_code") or "none"))
         raise _invalid_api_key()
     if record["user_status"] != "active":
+        record_api_key_auth(status="user_inactive", plan=str(record.get("plan_code") or "none"))
         raise _invalid_api_key()
 
     expires_at = record.get("expires_at")
     if expires_at is not None and expires_at <= datetime.now(UTC):
+        record_api_key_auth(status="expired", plan=str(record.get("plan_code") or "none"))
         raise _invalid_api_key(detail="API key has expired.")
 
     expected_hash = str(record["key_hash"])
     computed_hash = hashlib.sha256(api_key.encode("utf-8")).hexdigest()
     if not hmac.compare_digest(expected_hash, computed_hash):
+        record_api_key_auth(status="hash_mismatch", plan=str(record.get("plan_code") or "none"))
         raise _invalid_api_key()
 
     _enforce_governed_rate_limits(store, record)
-    store.touch_api_key_usage(record["api_key_id"], record["client_id"])
+    try:
+        store.touch_api_key_usage(record["api_key_id"], record["client_id"])
+    except Exception as exc:
+        logger.warning("Failed to update API key last-used timestamps: %s", exc)
     role = str(record["role"])
     if role not in VALID_ROLES:
         raise HTTPException(
@@ -169,6 +184,7 @@ def _enforce_governed_rate_limits(store, record: dict[str, object]) -> None:
     day_count = usage.get("day_count", 0)
 
     if requests_per_minute is not None and minute_count >= requests_per_minute:
+        record_rate_limit_hit("minute", str(record.get("plan_code") or "unknown"))
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=(
@@ -178,6 +194,7 @@ def _enforce_governed_rate_limits(store, record: dict[str, object]) -> None:
         )
 
     if requests_per_day is not None and day_count >= requests_per_day:
+        record_rate_limit_hit("day", str(record.get("plan_code") or "unknown"))
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=(

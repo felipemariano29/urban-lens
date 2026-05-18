@@ -6,6 +6,10 @@ from urban_lens.api.core.auth import UserProfile
 from urban_lens.core.settings import AppConfig
 
 
+def _normalize_model_name(name: str) -> str:
+    return name.split(":", 1)[0].strip().lower()
+
+
 def enforce_plan_top_k(profile: UserProfile, requested_top_k: int) -> None:
     if profile.plan_max_top_k is None:
         return
@@ -24,7 +28,9 @@ def resolve_chat_model(profile: UserProfile, requested_model: str | None) -> str
     resolved_model = requested_model or AppConfig.from_env().chat_model
     if not profile.allowed_models:
         return resolved_model
-    if resolved_model in profile.allowed_models:
+    normalized_resolved = _normalize_model_name(resolved_model)
+    normalized_allowed = {_normalize_model_name(model) for model in profile.allowed_models}
+    if normalized_resolved in normalized_allowed:
         return resolved_model
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,

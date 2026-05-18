@@ -22,22 +22,39 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/system", tags=["System"])
 
 
+def _normalize_model_name(name: str) -> str:
+    return name.split(":", 1)[0].strip().lower()
+
+
+def _is_generation_model(name: str, embedding_model: str) -> bool:
+    normalized_name = _normalize_model_name(name)
+    normalized_embedding = _normalize_model_name(embedding_model)
+    if normalized_name == normalized_embedding:
+        return False
+    return "embed" not in normalized_name
+
+
 def _fetch_ollama_models(config: AppConfig) -> list[OllamaModelInfo]:
     request = urllib.request.Request(f"{config.ollama_base_url.rstrip('/')}/api/tags", method="GET")
     with urllib.request.urlopen(request, timeout=5) as response:
         payload = json.loads(response.read().decode("utf-8"))
 
-    return [
-        OllamaModelInfo(
-            name=model["name"],
-            size_bytes=model.get("size"),
-            digest=model.get("digest"),
-            modified_at=datetime.fromisoformat(model["modified_at"].replace("Z", "+00:00"))
-            if model.get("modified_at")
-            else None,
+    models: list[OllamaModelInfo] = []
+    for model in payload.get("models", []):
+        name = str(model["name"])
+        if not _is_generation_model(name, config.embedding_model):
+            continue
+        models.append(
+            OllamaModelInfo(
+                name=name,
+                size_bytes=model.get("size"),
+                digest=model.get("digest"),
+                modified_at=datetime.fromisoformat(model["modified_at"].replace("Z", "+00:00"))
+                if model.get("modified_at")
+                else None,
+            )
         )
-        for model in payload.get("models", [])
-    ]
+    return models
 
 
 @router.get(

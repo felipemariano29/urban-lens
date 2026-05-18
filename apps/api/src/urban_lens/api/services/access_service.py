@@ -154,7 +154,9 @@ def rotate_api_key(
     new_api_key = f"ul_{new_key_prefix}_{new_key_secret}"
     new_key_hash = hashlib.sha256(new_api_key.encode("utf-8")).hexdigest()
 
-    expires_at = _normalize_expiration(body.expires_at) if body else None
+    expires_at = key_record.get("expires_at")
+    if body and body.expires_at is not None:
+        expires_at = _normalize_expiration(body.expires_at)
 
     new_api_key_id = store.rotate_api_key(
         api_key_id,

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import unicodedata
 import urllib.request
+from dataclasses import dataclass
 
 from urban_lens.rag.contracts import AccessProfile
 
@@ -147,11 +148,22 @@ def infer_answer_shape(question: str, language: str) -> str:
     )
 
 
+@dataclass(frozen=True)
+class GenerationResult:
+    text: str
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+
+    @property
+    def total_tokens(self) -> int:
+        return self.prompt_tokens + self.completion_tokens
+
+
 class OllamaGenerator:
     def __init__(self, base_url: str) -> None:
         self.base_url = base_url.rstrip("/")
 
-    def generate(self, prompt: str, model: str) -> str:
+    def generate(self, prompt: str, model: str) -> GenerationResult:
         payload = json.dumps({"model": model, "prompt": prompt, "stream": False}).encode("utf-8")
         request = urllib.request.Request(
             f"{self.base_url}/api/generate",
@@ -161,7 +173,11 @@ class OllamaGenerator:
         )
         with urllib.request.urlopen(request, timeout=180) as response:
             result = json.loads(response.read().decode("utf-8"))
-        return str(result.get("response", "")).strip()
+        return GenerationResult(
+            text=str(result.get("response", "")).strip(),
+            prompt_tokens=int(result.get("prompt_eval_count") or 0),
+            completion_tokens=int(result.get("eval_count") or 0),
+        )
 
 
 def remove_repeated_question_prefix(answer: str, question: str) -> str:

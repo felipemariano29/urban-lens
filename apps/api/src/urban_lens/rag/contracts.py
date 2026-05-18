@@ -52,7 +52,7 @@ class RagQuery(BaseModel):
     top_k: int = Field(5, ge=1, le=20, description="Number of retrieved chunks.")
     filters: RagFilters = Field(default_factory=RagFilters, description="Structured metadata filters.")
     profile: AccessProfile = Field(AccessProfile.intel_user, description="Access profile used to shape context.")
-    model: str = Field(..., description="Local Ollama generation model.")
+    model: str = Field("llama3", description="Local Ollama generation model.")
     min_score: float = Field(0.15, ge=0.0, le=1.0, description="Minimum similarity score for enough evidence.")
     max_context_chars: int = Field(6000, ge=500, le=20000, description="Prompt context budget in characters.")
 
@@ -92,6 +92,14 @@ class RagTimings(BaseModel):
     total_ms: float = Field(..., ge=0.0, description="End-to-end chat pipeline duration.")
 
 
+class RagTokenUsage(BaseModel):
+    prompt_tokens: int = Field(0, ge=0, description="Prompt tokens consumed by the model.")
+    completion_tokens: int = Field(0, ge=0, description="Completion tokens produced by the model.")
+    total_tokens: int = Field(0, ge=0, description="Total model tokens for this answer.")
+    context_limit_tokens: int = Field(0, ge=0, description="Configured token budget for the chat model context window.")
+    usage_ratio: float = Field(0.0, ge=0.0, description="Used/context_limit ratio for this request.")
+
+
 class RagResponse(BaseModel):
     answer: RagAnswer
     evidences: list[EvidenceCitation] = Field(default_factory=list)
@@ -99,3 +107,4 @@ class RagResponse(BaseModel):
     profile: AccessProfile
     fallback_reason: str | None = None
     timings_ms: RagTimings
+    token_usage: RagTokenUsage = Field(default_factory=RagTokenUsage)

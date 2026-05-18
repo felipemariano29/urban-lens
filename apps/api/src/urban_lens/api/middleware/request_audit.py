@@ -4,6 +4,7 @@ import logging
 import time
 from datetime import UTC, datetime
 
+from starlette.background import BackgroundTask, BackgroundTasks
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -25,12 +26,34 @@ class RequestAuditMiddleware(BaseHTTPMiddleware):
         if not isinstance(profile, UserProfile):
             return response
 
-        self._record_request(
+        background_task = BackgroundTask(
+            self._record_request,
             request=request,
             response=response,
             profile=profile,
             latency_ms=round((time.perf_counter() - started_at) * 1000, 1),
         )
+        if response.background is None:
+            response.background = background_task
+        elif isinstance(response.background, BackgroundTasks):
+            response.background.add_task(
+                self._record_request,
+                request=request,
+                response=response,
+                profile=profile,
+                latency_ms=round((time.perf_counter() - started_at) * 1000, 1),
+            )
+        else:
+            tasks = BackgroundTasks()
+            tasks.add_task(response.background.func, *response.background.args, **response.background.kwargs)
+            tasks.add_task(
+                self._record_request,
+                request=request,
+                response=response,
+                profile=profile,
+                latency_ms=round((time.perf_counter() - started_at) * 1000, 1),
+            )
+            response.background = tasks
         return response
 
     def _record_request(
@@ -63,6 +86,7 @@ class RequestAuditMiddleware(BaseHTTPMiddleware):
                         "auth_type": profile.auth_type,
                         "plan_code": profile.plan_code,
                         "top_k": audit_context.get("top_k"),
+                        **(audit_context.get("token_usage") or {}),
                     },
                     completed_at=datetime.now(UTC),
                 )

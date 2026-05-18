@@ -345,6 +345,36 @@ class TestAuthentication:
         assert resp.status_code == 403
         assert "phi3" in resp.json()["message"]
 
+    def test_governed_chat_allows_tagged_model_when_plan_allows_base_name(self, client):
+        governed_record = _governed_api_key_record(allowed_models=["llama3"])
+        mock_response = MagicMock()
+        mock_response.model_dump.return_value = {
+            "answer": {"text": "ok", "status": "answered", "model": "llama3:latest"},
+            "evidences": [],
+            "context": [],
+            "profile": "intel_user",
+            "fallback_reason": None,
+            "timings_ms": {
+                "embedding_ms": 1.0,
+                "retrieval_ms": 1.0,
+                "generation_ms": 1.0,
+                "total_ms": 3.0,
+            },
+        }
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record),
+            patch("urban_lens.governance.store.MetadataStore.count_client_requests", return_value={"minute_count": 0, "day_count": 0}),
+            patch("urban_lens.governance.store.MetadataStore.touch_api_key_usage"),
+            patch("urban_lens.api.services.rag_service.run_chat_query", return_value=mock_response) as run_chat_query,
+        ):
+            resp = client.post(
+                "/api/v1/chat/query",
+                json={"query": "test", "model": "llama3:latest"},
+                headers=_api_key_header(_governed_api_key()),
+            )
+        assert resp.status_code == 200
+        assert run_chat_query.call_args.kwargs["model"] == "llama3:latest"
+
     def test_governed_chat_uses_default_model_when_plan_allows_it(self, client, monkeypatch):
         monkeypatch.setenv("URBAN_LENS_CHAT_MODEL", "llama3")
         governed_record = _governed_api_key_record(allowed_models=["llama3"])
@@ -449,6 +479,14 @@ class TestErrorEnvelopes:
         assert body["error"] == "VALIDATION_ERROR"
         assert "message" in body
         assert "details" in body
+
+    def test_blank_query_returns_422(self, client):
+        resp = client.post("/api/v1/query", json={"query": "   "}, headers=_auth("viewer"))
+        assert resp.status_code == 422
+
+    def test_blank_chat_query_returns_422(self, client):
+        resp = client.post("/api/v1/chat/query", json={"query": "   "}, headers=_auth("viewer"))
+        assert resp.status_code == 422
 
     def test_502_has_standardised_envelope(self, client):
         with patch("urban_lens.api.services.rag_service.run_query", side_effect=RuntimeError("down")):
@@ -913,6 +951,10 @@ class TestAccessManagement:
         resp = client.get("/api/v1/access/keys", headers=_auth("viewer"))
         assert resp.status_code == 403
 
+    def test_list_keys_returns_403_for_operator(self, client):
+        resp = client.get("/api/v1/access/keys", headers=_auth("operator"))
+        assert resp.status_code == 403
+
     def test_list_keys_filters_by_client_id(self, client):
         with patch("urban_lens.governance.store.MetadataStore.list_api_keys", return_value=_mock_api_key_list()) as mock_list:
             resp = client.get("/api/v1/access/keys?client_id=client-1", headers=_auth("admin"))
@@ -935,6 +977,10 @@ class TestAccessManagement:
 
     def test_revoke_key_returns_403_for_viewer(self, client):
         resp = client.post("/api/v1/access/keys/key-1/revoke", headers=_auth("viewer"))
+        assert resp.status_code == 403
+
+    def test_revoke_key_returns_403_for_operator(self, client):
+        resp = client.post("/api/v1/access/keys/key-1/revoke", headers=_auth("operator"))
         assert resp.status_code == 403
 
     def test_revoke_key_returns_404_for_unknown_key(self, client):
@@ -982,6 +1028,10 @@ class TestAccessManagement:
         resp = client.post("/api/v1/access/keys/key-1/rotate", headers=_auth("viewer"))
         assert resp.status_code == 403
 
+    def test_rotate_key_returns_403_for_operator(self, client):
+        resp = client.post("/api/v1/access/keys/key-1/rotate", headers=_auth("operator"))
+        assert resp.status_code == 403
+
     def test_rotate_key_returns_404_for_unknown_key(self, client):
         with patch("urban_lens.governance.store.MetadataStore.get_api_key_by_id", return_value=None):
             resp = client.post("/api/v1/access/keys/unknown-key/rotate", headers=_auth("admin"))
@@ -1008,6 +1058,18 @@ class TestAccessManagement:
         assert resp.status_code == 200
         mock_rotate.assert_called_once()
         assert mock_rotate.call_args.kwargs["expires_at"] is not None
+
+    def test_rotate_key_preserves_existing_expiration_by_default(self, client):
+        existing_expiration = datetime.now(UTC) + timedelta(days=30)
+        key_record = _mock_api_key_by_id()
+        key_record["expires_at"] = existing_expiration
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_by_id", return_value=key_record),
+            patch("urban_lens.governance.store.MetadataStore.rotate_api_key", return_value="new-key-id") as mock_rotate,
+        ):
+            resp = client.post("/api/v1/access/keys/key-1/rotate", headers=_auth("admin"))
+        assert resp.status_code == 200
+        assert mock_rotate.call_args.kwargs["expires_at"] == existing_expiration
 
     def test_rotate_key_with_internal_service_key(self, client_with_svc_key):
         with (
@@ -1084,7 +1146,7 @@ class TestAccessManagement:
     def test_get_usage_returns_403_for_jwt_user(self, client):
         resp = client.get("/api/v1/access/me/usage", headers=_auth("viewer"))
         assert resp.status_code == 403
-        assert "governed API keys" in resp.json()["detail"]
+        assert "governed API keys" in resp.json()["message"]
 
     def test_get_usage_returns_403_for_internal_service(self, client_with_svc_key):
         resp = client_with_svc_key.get("/api/v1/access/me/usage", headers=_api_key_header())

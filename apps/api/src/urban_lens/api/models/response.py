@@ -5,7 +5,14 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from urban_lens.rag.contracts import EvidenceCitation, RagAnswer, RagContextChunk, AccessProfile, RagTimings
+from urban_lens.rag.contracts import (
+    AccessProfile,
+    EvidenceCitation,
+    RagAnswer,
+    RagContextChunk,
+    RagTimings,
+    RagTokenUsage,
+)
 
 
 class RunMetricsSchema(BaseModel):
@@ -98,6 +105,7 @@ class ChatQueryResponse(BaseModel):
     profile: AccessProfile = Field(..., description="Normalized access profile applied to the response.")
     fallback_reason: Optional[str] = Field(None, description="Machine-readable fallback reason, when any.")
     timings_ms: RagTimings = Field(..., description="Detailed chat pipeline timings in milliseconds.")
+    token_usage: RagTokenUsage = Field(default_factory=RagTokenUsage, description="Model token usage for this request.")
 
 
 class OllamaModelInfo(BaseModel):
@@ -212,6 +220,10 @@ class UsageStatsResponse(BaseModel):
     requests_per_day_limit: Optional[int] = Field(None, description="Rate limit per day.")
     remaining_minute: Optional[int] = Field(None, description="Remaining requests this minute.")
     remaining_day: Optional[int] = Field(None, description="Remaining requests today.")
+    requests_minute_usage_ratio: Optional[float] = Field(None, description="Used/limit ratio for the current minute window.")
+    requests_day_usage_ratio: Optional[float] = Field(None, description="Used/limit ratio for the current day window.")
+    tokens_last_minute: int = Field(0, description="Total model tokens consumed in the last minute.")
+    tokens_last_day: int = Field(0, description="Total model tokens consumed in the last 24 hours.")
 
 
 class AccessRequestCreateResponse(BaseModel):

@@ -36,9 +36,10 @@ class AppConfig(BaseModel):
     artifact_dir: Path
     milvus_uri: str
     ollama_base_url: str
-    chat_model: str
-    embedding_model: str
-    public_signup_enabled: bool
+    chat_model: str = "llama3"
+    embedding_model: str = "nomic-embed-text"
+    chat_context_window_tokens: int = 8192
+    public_signup_enabled: bool = False
     cors_origins: list[str] = Field(default_factory=lambda: ["*"])
 
     @classmethod
@@ -60,6 +61,7 @@ class AppConfig(BaseModel):
             ollama_base_url=os.getenv("URBAN_LENS_OLLAMA_BASE_URL", "http://localhost:11434"),
             chat_model=os.getenv("URBAN_LENS_CHAT_MODEL", "llama3"),
             embedding_model=os.getenv("URBAN_LENS_EMBEDDING_MODEL", "nomic-embed-text"),
+            chat_context_window_tokens=int(os.getenv("URBAN_LENS_CHAT_CONTEXT_WINDOW_TOKENS", "8192")),
             public_signup_enabled=_env_bool("URBAN_LENS_PUBLIC_SIGNUP_ENABLED", False),
             cors_origins=_env_list("URBAN_LENS_CORS_ORIGINS", ["*"]),
         )

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from urban_lens.rag.contracts import RagFilters
 
@@ -19,7 +19,7 @@ class QueryRequest(BaseModel):
         }
     )
 
-    query: str = Field(..., description="Natural language search query.")
+    query: str = Field(..., min_length=1, description="Natural language search query.")
     filters: Optional[Dict[str, str]] = Field(
         None,
         description=(
@@ -28,6 +28,14 @@ class QueryRequest(BaseModel):
         ),
     )
     top_k: int = Field(5, ge=1, le=20, description="Number of results to return (1-20). Default: 5.")
+
+    @field_validator("query")
+    @classmethod
+    def _validate_query(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Query must not be blank.")
+        return normalized
 
 
 class ChatQueryRequest(BaseModel):
@@ -42,13 +50,21 @@ class ChatQueryRequest(BaseModel):
         }
     )
 
-    query: str = Field(..., description="Natural language question for the RAG chat pipeline.")
+    query: str = Field(..., min_length=1, description="Natural language question for the RAG chat pipeline.")
     filters: RagFilters = Field(default_factory=RagFilters, description="Optional metadata filters.")
     top_k: int = Field(5, ge=1, le=20, description="Number of chunks retrieved for context.")
     model: Optional[str] = Field(
         None,
         description="Local Ollama model used for answer generation. Defaults to the configured chat model.",
     )
+
+    @field_validator("query")
+    @classmethod
+    def _validate_chat_query(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Query must not be blank.")
+        return normalized
 
 
 class AccessCredentialRequest(BaseModel):
@@ -69,8 +85,11 @@ class AccessCredentialRequest(BaseModel):
     full_name: str = Field(..., min_length=3, description="Human-readable account owner name.")
     email: str = Field(..., description="Unique user email used for account lookup and ownership.")
     organization: Optional[str] = Field(None, description="Optional organization or team name.")
-    role: str = Field("viewer", description="Application role assigned to the user.")
-    plan_code: str = Field("FREE", description="Service plan code such as FREE or PRO.")
+    role: Literal["viewer", "operator", "intel_user", "developer", "admin"] = Field(
+        "viewer",
+        description="Application role assigned to the user.",
+    )
+    plan_code: Literal["FREE", "PRO"] = Field("FREE", description="Service plan code such as FREE or PRO.")
     client_name: str = Field(..., min_length=3, description="Logical API client name for the issued key.")
     expires_at: Optional[datetime] = Field(None, description="Optional UTC expiration timestamp for the issued key.")
 

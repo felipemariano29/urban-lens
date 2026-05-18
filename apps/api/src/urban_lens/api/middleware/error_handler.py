@@ -9,13 +9,27 @@ from fastapi.responses import JSONResponse
 logger = logging.getLogger(__name__)
 
 
+def _sanitize_validation_errors(errors: list[dict]) -> list[dict]:
+    sanitized: list[dict] = []
+    for error in errors:
+        normalized = dict(error)
+        ctx = normalized.get("ctx")
+        if isinstance(ctx, dict):
+            normalized["ctx"] = {
+                key: (str(value) if isinstance(value, Exception) else value)
+                for key, value in ctx.items()
+            }
+        sanitized.append(normalized)
+    return sanitized
+
+
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
             "error": "VALIDATION_ERROR",
             "message": "One or more request fields are invalid.",
-            "details": exc.errors(),
+            "details": _sanitize_validation_errors(exc.errors()),
         },
     )
 

@@ -105,7 +105,7 @@ def list_clients(
 def list_keys(
     client_id: Optional[str] = Query(None, description="Filter by parent API client ID."),
     include_revoked: bool = Query(False, description="Include revoked keys in the response."),
-    _profile: UserProfile = Depends(require_roles("admin", "operator", "internal_service")),
+    _profile: UserProfile = Depends(require_roles("admin", "internal_service")),
 ) -> ApiKeyListResponse:
     from urban_lens.api.services import access_service
 
@@ -138,7 +138,7 @@ def list_keys(
 def revoke_key(
     api_key_id: str,
     body: Optional[ApiKeyRevokeRequest] = None,
-    _profile: UserProfile = Depends(require_roles("admin", "operator", "internal_service")),
+    _profile: UserProfile = Depends(require_roles("admin", "internal_service")),
 ) -> ApiKeyRevokeResponse:
     from urban_lens.api.services import access_service
 
@@ -176,7 +176,7 @@ def revoke_key(
 def rotate_key(
     api_key_id: str,
     body: Optional[ApiKeyRotateRequest] = None,
-    _profile: UserProfile = Depends(require_roles("admin", "operator", "internal_service")),
+    _profile: UserProfile = Depends(require_roles("admin", "internal_service")),
 ) -> ApiKeyRotateResponse:
     from urban_lens.api.services import access_service
 
@@ -276,4 +276,12 @@ def get_usage_stats(
         requests_per_day_limit=profile.requests_per_day,
         remaining_minute=remaining_minute,
         remaining_day=remaining_day,
+        requests_minute_usage_ratio=round(counts["minute_count"] / profile.requests_per_minute, 4)
+        if profile.requests_per_minute
+        else None,
+        requests_day_usage_ratio=round(counts["day_count"] / profile.requests_per_day, 4)
+        if profile.requests_per_day
+        else None,
+        tokens_last_minute=counts.get("minute_tokens", 0),
+        tokens_last_day=counts.get("day_tokens", 0),
     )

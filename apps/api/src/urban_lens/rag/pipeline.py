@@ -8,8 +8,8 @@ from urban_lens.core.settings import AppConfig
 from urban_lens.infrastructure.embedder import OllamaEmbedder
 from urban_lens.infrastructure.vector_store import MilvusVectorStore
 from urban_lens.rag.composition import compose_structured_answer
-from urban_lens.rag.contracts import AccessProfile, EvidenceCitation, RagAnswer, RagQuery, RagResponse, RagTimings
-from urban_lens.rag.generation import OllamaGenerator, build_prompt, detect_question_language, remove_repeated_question_prefix
+from urban_lens.rag.contracts import AccessProfile, EvidenceCitation, RagAnswer, RagQuery, RagResponse, RagTimings, RagTokenUsage
+from urban_lens.rag.generation import GenerationResult, OllamaGenerator, build_prompt, detect_question_language, remove_repeated_question_prefix
 from urban_lens.rag.query_understanding import detect_query_intent, enrich_filters_from_question, intent_to_corpus
 from urban_lens.rag.retrieval import build_context_text, filters_to_vector_store, milvus_hits_to_context
 
@@ -39,6 +39,7 @@ class RagPipeline:
     def run(self, request: RagQuery) -> RagResponse:
         started_at = time.perf_counter()
         generation_ms = 0.0
+        token_usage = self._token_usage()
         effective_filters = enrich_filters_from_question(request)
         intent = detect_query_intent(request.query)
 
@@ -56,6 +57,7 @@ class RagPipeline:
                     retrieval_ms=0.0,
                     generation_ms=generation_ms,
                 ),
+                token_usage=token_usage,
             )
 
         retrieval_started_at = time.perf_counter()
@@ -66,18 +68,32 @@ class RagPipeline:
 
         if corpus_selection == "knowledge":
             # Platform/MLflow queries - search only knowledge corpus
-            raw_hits = self.vector_store.search_knowledge(
-                query_embedding=embeddings[0],
-                top_k=request.top_k,
-            )
+            if hasattr(self.vector_store, "search_knowledge"):
+                raw_hits = self.vector_store.search_knowledge(
+                    query_embedding=embeddings[0],
+                    top_k=request.top_k,
+                )
+            else:
+                raw_hits = self.vector_store.search(
+                    query_embedding=embeddings[0],
+                    top_k=request.top_k,
+                    filters=crime_filters,
+                )
         elif corpus_selection == "hybrid":
             # Generic queries - search both corpora
-            raw_hits = self.vector_store.search_multi(
-                query_embedding=embeddings[0],
-                collections=["crime", "knowledge"],
-                top_k=request.top_k,
-                crime_filters=crime_filters,
-            )
+            if hasattr(self.vector_store, "search_multi"):
+                raw_hits = self.vector_store.search_multi(
+                    query_embedding=embeddings[0],
+                    collections=["crime", "knowledge"],
+                    top_k=request.top_k,
+                    crime_filters=crime_filters,
+                )
+            else:
+                raw_hits = self.vector_store.search(
+                    query_embedding=embeddings[0],
+                    top_k=request.top_k,
+                    filters=crime_filters,
+                )
         else:
             # Crime-specific queries - search only crime corpus
             raw_hits = self.vector_store.search(
@@ -108,6 +124,7 @@ class RagPipeline:
                     retrieval_ms=retrieval_ms,
                     generation_ms=generation_ms,
                 ),
+                token_usage=token_usage,
             )
 
         structured_answer = compose_structured_answer(request.query, context)
@@ -123,12 +140,20 @@ class RagPipeline:
                     retrieval_ms=retrieval_ms,
                     generation_ms=generation_ms,
                 ),
+                token_usage=token_usage,
             )
 
         context_text = build_context_text(context, request.max_context_chars)
         prompt = build_prompt(request.query, context_text, request.profile)
         generation_started_at = time.perf_counter()
-        answer_text = remove_repeated_question_prefix(self.generator.generate(prompt, request.model), request.query)
+        generation_result = self.generator.generate(prompt, request.model)
+        if isinstance(generation_result, str):
+            raw_answer = generation_result
+            token_usage = self._token_usage()
+        else:
+            raw_answer = generation_result.text
+            token_usage = self._token_usage(generation_result)
+        answer_text = remove_repeated_question_prefix(raw_answer, request.query)
         generation_ms = (time.perf_counter() - generation_started_at) * 1000
         if not answer_text:
             return self._fallback(
@@ -141,6 +166,7 @@ class RagPipeline:
                     retrieval_ms=retrieval_ms,
                     generation_ms=generation_ms,
                 ),
+                token_usage=token_usage,
             )
 
         return RagResponse(
@@ -154,9 +180,10 @@ class RagPipeline:
                 retrieval_ms=retrieval_ms,
                 generation_ms=generation_ms,
             ),
+            token_usage=token_usage,
         )
 
-    def _fallback(self, request: RagQuery, context, reason: str, timings: RagTimings) -> RagResponse:
+    def _fallback(self, request: RagQuery, context, reason: str, timings: RagTimings, token_usage: RagTokenUsage) -> RagResponse:
         return RagResponse(
             answer=RagAnswer(text=_fallback_text_for(request.query), status="insufficient_evidence", model=request.model),
             evidences=_citations_from_context(context),
@@ -164,6 +191,7 @@ class RagPipeline:
             profile=request.profile,
             fallback_reason=reason,
             timings_ms=timings,
+            token_usage=token_usage,
         )
 
     def _timings(
@@ -179,6 +207,20 @@ class RagPipeline:
             retrieval_ms=round(retrieval_ms, 1),
             generation_ms=round(generation_ms, 1),
             total_ms=round((time.perf_counter() - started_at) * 1000, 1),
+        )
+
+    def _token_usage(self, generation_result: GenerationResult | None = None) -> RagTokenUsage:
+        prompt_tokens = generation_result.prompt_tokens if generation_result else 0
+        completion_tokens = generation_result.completion_tokens if generation_result else 0
+        total_tokens = prompt_tokens + completion_tokens
+        limit = max(0, int(self.config.chat_context_window_tokens))
+        ratio = round(total_tokens / limit, 4) if limit > 0 else 0.0
+        return RagTokenUsage(
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+            context_limit_tokens=limit,
+            usage_ratio=ratio,
         )
 
 
