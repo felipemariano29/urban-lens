@@ -18,6 +18,7 @@ Use these documents together:
 | Document | Purpose |
 | --- | --- |
 | `docs/how-to-run.md` | Local environment startup and navigation hub |
+| `docs/api-endpoints.md` | Quick API endpoint summary, auth rules, and sample payloads |
 | `docs/how-to-populate-db.md` | How PostgreSQL initialization scripts work |
 | `docs/implementation-guide.md` | Step-by-step pipeline execution order |
 | `docs/ac2-sprint-closure.md` | Formal AC2 closure mapping for Sprints 1 to 8 |
