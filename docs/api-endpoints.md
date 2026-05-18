@@ -15,6 +15,7 @@ The API accepts one of these authentication strategies:
 
 - `Authorization: Bearer <jwt>`
 - `X-API-Key: <internal-service-key>`
+- `X-API-Key: <governed-api-key>`
 
 JWT roles currently supported:
 
@@ -27,9 +28,50 @@ JWT roles currently supported:
 
 Notes:
 
-- `X-API-Key` maps the caller to the `internal_service` role.
+- The legacy internal service key maps the caller to the `internal_service` role.
+- Governed API keys use the format `ul_<prefix>_<secret>` and are issued by the access endpoint.
+- Governed API keys inherit role and plan limits from the stored governance record.
 - If both headers are absent, protected endpoints return `401`.
 - Role checks are enforced per endpoint.
+
+### `POST /api/v1/access/credentials`
+
+Purpose:
+- Creates or updates a governed user, creates an API client bound to a service plan, and returns a plaintext API key once.
+
+Authentication:
+- `admin`, `internal_service`
+
+Request body:
+
+```json
+{
+  "full_name": "Ana Silva",
+  "email": "ana.silva@urbanlens.local",
+  "organization": "Urban Lens Security Lab",
+  "role": "viewer",
+  "plan_code": "FREE",
+  "client_name": "grafana-demo",
+  "expires_at": "2026-12-31T23:59:59Z"
+}
+```
+
+Main response fields:
+- `user_id`
+- `client_id`
+- `api_key_id`
+- `role`
+- `plan_code`
+- `client_name`
+- `key_prefix`
+- `api_key`
+- `expires_at`
+
+Typical statuses:
+- `201`: credentials issued
+- `401`: missing or invalid credentials
+- `403`: insufficient role
+- `404`: service plan not found
 
 ## Endpoints
 
@@ -99,6 +141,9 @@ Request body:
 }
 ```
 
+Plan behaviour:
+- Governed API keys may be blocked when `top_k` exceeds the maximum allowed by the caller plan.
+
 Response shape:
 - `results[]`
 
@@ -116,6 +161,7 @@ Each result includes:
 Typical statuses:
 - `200`: ranked evidence returned
 - `401`: missing or invalid credentials
+- `403`: plan or role restriction violated
 - `502`: RAG backend unavailable
 
 ### `POST /api/v1/chat/query`
@@ -145,6 +191,8 @@ Notes:
 
 - `model` is optional. When omitted, the API uses `URBAN_LENS_CHAT_MODEL`.
 - `filters.chunk_type` is only honored for `developer` and `admin`.
+- Governed API keys may be restricted to a subset of Ollama models according to the assigned service plan.
+- Governed API keys may also have a lower `top_k` cap than the global request schema allows.
 
 Response shape:
 - `answer`
@@ -152,10 +200,12 @@ Response shape:
 - `context[]`
 - `profile`
 - `fallback_reason`
+- `timings_ms`
 
 Important response details:
 - `answer.status` is either `answered` or `insufficient_evidence`
 - `answer.model` shows which Ollama model generated the answer
+- `timings_ms` returns `embedding_ms`, `retrieval_ms`, `generation_ms`, and `total_ms`
 
 Typical statuses:
 - `200`: generated answer or fallback with evidence payload
