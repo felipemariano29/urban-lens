@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -143,3 +144,47 @@ class ModelVersionPayload(GovernancePayload):
     metrics_json: dict[str, Any]
     artifact_uri: str
     status: str = "ready"
+
+
+class GovernedUserPayload(GovernancePayload):
+    full_name: str
+    email: str
+    organization: str | None = None
+    role: str = "viewer"
+    status: str = "active"
+
+
+class ApiClientPayload(GovernancePayload):
+    user_id: str
+    plan_code: str
+    client_name: str
+    status: str = "active"
+    requests_per_minute_override: int | None = None
+    requests_per_day_override: int | None = None
+
+
+class ApiKeyPayload(GovernancePayload):
+    client_id: str
+    key_prefix: str
+    key_hash: str
+    status: str = "active"
+    expires_at: datetime | None = None
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+
+class RequestAuditPayload(GovernancePayload):
+    request_id: str
+    route_path: str
+    http_method: str
+    user_id: str | None = None
+    client_id: str | None = None
+    api_key_id: str | None = None
+    plan_id: str | None = None
+    response_status: int | None = None
+    model_name: str | None = None
+    latency_ms: float | None = None
+    remote_ip: str | None = None
+    user_agent: str | None = None
+    filters_json: dict[str, Any] = Field(default_factory=dict)
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+    completed_at: datetime | None = None
