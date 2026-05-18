@@ -93,6 +93,8 @@ cp .env.example .env
    The frontend proxy also reads:
    - `URBAN_LENS_API_BASE_URL` for the FastAPI base URL
    - `URBAN_LENS_INTERNAL_API_KEY` for server-side authenticated proxy calls
+   - `URBAN_LENS_CHAT_MODEL` for the default Ollama chat model
+   - `OLLAMA_MODELS` for the list of Ollama models pre-downloaded by `ollama-setup`
 
 4. Install the Python package used by the pipeline jobs:
 
@@ -135,6 +137,7 @@ This starts:
 - frontend
 
 Run `make fullstack` to start the full Docker stack and then print the local URLs.
+The Docker Compose stack now waits for healthchecks and one-shot setup containers before starting downstream services, reducing cold-start race conditions between PostgreSQL, MinIO, MLflow, Milvus, Ollama, and the API.
 
 If you need to run the frontend outside Docker for local UI development, use:
 
@@ -168,6 +171,7 @@ Credentials are defined in `.env`.
 
 - Base URL: `http://localhost:${RAG_API_HOST_PORT:-8000}`
 - Health check: `http://localhost:${RAG_API_HOST_PORT:-8000}/api/v1/health`
+- Ollama models endpoint: `http://localhost:${RAG_API_HOST_PORT:-8000}/api/v1/system/models`
 
 ### Attu
 
@@ -179,6 +183,7 @@ Credentials are defined in `.env`.
 
 - URL: `http://localhost:${WEB_HOST_PORT:-3000}`
 - The browser calls Next.js route handlers first, and those handlers proxy to FastAPI using the server-side API key.
+- The query sidebar now loads available Ollama models from the local API and lets the user choose the generation model per request.
 
 ### MLflow
 
