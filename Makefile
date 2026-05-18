@@ -46,7 +46,7 @@ ifeq ($(COMPOSE_MODE),full)
 endif
 DOCKER_ENGINE_OK := $(shell docker info >/dev/null 2>&1 && echo 1 || echo 0)
 
-.PHONY: help check-compose check-docker-engine check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-obs up-full up-core down destroy reset logs logs-core logs-app logs-mlflow logs-obs ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs test frontend frontend-install
+.PHONY: help check-compose check-docker-engine check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-obs up-full up-core down destroy reset logs logs-core logs-app logs-mlflow logs-obs ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs index-mlflow eval-rag test frontend frontend-install
 
 help:
 	@printf "\n"
@@ -91,7 +91,11 @@ help:
 	@printf "  \033[1;37mmake index-embeddings\033[0m RAG_OBJECT_KEY=... RAG_DATASET_VERSION_ID=... [ACTOR=system]\n"
 	@printf "                      -> Indexar um crime_chunks especifico no Milvus\n"
 	@printf "  \033[1;37mmake index-docs\033[0m [DOCS_DIR=docs/] [ACTOR=system]\n"
-	@printf "                      -> Indexar todos os Markdowns de docs/ no Milvus\n\n"
+	@printf "                      -> Indexar todos os Markdowns de docs/ no Milvus\n"
+	@printf "  \033[1;37mmake index-mlflow\033[0m [MAX_RUNS=50]\n"
+	@printf "                      -> Indexar runs do MLflow no knowledge corpus\n"
+	@printf "  \033[1;37mmake eval-rag\033[0m [DATASET=path.json] [TAGS=crime platform] [MLFLOW=1]\n"
+	@printf "                      -> Executar avaliacao do RAG e logar no MLflow\n\n"
 
 	@printf "\033[1;33mPipeline de Dados\033[0m\n"
 	@printf "  \033[1;37mmake snapshots\033[0m -> Listar snapshots disponiveis em data/\n"
@@ -397,6 +401,18 @@ index-docs: check-python
 		--docs-dir "$(or $(DOCS_DIR),docs)" \
 		--batch-size "$(or $(BATCH_SIZE),32)" \
 		--actor "$(ACTOR)"
+
+index-mlflow: check-env check-python
+	@echo "[INFO] Indexando runs do MLflow no knowledge corpus..."
+	@$(PYTHON_RUN) $(PYTHON) pipelines/index_mlflow_runs.py \
+		--max-runs "$(or $(MAX_RUNS),50)"
+
+eval-rag: check-env check-python
+	@echo "[INFO] Executando avaliacao do RAG..."
+	@$(PYTHON_RUN) $(PYTHON) pipelines/evaluate_rag.py \
+		$(if $(DATASET),--dataset "$(DATASET)",) \
+		$(if $(TAGS),--tags $(TAGS),) \
+		$(if $(MLFLOW),--mlflow,)
 
 test: check-python
 	@$(PYTHON_RUN) $(PYTHON) -m pytest
