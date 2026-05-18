@@ -212,3 +212,12 @@ class UsageStatsResponse(BaseModel):
     requests_per_day_limit: Optional[int] = Field(None, description="Rate limit per day.")
     remaining_minute: Optional[int] = Field(None, description="Remaining requests this minute.")
     remaining_day: Optional[int] = Field(None, description="Remaining requests today.")
+
+
+class PublicApiKeyResponse(BaseModel):
+    """Response for public API key registration (no auth required)."""
+
+    api_key: str = Field(..., description="Plaintext API key - save this, it will only be shown once.")
+    key_prefix: str = Field(..., description="Key prefix for identification (ul_xxxxxx).")
+    plan: str = Field(..., description="Service plan assigned.")
+    message: str = Field(..., description="Human-readable confirmation message.")

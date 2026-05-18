@@ -104,3 +104,21 @@ class ApiKeyRotateRequest(BaseModel):
         None,
         description="Optional expiration timestamp for the new rotated key.",
     )
+
+
+class PublicApiKeyRequest(BaseModel):
+    """Request model for public API key registration (no auth required)."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "plan": "free",
+            }
+        }
+    )
+
+    name: str = Field(..., min_length=2, max_length=100, description="Name of the person or organization.")
+    email: str = Field(..., description="Email address for the API key owner.")
+    plan: str = Field("free", description="Service plan: free, basic, pro, or enterprise.")
