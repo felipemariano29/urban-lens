@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 import jwt
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, Request, status
 
 _JWT_ALGORITHM = "HS256"
 
@@ -28,6 +28,7 @@ class UserProfile:
 
 
 def get_current_profile(
+    request: Request,
     authorization: str | None = Header(None, description="Bearer JWT token."),
     x_api_key: str | None = Header(None, alias="X-API-Key", description="Internal service API key."),
 ) -> UserProfile:
@@ -36,8 +37,12 @@ def get_current_profile(
 
     if x_api_key is not None:
         if internal_api_key and x_api_key == internal_api_key:
-            return UserProfile(role="internal_service", auth_type="internal_api_key")
-        return _authenticate_governed_api_key(x_api_key)
+            profile = UserProfile(role="internal_service", auth_type="internal_api_key")
+            request.state.user_profile = profile
+            return profile
+        profile = _authenticate_governed_api_key(x_api_key)
+        request.state.user_profile = profile
+        return profile
 
     if authorization is None:
         raise HTTPException(
@@ -76,7 +81,9 @@ def get_current_profile(
             detail=f"Unknown role '{role}'. Valid roles: {sorted(VALID_ROLES)}.",
         )
 
-    return UserProfile(role=role, subject=payload.get("sub"), auth_type="jwt")
+    profile = UserProfile(role=role, subject=payload.get("sub"), auth_type="jwt")
+    request.state.user_profile = profile
+    return profile
 
 
 def _authenticate_governed_api_key(api_key: str) -> UserProfile:

@@ -5,6 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from urban_lens.api.middleware.correlation import CorrelationIdMiddleware
+from urban_lens.api.middleware.request_audit import RequestAuditMiddleware
 from urban_lens.api.middleware.error_handler import (
     generic_exception_handler,
     http_exception_handler,
@@ -91,6 +92,7 @@ app = FastAPI(
 _config = AppConfig.from_env()
 
 app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(RequestAuditMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_config.cors_origins,

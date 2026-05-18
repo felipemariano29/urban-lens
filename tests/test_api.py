@@ -263,6 +263,16 @@ class TestAuthentication:
         )
         assert resp.status_code == 401
 
+    def test_authenticated_request_is_audited(self, client):
+        mock_hits = [{"id": "c1", "score": 0.9, "content": "text", "metadata": {}}]
+        with (
+            patch("urban_lens.api.services.rag_service.run_query", return_value=mock_hits),
+            patch("urban_lens.governance.store.MetadataStore.record_request_audit") as record_request_audit,
+        ):
+            resp = client.post("/api/v1/query", json={"query": "test"}, headers=_auth("viewer"))
+        assert resp.status_code == 200
+        assert record_request_audit.called
+
 
 # ---------------------------------------------------------------------------
 # Error envelope format
