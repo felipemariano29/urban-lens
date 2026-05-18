@@ -120,16 +120,44 @@ services:
     networks:
       - app_network
 
+  attu:
+    image: zilliz/attu:v2.4.12
+    container_name: attu
+    restart: unless-stopped
+    depends_on:
+      - milvus
+    environment:
+      MILVUS_ADDRESS: "milvus-standalone:19530"
+      ATTU_DB_PATH: "/data/attu.db"
+    ports:
+      - "${ATTU_HOST_PORT:-3001}:3000"
+    volumes:
+      - type: bind
+        source: ./docker-data/attu
+        target: /data
+    networks:
+      - app_network
+
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
     restart: unless-stopped
     ports:
       - "${OLLAMA_HOST_PORT:-11434}:11434"
+    environment:
+      OLLAMA_NUM_PARALLEL: "${OLLAMA_NUM_PARALLEL:-4}"
     volumes:
       - type: bind
         source: ./docker-data/ollama
         target: /root/.ollama
+    # GPU support commented out - uncomment if you have NVIDIA GPU with proper WSL drivers
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     networks:
       - app_network
 
@@ -142,7 +170,10 @@ services:
       /bin/sh -c "
       echo 'Aguardando Ollama iniciar...';
       sleep 20;
+      echo 'Baixando modelo de embeddings...';
       OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text;
+      echo 'Baixando modelo LLM para chat...';
+      OLLAMA_HOST=ollama:11434 ollama pull llama3;
       echo 'Setup Ollama concluido!';
       exit 0;
       "

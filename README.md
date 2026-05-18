@@ -61,6 +61,7 @@ Desenvolver uma plataforma completa de **RAG local com governança de dados**, c
 O domínio escolhido para o projeto é **Inteligência Territorial para Prefeituras**, com foco em análise de segurança urbana baseada em dados públicos.
 
 ### Aplicações esperadas
+
 A solução poderá apoiar a prefeitura em tarefas como:
 - priorização territorial;
 - análise histórica de ocorrências;
@@ -77,6 +78,7 @@ A solução poderá apoiar a prefeitura em tarefas como:
 A empresa fictícia **Urban Lens Analytics** atua no desenvolvimento de soluções de inteligência urbana orientadas por dados, oferecendo ferramentas para análise territorial, observação de tendências e apoio estratégico à administração pública.
 
 ### Produto
+
 **Urban Lens**
 
 Produto voltado para consulta inteligente de dados e documentos, utilizando RAG e interface simples para auxiliar o núcleo de inteligência da prefeitura.
@@ -94,49 +96,60 @@ Abaixo está o diagrama macro da arquitetura proposta para o **Urban Lens**, mos
 A arquitetura do projeto segue o modelo proposto em sala, contemplando as seguintes camadas:
 
 ### Camada de Dados
+
 - **MinIO**: Data Lake com arquitetura Medallion
   - **Bronze**: dados brutos
   - **Silver**: dados tratados e padronizados
   - **Gold**: dados consolidados para consumo analítico
 
 - **PostgreSQL**
-  - metadados
-  - auditoria
-  - controle de versionamento
+  - metadados;
+  - auditoria;
+  - controle de versionamento.
 
 - **Milvus**
-  - armazenamento vetorial
-  - embeddings
-  - recuperação semântica
+  - armazenamento vetorial;
+  - embeddings;
+  - recuperação semântica.
+
+- **Attu**
+  - interface visual para inspeção do Milvus;
+  - apoio à validação de coleções e indexação vetorial em ambiente local.
 
 ### Camada de IA
+
 - **Ollama**
-  - inferência local com LLM
-  - modelo de embeddings
+  - inferência local com LLM;
+  - modelo de embeddings.
 
 - **Pipeline RAG**
-  - chunking
-  - embedding
-  - indexação
-  - recuperação
-  - geração de resposta
+  - chunking;
+  - embedding;
+  - indexação;
+  - recuperação;
+  - geração de resposta.
 
 ### Camada de MLOps
+
 - **MLflow**
-  - tracking de experimentos
-  - métricas
-  - versionamento de prompts
-  - acompanhamento de testes
+  - tracking de experimentos;
+  - métricas;
+  - versionamento de prompts;
+  - acompanhamento de testes.
 
 ### Camada de Aplicação
-- **FastAPI**
-  - endpoints da aplicação
-  - integração com o pipeline RAG
 
-- **Gradio**
-  - interface simples de consulta para o usuário final
+- **FastAPI**
+  - endpoints da aplicação;
+  - integração com o pipeline RAG;
+  - documentação Swagger como entregável acadêmico.
+
+- **Frontend simples (Next.js)**
+  - interface de consulta para o usuário final;
+  - integração com a API real do projeto.
 
 ### Infraestrutura
+
 - **Docker**
 - **Docker Compose**
 - **Makefile**
@@ -147,10 +160,11 @@ A arquitetura do projeto segue o modelo proposto em sala, contemplando as seguin
 
 - Python
 - FastAPI
-- Gradio
+- Next.js
 - PostgreSQL
 - MinIO
 - Milvus
+- Attu
 - Ollama
 - MLflow
 - Docker
@@ -161,14 +175,14 @@ A arquitetura do projeto segue o modelo proposto em sala, contemplando as seguin
 
 ## 8. Fonte de dados
 
-O projeto utilizará dados públicos do **DATA.POLICE.UK**, que disponibiliza informações históricas relacionadas à segurança pública, como:
+O projeto utiliza dados públicos do **DATA.POLICE.UK**, que disponibiliza informações históricas relacionadas à segurança pública, como:
 - crimes em nível de rua;
 - outcomes;
 - stop and search;
 - prioridades de neighbourhood;
 - informações por força policial e região.
 
-Esses dados serão usados para apoiar análises históricas e territoriais no contexto da inteligência municipal.
+Esses dados são usados para apoiar análises históricas e territoriais no contexto da inteligência municipal.
 
 ---
 
@@ -181,11 +195,31 @@ A solução é voltada principalmente para:
 - observatórios urbanos;
 - equipes de planejamento territorial.
 
-## 📚 Documentation Hub
+---
+
+## 10. Estado atual da entrega
+
+Até a **Sprint 8 / AC2**, o projeto já entrega:
+
+- pipeline Bronze -> Silver -> Gold com governança;
+- catálogo, versionamento e auditoria em PostgreSQL;
+- geração de embeddings e indexação vetorial no Milvus;
+- validação visual do índice via Attu;
+- RAG funcional com busca vetorial, construção de prompt e inferência local;
+- API FastAPI com endpoints documentados;
+- frontend simples integrado à API real;
+- roteiro de demonstração com datasets leves para execução ao vivo.
+
+---
+
+## 11. Documentation Hub
 
 | Documento | Descrição |
 |----------|------------|
-| [How to run](docs/how-to-run.md) | Setup e subir o ambiente |
-| [Populate DB](docs/how-to-populate-db.md) | Script de inicialização do banco de dados |
-| [Product Vision](docs/product-vision.md) | Overview do projeto |
-| [Full Document (PDF)](docs/urban_lens_visao_consolidada.pdf) | Especificação de projeto completa |
+| [How to run](docs/how-to-run.md) | Setup, serviços locais e execução do ambiente |
+| [Implementation Guide](docs/implementation-guide.md) | Execução ponta a ponta do pipeline governado |
+| [AC2 Sprint Closure](docs/ac2-sprint-closure.md) | Mapeamento formal das Sprints 1 a 8 para evidências do repositório |
+| [Delivery Plan](docs/governance-medallion-delivery-plan.md) | Plano interno de execução e status das tarefas |
+| [Demo Professor](docs/demo-professor.txt) | Roteiro prático da demonstração ao vivo |
+| [Product Vision](docs/product-vision.md) | Visão de produto |
+| [Full Document (PDF)](docs/urban_lens_visao_consolidada.pdf) | Especificação consolidada do projeto |

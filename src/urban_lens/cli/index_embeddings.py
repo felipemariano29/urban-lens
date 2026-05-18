@@ -25,8 +25,8 @@ def main() -> None:
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=32,
-        help="Number of chunks per Ollama embedding request (default: 32).",
+        default=64,
+        help="Number of chunks per Ollama embedding request (default: 64).",
     )
     parser.add_argument("--actor", default="system")
     args = parser.parse_args()

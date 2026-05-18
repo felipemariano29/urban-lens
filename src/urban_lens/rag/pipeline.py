@@ -5,13 +5,19 @@ from __future__ import annotations
 from urban_lens.core.settings import AppConfig
 from urban_lens.infrastructure.embedder import OllamaEmbedder
 from urban_lens.infrastructure.vector_store import MilvusVectorStore
-from urban_lens.rag.contracts import EvidenceCitation, RagAnswer, RagQuery, RagResponse
-from urban_lens.rag.generation import OllamaGenerator, build_prompt, remove_repeated_question_prefix
+from urban_lens.rag.composition import compose_structured_answer
+from urban_lens.rag.contracts import AccessProfile, EvidenceCitation, RagAnswer, RagQuery, RagResponse
+from urban_lens.rag.generation import OllamaGenerator, build_prompt, detect_question_language, remove_repeated_question_prefix
+from urban_lens.rag.query_understanding import detect_query_intent, enrich_filters_from_question
 from urban_lens.rag.retrieval import build_context_text, filters_to_vector_store, milvus_hits_to_context
 
-FALLBACK_TEXT = (
+FALLBACK_TEXT_PT = (
     "Nao ha evidencia suficiente no contexto recuperado para responder com seguranca. "
     "Refine a pergunta, informe regiao/periodo/tipo de crime, ou indexe dados Gold adicionais."
+)
+FALLBACK_TEXT_EN = (
+    "There is not enough evidence in the retrieved context to answer safely. "
+    "Refine the question, provide region/period/crime type, or index additional Gold data."
 )
 
 
@@ -29,6 +35,8 @@ class RagPipeline:
         self.generator = generator or OllamaGenerator(config.ollama_base_url)
 
     def run(self, request: RagQuery) -> RagResponse:
+        effective_filters = enrich_filters_from_question(request)
+        intent = detect_query_intent(request.query)
         embeddings = self.embedder.embed([request.query])
         if not embeddings:
             return self._fallback(request, [], "embedding_empty")
@@ -36,12 +44,29 @@ class RagPipeline:
         raw_hits = self.vector_store.search(
             query_embedding=embeddings[0],
             top_k=request.top_k,
-            filters=filters_to_vector_store(request.filters, request.profile),
+            filters=filters_to_vector_store(effective_filters, request.profile),
         )
+        if intent == "crime_type_listing":
+            raw_hits = _augment_hits_for_crime_type_listing(
+                raw_hits=raw_hits,
+                query_embedding=embeddings[0],
+                top_k=max(request.top_k, 12),
+                effective_filters=effective_filters,
+                vector_store=self.vector_store,
+            )
         context = milvus_hits_to_context(raw_hits, request.profile)
         enough_context = bool(context) and max(chunk.score for chunk in context) >= request.min_score
         if not enough_context:
             return self._fallback(request, context, "insufficient_retrieved_evidence")
+
+        structured_answer = compose_structured_answer(request.query, context)
+        if structured_answer:
+            return RagResponse(
+                answer=RagAnswer(text=structured_answer, status="answered", model=request.model),
+                evidences=_citations_from_context(context),
+                context=context,
+                profile=request.profile,
+            )
 
         context_text = build_context_text(context, request.max_context_chars)
         prompt = build_prompt(request.query, context_text, request.profile)
@@ -58,7 +83,7 @@ class RagPipeline:
 
     def _fallback(self, request: RagQuery, context, reason: str) -> RagResponse:
         return RagResponse(
-            answer=RagAnswer(text=FALLBACK_TEXT, status="insufficient_evidence", model=request.model),
+            answer=RagAnswer(text=_fallback_text_for(request.query), status="insufficient_evidence", model=request.model),
             evidences=_citations_from_context(context),
             context=context,
             profile=request.profile,
@@ -82,3 +107,41 @@ def _citations_from_context(context) -> list[EvidenceCitation]:
             )
         )
     return citations
+
+
+def _fallback_text_for(question: str) -> str:
+    return FALLBACK_TEXT_PT if detect_question_language(question) == "pt" else FALLBACK_TEXT_EN
+
+
+def _augment_hits_for_crime_type_listing(
+    *,
+    raw_hits: list[dict[str, object]],
+    query_embedding: list[float],
+    top_k: int,
+    effective_filters,
+    vector_store: MilvusVectorStore,
+) -> list[dict[str, object]]:
+    base_filters = filters_to_vector_store(effective_filters, profile=AccessProfile.admin)
+    # Prefer category chunks that enumerate crime types directly.
+    preferred_chunk_type = "area_month_category" if base_filters.get("lsoa_code") else "month_category"
+    targeted_hits = vector_store.search(
+        query_embedding=query_embedding,
+        top_k=top_k,
+        filters={**base_filters, "chunk_type": preferred_chunk_type},
+    )
+    return _merge_hits_preserving_order(targeted_hits, raw_hits)
+
+
+def _merge_hits_preserving_order(*hit_groups: list[dict[str, object]]) -> list[dict[str, object]]:
+    merged: list[dict[str, object]] = []
+    seen_chunk_ids: set[str] = set()
+    for hits in hit_groups:
+        for hit in hits:
+            entity = hit.get("entity", hit)
+            chunk_id = str(entity.get("chunk_id") or entity.get("id") or "")
+            if chunk_id and chunk_id in seen_chunk_ids:
+                continue
+            if chunk_id:
+                seen_chunk_ids.add(chunk_id)
+            merged.append(hit)
+    return merged

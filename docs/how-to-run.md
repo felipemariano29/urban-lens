@@ -20,6 +20,7 @@ Use these documents together:
 | `docs/how-to-run.md` | Local environment startup and navigation hub |
 | `docs/how-to-populate-db.md` | How PostgreSQL initialization scripts work |
 | `docs/implementation-guide.md` | Step-by-step pipeline execution order |
+| `docs/ac2-sprint-closure.md` | Formal AC2 closure mapping for Sprints 1 to 8 |
 | `docs/architecture/medallion-governance.md` | Layer rules, path conventions, quality gates, and allowed data movement |
 | `docs/architecture/metadata-contract.md` | Governance entities, lineage, audit, access, and response contracts |
 | `docs/adr/0001-medallion-layout.md` | Why Gold is segmented across analytics, RAG, and ML |
@@ -33,10 +34,12 @@ The repository currently provides:
 - MinIO for object storage
 - MinIO bucket bootstrap via `minio-setup`
 - MLflow for experiment tracking and model registry UI
+- Attu for Milvus collection inspection
 - FastAPI internal API via `rag-api`
+- Next.js frontend with server-side proxy routes under `app/api/v1/*`
 - Python pipeline jobs for Bronze, Silver, Gold, and forecast-model publication
 
-The repository still does not provision every platform component in Docker Compose. Milvus and Ollama remain outside the local stack, but the repository now starts the governed storage, metadata, and MLflow tracking services required by the implemented data and model pipeline.
+The repository now provisions the local platform components required by the implemented pipeline and RAG runtime, including Milvus and Ollama inside Docker Compose.
 
 ## Repository Structure
 
@@ -87,6 +90,9 @@ cp .env.example .env
 ```
 
 3. Review the values in `.env` if you need different ports or credentials.
+   The frontend proxy also reads:
+   - `URBAN_LENS_API_BASE_URL` for the FastAPI base URL
+   - `URBAN_LENS_INTERNAL_API_KEY` for server-side authenticated proxy calls
 
 4. Install the Python package used by the pipeline jobs:
 
@@ -115,7 +121,18 @@ This starts:
 - MinIO
 - MinIO bucket bootstrap
 - MLflow
+- Milvus
+- Attu
+- Ollama
 - rag-api
+
+To start the frontend locally, run:
+
+```bash
+make frontend
+```
+
+Or run `make fullstack` to start the backend stack and then launch the frontend dev server.
 
 ## Available Services
 
@@ -142,7 +159,18 @@ Credentials are defined in `.env`.
 ### rag-api
 
 - Base URL: `http://localhost:${RAG_API_HOST_PORT:-8000}`
-- Health check: `http://localhost:${RAG_API_HOST_PORT:-8000}/health`
+- Health check: `http://localhost:${RAG_API_HOST_PORT:-8000}/api/v1/health`
+
+### Attu
+
+- URL: `http://localhost:${ATTU_HOST_PORT:-3001}`
+- Milvus target: `milvus-standalone:19530`
+- Purpose: inspect collections such as `crime_chunks`, confirm row counts, and explore schema during local validation
+
+### Frontend
+
+- URL: `http://localhost:3000`
+- The browser calls Next.js route handlers first, and those handlers proxy to FastAPI using the server-side API key.
 
 ### MLflow
 

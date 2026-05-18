@@ -13,7 +13,7 @@ import pytest
 
 from urban_lens.core.settings import AppConfig
 from urban_lens.infrastructure.embedder import OllamaEmbedder
-from urban_lens.workflows.embeddings import gold_to_vector_index
+from urban_lens.workflows.embeddings import _embedding_input_for_record, gold_to_vector_index
 
 
 # ---------------------------------------------------------------------------
@@ -273,6 +273,17 @@ class TestGoldToVectorIndex:
 
         for chunk in vector_store.collections["crime_chunks"]:
             assert chunk["dataset_version_id"] == version_id
+
+    def test_embedding_input_includes_title_and_metadata(self):
+        record = _sample_rag_frame().iloc[0].to_dict()
+
+        text = _embedding_input_for_record(record)
+
+        assert "title: 2026-01 Some Area burglary" in text
+        assert "chunk_type: area_month_category" in text
+        assert "reference_month: 2026-01" in text
+        assert "crime_type: burglary" in text
+        assert "content: In 2026-01, area Some Area" in text
 
     def test_upsert_replaces_existing_chunk(self):
         frame = _sample_rag_frame()

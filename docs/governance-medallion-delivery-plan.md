@@ -12,7 +12,13 @@ Task status:
 - `T3` completed on 2026-03-20 through `sql/init/001_governance_schema.sql`
 - `T4` completed on 2026-03-20 through pure transformations and tests using real `DATA.POLICE.UK` January snapshot files
 - `T5` completed on 2026-03-20 through job orchestration, snapshot ingestion support, and end-to-end tests with fake infrastructure
-- `T6` to `T8` remain available for execution and delegation
+- `T6` completed on 2026-05-14 through routing helpers, governed RAG contracts, `/api/v1/chat/query`, and validation documentation
+- `T7` completed on 2026-05-14 through baseline training, MLflow logging, model registration, and governed forecast publication
+- `T8` completed on 2026-05-14 through the implementation guide, `.env.example`, demo runbook, Attu-backed validation flow, and AC2 closure evidence
+
+Status note:
+- `T6` is considered complete for the current delivery scope because the heuristic intent classifier, factual RAG path, and governed response contract are implemented and documented.
+- Predictive-serving UX remains a future enhancement, but it is outside the closure required for AC2 through Sprint 8.
 
 ## Delivery Goal
 
@@ -239,6 +245,9 @@ Parallelization:
 
 ### `T6` Gold RAG Output and Chat Routing Contract
 
+Status:
+- Completed for current delivery scope
+
 Primary scope:
 - `RAG-266`
 - downstream dependency for RAG and API teams
@@ -265,11 +274,18 @@ Out of scope:
 Definition of done:
 - an API or chat implementer can consume the routing result and produce transparent factual or predictive responses
 
+Current closure note:
+- The repository includes heuristic routing helpers, governed RAG contracts, and the local chat API integration required by downstream API and interface work.
+- Predictive intent handling is documented and classified, while full predictive answer UX remains a follow-up beyond the current AC2 closure.
+
 Parallelization:
 - This task MAY run in parallel with `T5` once `T1` and `T2` are stable.
 - This task SHOULD own only routing and contract helpers, not transformation or SQL files.
 
 ### `T7` ML Baseline Training and Prediction Publication
+
+Status:
+- Completed
 
 Primary scope:
 - `RAG-230`
@@ -297,12 +313,18 @@ Out of scope:
 Definition of done:
 - the project can train once, produce metrics, and publish predictions with full lineage to the training and scoring datasets
 
+Current closure note:
+- The repository includes local baseline training, temporal holdout evaluation, MLflow logging, model registration, and governed publication of forecast outputs.
+
 Parallelization:
 - This task SHALL wait for `T5`.
 - This task MAY run in parallel with `T8`.
 - This task SHOULD own only ML training, scoring, and related metadata registration files.
 
 ### `T8` Runbook, Validation, and Final Acceptance Evidence
+
+Status:
+- Completed for current delivery scope
 
 Primary scope:
 - `RAG-231`
@@ -328,6 +350,9 @@ Out of scope:
 
 Definition of done:
 - another engineer can set up the environment and execute the documented flow without relying on tribal knowledge
+
+Current closure note:
+- The repository includes setup and run guides, `.env.example`, a live demo runbook, lightweight demo datasets, and a visual Milvus validation path through Attu.
 
 Parallelization:
 - This task MAY start early in draft form, but it SHALL finish only after `T5` and `T7` stabilize.

@@ -10,6 +10,21 @@ from urban_lens.infrastructure.object_store import MinIOStorage
 from urban_lens.infrastructure.vector_store import MilvusVectorStore
 
 
+def _embedding_input_for_record(record: dict[str, object]) -> str:
+    parts = [
+        f"title: {record['title']}",
+        f"chunk_type: {record['chunk_type']}",
+    ]
+    if record.get("reference_month"):
+        parts.append(f"reference_month: {record['reference_month']}")
+    if record.get("lsoa_code"):
+        parts.append(f"lsoa_code: {record['lsoa_code']}")
+    if record.get("crime_type"):
+        parts.append(f"crime_type: {record['crime_type']}")
+    parts.append(f"content: {record['content']}")
+    return "\n".join(parts)
+
+
 def gold_to_vector_index(
     rag_object_key: str,
     rag_dataset_version_id: str,
@@ -63,7 +78,7 @@ def gold_to_vector_index(
 
     for batch_num, batch_start in enumerate(range(0, total_records, batch_size), start=1):
         batch = records[batch_start : batch_start + batch_size]
-        texts = [str(r["content"]) for r in batch]
+        texts = [_embedding_input_for_record(r) for r in batch]
         embeddings = embedder.embed(texts)
 
         milvus_records = [

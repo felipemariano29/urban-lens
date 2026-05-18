@@ -200,5 +200,5 @@ make train-latest ACTOR=smoke-test
 Validate success by checking:
 - MinIO console: Silver and Gold Parquet files exist for `year=2026/month=01`
 - MLflow UI: a completed experiment run appears under `crime_forecasting`
-- Milvus: the `crime_chunks` collection has records (check with `make urls` → Milvus REST)
+- Milvus: the `crime_chunks` collection has records (check with `make urls` and inspect Attu at `http://localhost:${ATTU_HOST_PORT:-3001}`)
 - PostgreSQL: `SELECT COUNT(*) FROM governance.dataset_versions` returns non-zero rows

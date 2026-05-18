@@ -158,6 +158,11 @@ def test_gold_aggregations_produce_specific_and_aggregated_views() -> None:
     assert overview["dominant_crime_type"] == "burglary"
     assert month_category.iloc[0]["crime_type"] == "burglary"
     assert not rag_records.empty
+    assert {"area_month_top_crimes", "month_top_crimes"}.issubset(set(rag_records["chunk_type"]))
+    burglary_chunk = rag_records[rag_records["title"] == "2024-01 Area 1 burglary"].iloc[0]
+    assert "ranked #1" in burglary_chunk["content"]
+    top_crimes_chunk = rag_records[rag_records["chunk_type"] == "area_month_top_crimes"].iloc[0]
+    assert "#1 burglary (2 incidents" in top_crimes_chunk["content"]
 
 
 def test_ml_datasets_build_lags_and_future_target() -> None:

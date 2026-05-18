@@ -229,12 +229,51 @@ def build_rag_evidence_records(
     month_category_frame: pd.DataFrame,
 ) -> pd.DataFrame:
     records: list[dict[str, object]] = []
+    area_totals = area_month_frame.loc[:, ["reference_month", "lsoa_code", "incident_count"]].rename(
+        columns={"incident_count": "area_total_incidents"}
+    )
+    category_with_totals = area_month_category_frame.merge(
+        area_totals,
+        on=["reference_month", "lsoa_code"],
+        how="left",
+    )
+    category_with_totals["area_incident_share"] = (
+        category_with_totals["incident_count"] / category_with_totals["area_total_incidents"].replace(0, pd.NA)
+    ).fillna(0.0)
+    category_with_totals["area_rank"] = (
+        category_with_totals.sort_values(
+            ["reference_month", "lsoa_code", "incident_count", "crime_type"],
+            ascending=[True, True, False, True],
+        )
+        .groupby(["reference_month", "lsoa_code"], dropna=False)
+        .cumcount()
+        .add(1)
+    )
 
-    for row in area_month_category_frame.itertuples(index=False):
+    month_totals = month_category_frame.groupby("reference_month", dropna=False)["incident_count"].sum().rename(
+        "month_total_incidents"
+    )
+    month_category_enriched = month_category_frame.merge(month_totals, on="reference_month", how="left")
+    month_category_enriched["dataset_incident_share"] = (
+        month_category_enriched["incident_count"] / month_category_enriched["month_total_incidents"].replace(0, pd.NA)
+    ).fillna(0.0)
+    month_category_enriched["month_rank"] = (
+        month_category_enriched.sort_values(
+            ["reference_month", "incident_count", "crime_type"],
+            ascending=[True, False, True],
+        )
+        .groupby("reference_month", dropna=False)
+        .cumcount()
+        .add(1)
+    )
+
+    for row in category_with_totals.itertuples(index=False):
         title = f"{row.reference_month} {row.lsoa_name} {row.crime_type}"
         content = (
             f"In {row.reference_month}, area {row.lsoa_name} ({row.lsoa_code}) recorded "
             f"{row.incident_count} incidents for crime type {row.crime_type}. "
+            f"This represented {row.area_incident_share:.1%} of all incidents in the area and ranked "
+            f"#{int(row.area_rank)} among crime types for that area-month. "
             f"Outcome-known ratio was {row.outcome_known_ratio:.2f} and "
             f"context-present ratio was {row.context_present_ratio:.2f}."
         )
@@ -251,11 +290,23 @@ def build_rag_evidence_records(
         )
 
     for row in area_month_frame.itertuples(index=False):
+        top_crimes = (
+            category_with_totals[
+                (category_with_totals["reference_month"] == row.reference_month)
+                & (category_with_totals["lsoa_code"] == row.lsoa_code)
+            ]
+            .sort_values(["incident_count", "crime_type"], ascending=[False, True])
+            .head(3)
+        )
+        top_crime_summary = ", ".join(
+            f"{crime_row.crime_type} ({int(crime_row.incident_count)})" for crime_row in top_crimes.itertuples(index=False)
+        )
         title = f"{row.reference_month} {row.lsoa_name} overview"
         content = (
             f"In {row.reference_month}, area {row.lsoa_name} ({row.lsoa_code}) recorded "
             f"{row.incident_count} incidents across {row.crime_type_count} crime types. "
-            f"The dominant crime type was {row.dominant_crime_type}."
+            f"The dominant crime type was {row.dominant_crime_type}. "
+            f"Top crime categories were: {top_crime_summary}."
         )
         records.append(
             {
@@ -269,11 +320,44 @@ def build_rag_evidence_records(
             }
         )
 
-    for row in month_category_frame.itertuples(index=False):
+        ranking_title = f"{row.reference_month} {row.lsoa_name} top crimes"
+        ranking_lines = "; ".join(
+            f"#{int(crime_row.area_rank)} {crime_row.crime_type} ({int(crime_row.incident_count)} incidents, "
+            f"{crime_row.area_incident_share:.1%} share)"
+            for crime_row in top_crimes.itertuples(index=False)
+        )
+        ranking_content = (
+            f"In {row.reference_month}, the main crime ranking for area {row.lsoa_name} ({row.lsoa_code}) was: "
+            f"{ranking_lines}."
+        )
+        records.append(
+            {
+                "chunk_id": hashlib.sha256(f"area-month-top:{ranking_title}".encode("utf-8")).hexdigest(),
+                "chunk_type": "area_month_top_crimes",
+                "reference_month": row.reference_month,
+                "lsoa_code": row.lsoa_code,
+                "crime_type": row.dominant_crime_type,
+                "title": ranking_title,
+                "content": ranking_content,
+            }
+        )
+
+    month_top = (
+        month_category_enriched.sort_values(
+            ["reference_month", "incident_count", "crime_type"],
+            ascending=[True, False, True],
+        )
+        .groupby("reference_month", dropna=False)
+        .head(5)
+    )
+
+    for row in month_category_enriched.itertuples(index=False):
         title = f"{row.reference_month} citywide {row.crime_type}"
         content = (
             f"In {row.reference_month}, crime type {row.crime_type} recorded "
-            f"{row.incident_count} incidents across the available dataset."
+            f"{row.incident_count} incidents across the available dataset. "
+            f"It ranked #{int(row.month_rank)} for that month and represented "
+            f"{row.dataset_incident_share:.1%} of all indexed incidents."
         )
         records.append(
             {
@@ -284,6 +368,30 @@ def build_rag_evidence_records(
                 "crime_type": row.crime_type,
                 "title": title,
                 "content": content,
+            }
+        )
+
+    for reference_month, month_rows in month_top.groupby("reference_month", dropna=False):
+        ranking_title = f"{reference_month} citywide top crimes"
+        ranking_content = (
+            f"In {reference_month}, the main crime categories across the indexed dataset were: "
+            + "; ".join(
+                f"#{int(row.month_rank)} {row.crime_type} ({int(row.incident_count)} incidents, "
+                f"{row.dataset_incident_share:.1%} share)"
+                for row in month_rows.itertuples(index=False)
+            )
+            + "."
+        )
+        dominant_crime_type = str(month_rows.iloc[0]["crime_type"]) if not month_rows.empty else None
+        records.append(
+            {
+                "chunk_id": hashlib.sha256(f"month-top:{ranking_title}".encode("utf-8")).hexdigest(),
+                "chunk_type": "month_top_crimes",
+                "reference_month": str(reference_month),
+                "lsoa_code": None,
+                "crime_type": dominant_crime_type,
+                "title": ranking_title,
+                "content": ranking_content,
             }
         )
 
