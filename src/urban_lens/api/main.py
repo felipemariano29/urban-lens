@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from urban_lens.api.middleware.correlation import CorrelationIdMiddleware
 from urban_lens.api.middleware.request_audit import RequestAuditMiddleware
+from urban_lens.api.middleware.metrics import MetricsMiddleware, metrics_endpoint
 from urban_lens.api.middleware.error_handler import (
     generic_exception_handler,
     http_exception_handler,
@@ -91,6 +92,7 @@ app = FastAPI(
 
 _config = AppConfig.from_env()
 
+app.add_middleware(MetricsMiddleware)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(RequestAuditMiddleware)
 app.add_middleware(
@@ -103,5 +105,8 @@ app.add_middleware(
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
+
+# Prometheus metrics endpoint
+app.add_api_route("/metrics", metrics_endpoint, methods=["GET"], include_in_schema=False)
 
 register_routers(app)
