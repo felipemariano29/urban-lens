@@ -38,9 +38,15 @@ COMPOSE_FILES := -f docker-compose.yml
 ifeq ($(COMPOSE_MODE),gpu)
 	COMPOSE_FILES += -f docker-compose.gpu.yml
 endif
+ifeq ($(COMPOSE_MODE),obs)
+	COMPOSE_FILES += -f docker-compose.observability.yml
+endif
+ifeq ($(COMPOSE_MODE),full)
+	COMPOSE_FILES += -f docker-compose.observability.yml
+endif
 DOCKER_ENGINE_OK := $(shell docker info >/dev/null 2>&1 && echo 1 || echo 0)
 
-.PHONY: help check-compose check-docker-engine check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-core down destroy reset logs logs-core logs-app logs-mlflow ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs test frontend frontend-install
+.PHONY: help check-compose check-docker-engine check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-obs up-full up-core down destroy reset logs logs-core logs-app logs-mlflow logs-obs ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs test frontend frontend-install
 
 help:
 	@printf "\n"
@@ -53,13 +59,16 @@ help:
 	@printf "  \033[1;37mmake up\033[0m        -> Subir os containers (modo atual: COMPOSE_MODE=$(COMPOSE_MODE))\n"
 	@printf "  \033[1;37mmake up-cpu\033[0m    -> Subir a stack completa sem overlay de GPU\n"
 	@printf "  \033[1;37mmake up-gpu\033[0m    -> Subir a stack completa com overlay de GPU para Ollama\n"
+	@printf "  \033[1;37mmake up-obs\033[0m    -> Subir stack com observabilidade (Prometheus, Grafana, Loki)\n"
+	@printf "  \033[1;37mmake up-full\033[0m   -> Subir stack completa com observabilidade\n"
 	@printf "  \033[1;37mmake up-core\033[0m   -> Subir Postgres + MinIO + MLflow\n"
 	@printf "  \033[1;37mmake down\033[0m      -> Parar containers sem remover estado local\n"
 	@printf "  \033[1;37mmake destroy\033[0m   -> Remover containers e rede local\n"
 	@printf "  \033[1;37mmake reset\033[0m     -> Reset completo (remove volumes)\n"
 	@printf "  \033[1;37mmake logs\033[0m      -> Ver logs de toda a stack em tempo real\n"
 	@printf "  \033[1;37mmake logs-core\033[0m -> Ver logs dos servicos principais de dados e backend\n"
-	@printf "  \033[1;37mmake logs-app\033[0m  -> Ver logs da aplicacao web e API\n\n"
+	@printf "  \033[1;37mmake logs-app\033[0m  -> Ver logs da aplicacao web e API\n"
+	@printf "  \033[1;37mmake logs-obs\033[0m  -> Ver logs da observabilidade (Prometheus, Grafana, Loki)\n\n"
 
 	@printf "\033[1;33mFrontend\033[0m\n"
 	@printf "  \033[1;37mmake frontend\033[0m  -> Rodar frontend Next.js localmente fora do Docker\n"
@@ -188,6 +197,12 @@ up-cpu:
 up-gpu:
 	@$(MAKE) up COMPOSE_MODE=gpu
 
+up-obs:
+	@$(MAKE) up COMPOSE_MODE=obs
+
+up-full:
+	@$(MAKE) up COMPOSE_MODE=full
+
 up: check-compose check-docker-engine check-env
 	@echo "[INFO] Subindo containers com COMPOSE_MODE=$(COMPOSE_MODE)..."
 	@$(COMPOSE) $(COMPOSE_FILES) up -d
@@ -261,6 +276,10 @@ logs-app: check-compose check-docker-engine check-env
 logs-mlflow: check-compose check-docker-engine check-env
 	@echo "[INFO] Exibindo logs do MLflow..."
 	@$(COMPOSE) $(COMPOSE_FILES) logs -f mlflow
+
+logs-obs: check-compose check-docker-engine check-env
+	@echo "[INFO] Exibindo logs da observabilidade (prometheus, grafana, loki)..."
+	@$(COMPOSE) -f docker-compose.yml -f docker-compose.observability.yml logs -f prometheus grafana loki promtail
 
 ps: check-compose check-docker-engine check-env
 	@$(COMPOSE) $(COMPOSE_FILES) ps
