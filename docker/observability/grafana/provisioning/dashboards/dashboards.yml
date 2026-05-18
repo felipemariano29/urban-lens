@@ -1,0 +1,13 @@
+apiVersion: 1
+
+providers:
+  - name: 'Urban Lens Dashboards'
+    orgId: 1
+    folder: 'Urban Lens'
+    folderUid: 'urban-lens'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
