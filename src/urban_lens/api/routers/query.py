@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from urban_lens.api.core.auth import UserProfile
+from urban_lens.api.core.policy import enforce_plan_top_k, resolve_chat_model
 from urban_lens.api.dependencies import require_roles
 from urban_lens.api.schemas import ChatQueryRequest, ChatQueryResponse, QueryRequest, QueryResponse, QueryResult
 
@@ -27,10 +28,17 @@ router = APIRouter(prefix="/api/v1", tags=["Query"])
     },
 )
 def query(
+    request: Request,
     body: QueryRequest,
-    _profile: UserProfile = Depends(require_roles("viewer", "operator", "admin", "internal_service")),
+    profile: UserProfile = Depends(require_roles("viewer", "operator", "admin", "internal_service")),
 ) -> QueryResponse:
     from urban_lens.api.services import rag_service
+
+    enforce_plan_top_k(profile, body.top_k)
+    request.state.audit_context = {
+        "top_k": body.top_k,
+        "filters": body.filters or {},
+    }
 
     try:
         hits = rag_service.run_query(
@@ -64,6 +72,7 @@ def query(
     },
 )
 def chat_query(
+    request: Request,
     body: ChatQueryRequest,
     profile: UserProfile = Depends(
         require_roles("viewer", "operator", "intel_user", "developer", "admin", "internal_service")
@@ -71,13 +80,21 @@ def chat_query(
 ) -> ChatQueryResponse:
     from urban_lens.api.services import rag_service
 
+    enforce_plan_top_k(profile, body.top_k)
+    resolved_model = resolve_chat_model(profile, body.model)
+    request.state.audit_context = {
+        "top_k": body.top_k,
+        "model_name": resolved_model,
+        "filters": body.filters.model_dump(exclude_none=True),
+    }
+
     try:
         result = rag_service.run_chat_query(
             query=body.query,
             role=profile.role,
             top_k=body.top_k,
             filters=body.filters,
-            model=body.model,
+            model=resolved_model,
         )
     except Exception as exc:
         logger.error("RAG chat service error: %s", exc)

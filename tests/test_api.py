@@ -38,6 +38,7 @@ def _governed_api_key_record(**overrides) -> dict:
         "api_key_id": "api-key-1",
         "client_id": "client-1",
         "user_id": "user-1",
+        "plan_id": "plan-1",
         "key_prefix": "abc123def456",
         "key_hash": hashlib.sha256(api_key.encode("utf-8")).hexdigest(),
         "api_key_status": "active",
@@ -272,6 +273,95 @@ class TestAuthentication:
             resp = client.post("/api/v1/query", json={"query": "test"}, headers=_auth("viewer"))
         assert resp.status_code == 200
         assert record_request_audit.called
+
+    def test_governed_query_rejects_top_k_above_plan_limit(self, client):
+        governed_record = _governed_api_key_record(plan_max_top_k=3)
+        with patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record):
+            resp = client.post(
+                "/api/v1/query",
+                json={"query": "test", "top_k": 4},
+                headers=_api_key_header(_governed_api_key()),
+            )
+        assert resp.status_code == 403
+        assert "top_k=4" in resp.json()["message"]
+
+    def test_governed_chat_rejects_disallowed_model(self, client):
+        governed_record = _governed_api_key_record(allowed_models=["llama3"])
+        with patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record):
+            resp = client.post(
+                "/api/v1/chat/query",
+                json={"query": "test", "model": "phi3"},
+                headers=_api_key_header(_governed_api_key()),
+            )
+        assert resp.status_code == 403
+        assert "phi3" in resp.json()["message"]
+
+    def test_governed_chat_uses_default_model_when_plan_allows_it(self, client, monkeypatch):
+        monkeypatch.setenv("URBAN_LENS_CHAT_MODEL", "llama3")
+        governed_record = _governed_api_key_record(allowed_models=["llama3"])
+        mock_response = MagicMock()
+        mock_response.model_dump.return_value = {
+            "answer": {"text": "ok", "status": "answered", "model": "llama3"},
+            "evidences": [],
+            "context": [],
+            "profile": "intel_user",
+            "fallback_reason": None,
+            "timings_ms": {
+                "embedding_ms": 1.0,
+                "retrieval_ms": 1.0,
+                "generation_ms": 1.0,
+                "total_ms": 3.0,
+            },
+        }
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record),
+            patch("urban_lens.governance.store.MetadataStore.touch_api_key_usage"),
+            patch("urban_lens.api.services.rag_service.run_chat_query", return_value=mock_response) as run_chat_query,
+        ):
+            resp = client.post(
+                "/api/v1/chat/query",
+                json={"query": "test"},
+                headers=_api_key_header(_governed_api_key()),
+            )
+        assert resp.status_code == 200
+        assert run_chat_query.call_args.kwargs["model"] == "llama3"
+
+    def test_governed_chat_request_is_audited_with_model_context(self, client):
+        governed_record = _governed_api_key_record(
+            role="intel_user",
+            allowed_models=["llama3"],
+        )
+        mock_response = MagicMock()
+        mock_response.model_dump.return_value = {
+            "answer": {"text": "ok", "status": "answered", "model": "llama3"},
+            "evidences": [],
+            "context": [],
+            "profile": "intel_user",
+            "fallback_reason": None,
+            "timings_ms": {
+                "embedding_ms": 1.0,
+                "retrieval_ms": 1.0,
+                "generation_ms": 1.0,
+                "total_ms": 3.0,
+            },
+        }
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record),
+            patch("urban_lens.governance.store.MetadataStore.touch_api_key_usage"),
+            patch("urban_lens.api.services.rag_service.run_chat_query", return_value=mock_response),
+            patch("urban_lens.governance.store.MetadataStore.record_request_audit") as record_request_audit,
+        ):
+            resp = client.post(
+                "/api/v1/chat/query",
+                json={"query": "test", "model": "llama3", "top_k": 3, "filters": {"crime_type": "burglary"}},
+                headers=_api_key_header(_governed_api_key()),
+            )
+        assert resp.status_code == 200
+        payload = record_request_audit.call_args.args[0]
+        assert payload.plan_id == "plan-1"
+        assert payload.model_name == "llama3"
+        assert payload.filters_json == {"crime_type": "burglary"}
+        assert payload.metadata_json["top_k"] == 3
 
 
 # ---------------------------------------------------------------------------

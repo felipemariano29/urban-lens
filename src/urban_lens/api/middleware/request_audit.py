@@ -41,6 +41,7 @@ class RequestAuditMiddleware(BaseHTTPMiddleware):
         latency_ms: float,
     ) -> None:
         try:
+            audit_context = getattr(request.state, "audit_context", {})
             store = MetadataStore(AppConfig.from_env().postgres_dsn)
             store.record_request_audit(
                 RequestAuditPayload(
@@ -50,14 +51,17 @@ class RequestAuditMiddleware(BaseHTTPMiddleware):
                     user_id=profile.user_id,
                     client_id=profile.client_id,
                     api_key_id=profile.api_key_id,
-                    plan_id=None,
+                    plan_id=profile.plan_id,
                     response_status=response.status_code,
+                    model_name=audit_context.get("model_name"),
                     latency_ms=latency_ms,
                     remote_ip=request.client.host if request.client else None,
                     user_agent=request.headers.get("user-agent"),
+                    filters_json=audit_context.get("filters", {}),
                     metadata_json={
                         "auth_type": profile.auth_type,
                         "plan_code": profile.plan_code,
+                        "top_k": audit_context.get("top_k"),
                     },
                 )
             )

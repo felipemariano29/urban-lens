@@ -21,6 +21,7 @@ class UserProfile:
     user_id: str | None = None
     client_id: str | None = None
     api_key_id: str | None = None
+    plan_id: str | None = None
     plan_code: str | None = None
     plan_max_top_k: int | None = None
     allowed_models: tuple[str, ...] = ()
@@ -126,6 +127,7 @@ def _authenticate_governed_api_key(api_key: str) -> UserProfile:
         user_id=record["user_id"],
         client_id=record["client_id"],
         api_key_id=record["api_key_id"],
+        plan_id=record.get("plan_id"),
         plan_code=record.get("plan_code"),
         plan_max_top_k=record.get("plan_max_top_k"),
         allowed_models=tuple(record.get("allowed_models") or ()),
