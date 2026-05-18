@@ -73,3 +73,34 @@ class AccessCredentialRequest(BaseModel):
     plan_code: str = Field("FREE", description="Service plan code such as FREE or PRO.")
     client_name: str = Field(..., min_length=3, description="Logical API client name for the issued key.")
     expires_at: Optional[datetime] = Field(None, description="Optional UTC expiration timestamp for the issued key.")
+
+
+class ApiKeyRevokeRequest(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "reason": "Security incident - key potentially compromised",
+            }
+        }
+    )
+
+    reason: Optional[str] = Field(
+        None,
+        max_length=500,
+        description="Optional reason for revoking the API key.",
+    )
+
+
+class ApiKeyRotateRequest(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "expires_at": "2027-06-30T23:59:59Z",
+            }
+        }
+    )
+
+    expires_at: Optional[datetime] = Field(
+        None,
+        description="Optional expiration timestamp for the new rotated key.",
+    )

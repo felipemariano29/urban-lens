@@ -123,3 +123,64 @@ class AccessCredentialResponse(BaseModel):
     key_prefix: str = Field(..., description="Stored API key prefix used for lookup.")
     api_key: str = Field(..., description="Plaintext API key returned only once at issuance time.")
     expires_at: Optional[datetime] = Field(None, description="Optional API key expiration timestamp.")
+
+
+class ApiClientInfo(BaseModel):
+    client_id: str = Field(..., description="Unique API client identifier.")
+    user_id: str = Field(..., description="Owner user identifier.")
+    client_name: str = Field(..., description="Logical API client name.")
+    status: str = Field(..., description="Client status: active, suspended, or revoked.")
+    requests_per_minute_override: Optional[int] = Field(None, description="Client-specific rate limit override.")
+    requests_per_day_override: Optional[int] = Field(None, description="Client-specific daily limit override.")
+    last_used_at: Optional[datetime] = Field(None, description="Last API key usage timestamp.")
+    created_at: datetime = Field(..., description="Client creation timestamp.")
+    updated_at: Optional[datetime] = Field(None, description="Last client update timestamp.")
+    user_email: str = Field(..., description="Owner email address.")
+    user_full_name: str = Field(..., description="Owner display name.")
+    user_role: str = Field(..., description="Owner application role.")
+    plan_code: str = Field(..., description="Service plan code.")
+    plan_name: str = Field(..., description="Service plan display name.")
+    plan_requests_per_minute: int = Field(..., description="Plan default rate limit.")
+    plan_requests_per_day: int = Field(..., description="Plan default daily limit.")
+    active_keys_count: int = Field(..., description="Number of active API keys for this client.")
+
+
+class ApiClientListResponse(BaseModel):
+    clients: List[ApiClientInfo] = Field(..., description="List of API clients.")
+    total: int = Field(..., description="Total number of clients returned.")
+
+
+class ApiKeyInfo(BaseModel):
+    api_key_id: str = Field(..., description="Unique API key identifier.")
+    client_id: str = Field(..., description="Parent API client identifier.")
+    key_prefix: str = Field(..., description="Key prefix for identification (ul_xxxxxx).")
+    status: str = Field(..., description="Key status: active, revoked, or expired.")
+    expires_at: Optional[datetime] = Field(None, description="Key expiration timestamp.")
+    issued_at: datetime = Field(..., description="Key issuance timestamp.")
+    last_used_at: Optional[datetime] = Field(None, description="Last usage timestamp.")
+    revoked_at: Optional[datetime] = Field(None, description="Revocation timestamp, if revoked.")
+    client_name: str = Field(..., description="Parent client name.")
+    user_email: str = Field(..., description="Owner email address.")
+
+
+class ApiKeyListResponse(BaseModel):
+    keys: List[ApiKeyInfo] = Field(..., description="List of API keys.")
+    total: int = Field(..., description="Total number of keys returned.")
+
+
+class ApiKeyRevokeResponse(BaseModel):
+    api_key_id: str = Field(..., description="Revoked API key identifier.")
+    key_prefix: str = Field(..., description="Revoked key prefix.")
+    status: str = Field("revoked", description="New key status after revocation.")
+    revoked_at: datetime = Field(..., description="Revocation timestamp.")
+    message: str = Field(..., description="Human-readable confirmation message.")
+
+
+class ApiKeyRotateResponse(BaseModel):
+    old_api_key_id: str = Field(..., description="Revoked API key identifier.")
+    new_api_key_id: str = Field(..., description="Newly issued API key identifier.")
+    client_id: str = Field(..., description="Parent API client identifier.")
+    key_prefix: str = Field(..., description="New key prefix for identification.")
+    api_key: str = Field(..., description="Plaintext new API key returned only once.")
+    expires_at: Optional[datetime] = Field(None, description="New key expiration timestamp.")
+    message: str = Field(..., description="Human-readable confirmation message.")
