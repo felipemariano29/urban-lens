@@ -97,3 +97,16 @@ class ChatQueryResponse(BaseModel):
     context: List[RagContextChunk] = Field(default_factory=list, description="Retrieved context chunks.")
     profile: AccessProfile = Field(..., description="Normalized access profile applied to the response.")
     fallback_reason: Optional[str] = Field(None, description="Machine-readable fallback reason, when any.")
+
+
+class OllamaModelInfo(BaseModel):
+    name: str = Field(..., description="Model name as exposed by the local Ollama catalog.")
+    size_bytes: Optional[int] = Field(None, description="Downloaded model size in bytes, when reported by Ollama.")
+    digest: Optional[str] = Field(None, description="Immutable model digest, when reported by Ollama.")
+    modified_at: Optional[datetime] = Field(None, description="Timestamp of the last model update in Ollama.")
+
+
+class AvailableModelsResponse(BaseModel):
+    default_chat_model: str = Field(..., description="Default chat model used when the client does not select one.")
+    default_embedding_model: str = Field(..., description="Embedding model configured for vector search.")
+    models: List[OllamaModelInfo] = Field(..., description="Models currently available in the local Ollama runtime.")
