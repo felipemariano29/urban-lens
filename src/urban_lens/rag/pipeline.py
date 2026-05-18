@@ -10,7 +10,7 @@ from urban_lens.infrastructure.vector_store import MilvusVectorStore
 from urban_lens.rag.composition import compose_structured_answer
 from urban_lens.rag.contracts import AccessProfile, EvidenceCitation, RagAnswer, RagQuery, RagResponse, RagTimings
 from urban_lens.rag.generation import OllamaGenerator, build_prompt, detect_question_language, remove_repeated_question_prefix
-from urban_lens.rag.query_understanding import detect_query_intent, enrich_filters_from_question
+from urban_lens.rag.query_understanding import detect_query_intent, enrich_filters_from_question, intent_to_corpus
 from urban_lens.rag.retrieval import build_context_text, filters_to_vector_store, milvus_hits_to_context
 
 FALLBACK_TEXT_PT = (
@@ -59,11 +59,33 @@ class RagPipeline:
             )
 
         retrieval_started_at = time.perf_counter()
-        raw_hits = self.vector_store.search(
-            query_embedding=embeddings[0],
-            top_k=request.top_k,
-            filters=filters_to_vector_store(effective_filters, request.profile),
-        )
+
+        # Select corpus based on query intent
+        corpus_selection = intent_to_corpus(intent)
+        crime_filters = filters_to_vector_store(effective_filters, request.profile)
+
+        if corpus_selection == "knowledge":
+            # Platform/MLflow queries - search only knowledge corpus
+            raw_hits = self.vector_store.search_knowledge(
+                query_embedding=embeddings[0],
+                top_k=request.top_k,
+            )
+        elif corpus_selection == "hybrid":
+            # Generic queries - search both corpora
+            raw_hits = self.vector_store.search_multi(
+                query_embedding=embeddings[0],
+                collections=["crime", "knowledge"],
+                top_k=request.top_k,
+                crime_filters=crime_filters,
+            )
+        else:
+            # Crime-specific queries - search only crime corpus
+            raw_hits = self.vector_store.search(
+                query_embedding=embeddings[0],
+                top_k=request.top_k,
+                filters=crime_filters,
+            )
+
         if intent == "crime_type_listing":
             raw_hits = _augment_hits_for_crime_type_listing(
                 raw_hits=raw_hits,
