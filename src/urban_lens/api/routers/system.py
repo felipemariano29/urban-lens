@@ -9,7 +9,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from urban_lens.api.core.auth import UserProfile
 from urban_lens.api.dependencies import require_roles
-from urban_lens.api.models.request import ChatQueryRequest
 from urban_lens.api.schemas import AvailableModelsResponse, OllamaModelInfo
 from urban_lens.core.settings import AppConfig
 
@@ -66,7 +65,7 @@ def list_models(
         )
 
     return AvailableModelsResponse(
-        default_chat_model=ChatQueryRequest.model_fields["model"].default,
+        default_chat_model=config.chat_model,
         default_embedding_model=config.embedding_model,
         models=models,
     )

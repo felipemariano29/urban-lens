@@ -52,7 +52,7 @@ class RagQuery(BaseModel):
     top_k: int = Field(5, ge=1, le=20, description="Number of retrieved chunks.")
     filters: RagFilters = Field(default_factory=RagFilters, description="Structured metadata filters.")
     profile: AccessProfile = Field(AccessProfile.intel_user, description="Access profile used to shape context.")
-    model: str = Field("llama3", description="Local Ollama generation model.")
+    model: str = Field(..., description="Local Ollama generation model.")
     min_score: float = Field(0.15, ge=0.0, le=1.0, description="Minimum similarity score for enough evidence.")
     max_context_chars: int = Field(6000, ge=500, le=20000, description="Prompt context budget in characters.")
 

@@ -44,4 +44,7 @@ class ChatQueryRequest(BaseModel):
     query: str = Field(..., description="Natural language question for the RAG chat pipeline.")
     filters: RagFilters = Field(default_factory=RagFilters, description="Optional metadata filters.")
     top_k: int = Field(5, ge=1, le=20, description="Number of chunks retrieved for context.")
-    model: str = Field("llama3", description="Local Ollama model used for answer generation.")
+    model: Optional[str] = Field(
+        None,
+        description="Local Ollama model used for answer generation. Defaults to the configured chat model.",
+    )

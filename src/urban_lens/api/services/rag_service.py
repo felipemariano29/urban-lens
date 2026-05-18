@@ -84,7 +84,7 @@ def run_chat_query(
     role: str,
     top_k: int = 5,
     filters: RagFilters | None = None,
-    model: str = "llama3",
+    model: str | None = None,
 ) -> RagResponse:
     config = AppConfig.from_env()
     profile = normalize_profile(role)
@@ -93,6 +93,6 @@ def run_chat_query(
         top_k=top_k,
         filters=filters or RagFilters(),
         profile=profile,
-        model=model,
+        model=model or config.chat_model,
     )
     return RagPipeline(config).run(request)
