@@ -214,10 +214,8 @@ class UsageStatsResponse(BaseModel):
     remaining_day: Optional[int] = Field(None, description="Remaining requests today.")
 
 
-class PublicApiKeyResponse(BaseModel):
-    """Response for public API key registration (no auth required)."""
-
-    api_key: str = Field(..., description="Plaintext API key - save this, it will only be shown once.")
-    key_prefix: str = Field(..., description="Key prefix for identification (ul_xxxxxx).")
-    plan: str = Field(..., description="Service plan assigned.")
-    message: str = Field(..., description="Human-readable confirmation message.")
+class AccessRequestCreateResponse(BaseModel):
+    request_id: str = Field(..., description="Unique access request identifier.")
+    status: str = Field(..., description="Workflow status, typically `pending_review`.")
+    recommended_plan: str = Field(..., description="Recommended onboarding plan after triage.")
+    message: str = Field(..., description="Human-readable next step for the requester.")

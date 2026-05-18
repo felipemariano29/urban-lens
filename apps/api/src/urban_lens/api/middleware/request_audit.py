@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+from datetime import UTC, datetime
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -63,6 +64,7 @@ class RequestAuditMiddleware(BaseHTTPMiddleware):
                         "plan_code": profile.plan_code,
                         "top_k": audit_context.get("top_k"),
                     },
+                    completed_at=datetime.now(UTC),
                 )
             )
         except Exception as exc:

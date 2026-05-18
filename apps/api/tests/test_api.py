@@ -280,6 +280,8 @@ class TestAuthentication:
             resp = client.post("/api/v1/query", json={"query": "test"}, headers=_auth("viewer"))
         assert resp.status_code == 200
         assert record_request_audit.called
+        payload = record_request_audit.call_args.args[0]
+        assert payload.completed_at is not None
 
     def test_governed_api_key_rate_limit_returns_429(self, client):
         governed_record = _governed_api_key_record(effective_requests_per_minute=2)
@@ -1091,3 +1093,29 @@ class TestAccessManagement:
     def test_get_usage_returns_401_without_auth(self, client):
         resp = client.get("/api/v1/access/me/usage")
         assert resp.status_code == 401
+
+
+class TestPublicAccessRequest:
+    def test_create_access_request_returns_201(self, client):
+        with patch("urban_lens.governance.store.MetadataStore.create_access_request", return_value="request-1") as create_access_request:
+            resp = client.post(
+                "/api/v1/system/access-requests",
+                json={
+                    "full_name": "Ana Silva",
+                    "email": "ana.silva@urbanlens.local",
+                    "organization": "Urban Safety Office",
+                    "use_case": "Need governed read-only analytics access for monthly reporting.",
+                },
+            )
+        assert resp.status_code == 201
+        body = resp.json()
+        assert body["request_id"] == "request-1"
+        assert body["status"] == "pending_review"
+        create_access_request.assert_called_once()
+
+    def test_create_access_request_validates_payload(self, client):
+        resp = client.post(
+            "/api/v1/system/access-requests",
+            json={"full_name": "A", "email": "bad", "use_case": "short"},
+        )
+        assert resp.status_code == 422

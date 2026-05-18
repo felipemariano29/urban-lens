@@ -10,12 +10,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from urban_lens.api.core.auth import UserProfile
 from urban_lens.api.dependencies import require_roles
 from urban_lens.api.schemas import (
+    AccessRequestCreateRequest,
+    AccessRequestCreateResponse,
     AvailableModelsResponse,
     OllamaModelInfo,
-    PublicApiKeyRequest,
-    PublicApiKeyResponse,
 )
 from urban_lens.core.settings import AppConfig
+from urban_lens.governance import AccessRequestPayload, MetadataStore
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/system", tags=["System"])
@@ -77,58 +78,54 @@ def list_models(
 
 
 @router.post(
-    "/api-keys",
-    response_model=PublicApiKeyResponse,
-    summary="Register a new API key (public)",
+    "/access-requests",
+    response_model=AccessRequestCreateResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Request governed access",
     description=(
-        "Public endpoint for self-service API key registration. "
-        "Creates a new user, API client, and issues a plaintext API key. "
-        "The key is returned only once - store it securely."
+        "Public onboarding endpoint for requesting governed access to Urban Lens Analytics. "
+        "This endpoint records the request for review instead of issuing a privileged API key directly."
     ),
     responses={
-        200: {"description": "API key created successfully."},
+        201: {"description": "Access request registered successfully."},
         422: {"description": "Invalid input payload."},
         502: {"description": "Backend registration service unavailable."},
     },
 )
-def create_public_api_key(body: PublicApiKeyRequest) -> PublicApiKeyResponse:
-    from urban_lens.api.schemas import AccessCredentialRequest
-    from urban_lens.api.services import access_service
-
-    # Map plan name to plan code
-    plan_code_map = {
-        "free": "FREE",
-        "basic": "BASIC",
-        "pro": "PRO",
-        "enterprise": "ENTERPRISE",
-    }
-    plan_code = plan_code_map.get(body.plan.lower(), "FREE")
-
+def create_access_request(body: AccessRequestCreateRequest) -> AccessRequestCreateResponse:
+    config = AppConfig.from_env()
     try:
-        # Use the internal access service to create credentials
-        credential_request = AccessCredentialRequest(
-            full_name=body.name,
-            email=body.email,
-            organization=None,
-            role="viewer",
-            plan_code=plan_code,
-            client_name=f"web-{body.email.split('@')[0]}",
-            expires_at=None,
+        store = MetadataStore(dsn=config.postgres_dsn)
+        access_request_id = store.create_access_request(
+            AccessRequestPayload(
+                full_name=body.full_name,
+                email=body.email,
+                organization=body.organization,
+                use_case=body.use_case,
+                requested_plan_code="FREE",
+                metadata_json={
+                    "entrypoint": "public_system_route",
+                    "public_signup_enabled": config.public_signup_enabled,
+                },
+            )
         )
+        message = (
+            "Solicitacao registrada. Um administrador precisa aprovar e emitir a credencial governada."
+        )
+        if config.public_signup_enabled:
+            message += " O fluxo publico esta habilitado, mas a emissao automatica de chave permanece desabilitada."
 
-        result = access_service.issue_access_credential(credential_request)
-
-        return PublicApiKeyResponse(
-            api_key=result.api_key,
-            key_prefix=result.key_prefix,
-            plan=plan_code.lower(),
-            message=f"API key created successfully for {body.name}. Save this key - it will only be shown once.",
+        return AccessRequestCreateResponse(
+            request_id=access_request_id,
+            status="pending_review",
+            recommended_plan="FREE",
+            message=message,
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     except Exception as exc:
-        logger.error("Public API key creation failed: %s", exc)
+        logger.error("Public access request creation failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Unable to create API key. Please try again later.",
+            detail="Unable to register the access request. Please try again later.",
         )

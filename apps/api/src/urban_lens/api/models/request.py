@@ -106,19 +106,21 @@ class ApiKeyRotateRequest(BaseModel):
     )
 
 
-class PublicApiKeyRequest(BaseModel):
-    """Request model for public API key registration (no auth required)."""
+class AccessRequestCreateRequest(BaseModel):
+    """Public request model for access onboarding."""
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "name": "John Doe",
+                "full_name": "John Doe",
                 "email": "john.doe@example.com",
-                "plan": "free",
+                "organization": "City Intelligence Office",
+                "use_case": "Need read-only analytics access for monthly urban safety reviews.",
             }
         }
     )
 
-    name: str = Field(..., min_length=2, max_length=100, description="Name of the person or organization.")
-    email: str = Field(..., description="Email address for the API key owner.")
-    plan: str = Field("free", description="Service plan: free, basic, pro, or enterprise.")
+    full_name: str = Field(..., min_length=3, max_length=100, description="Full name of the requester.")
+    email: str = Field(..., description="Email address for follow-up and approval flow.")
+    organization: str | None = Field(None, max_length=120, description="Optional organization or department.")
+    use_case: str = Field(..., min_length=10, max_length=800, description="Why the requester needs access.")

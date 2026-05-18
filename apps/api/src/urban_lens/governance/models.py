@@ -83,6 +83,22 @@ class ApiKey(Base):
     metadata_json = Column(JSONB, nullable=False)
 
 
+class AccessRequest(Base):
+    __tablename__ = "access_requests"
+    __table_args__ = {"schema": "governance"}
+
+    id = Column(UUID(as_uuid=True), primary_key=True)
+    full_name = Column(String, nullable=False)
+    email = Column(String, nullable=False)
+    organization = Column(String, nullable=True)
+    use_case = Column(String, nullable=False)
+    requested_plan_code = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    metadata_json = Column(JSONB, nullable=False)
+    created_at = Column(DateTime, nullable=False)
+    reviewed_at = Column(DateTime, nullable=True)
+
+
 class RequestAudit(Base):
     __tablename__ = "request_audit"
     __table_args__ = {"schema": "governance"}

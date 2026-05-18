@@ -172,6 +172,16 @@ class ApiKeyPayload(GovernancePayload):
     metadata_json: dict[str, Any] = Field(default_factory=dict)
 
 
+class AccessRequestPayload(GovernancePayload):
+    full_name: str
+    email: str
+    organization: str | None = None
+    use_case: str
+    requested_plan_code: str = "FREE"
+    status: str = "pending_review"
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+
 class RequestAuditPayload(GovernancePayload):
     request_id: str
     route_path: str

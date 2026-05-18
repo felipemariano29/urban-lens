@@ -286,7 +286,7 @@ logs-mlflow: check-compose check-docker-engine check-env
 
 logs-obs: check-compose check-docker-engine check-env
 	@echo "[INFO] Exibindo logs da observabilidade (prometheus, grafana, loki)..."
-	@$(COMPOSE) -f docker-compose.yml -f docker-compose.observability.yml logs -f prometheus grafana loki promtail
+	@$(COMPOSE) --env-file .env -f $(COMPOSE_DIR)/docker-compose.yml -f $(COMPOSE_DIR)/docker-compose.observability.yml logs -f prometheus grafana loki promtail
 
 ps: check-compose check-docker-engine check-env
 	@$(COMPOSE) $(COMPOSE_FILES) ps

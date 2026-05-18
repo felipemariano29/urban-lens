@@ -5,7 +5,7 @@ from urban_lens.api.models.request import QueryRequest as QueryRequest
 from urban_lens.api.models.request import AccessCredentialRequest as AccessCredentialRequest
 from urban_lens.api.models.request import ApiKeyRevokeRequest as ApiKeyRevokeRequest
 from urban_lens.api.models.request import ApiKeyRotateRequest as ApiKeyRotateRequest
-from urban_lens.api.models.request import PublicApiKeyRequest as PublicApiKeyRequest
+from urban_lens.api.models.request import AccessRequestCreateRequest as AccessRequestCreateRequest
 from urban_lens.api.models.response import (
     AccessCredentialResponse as AccessCredentialResponse,
     ApiClientInfo as ApiClientInfo,
@@ -18,7 +18,7 @@ from urban_lens.api.models.response import (
     ChatQueryResponse as ChatQueryResponse,
     CurrentUserResponse as CurrentUserResponse,
     OllamaModelInfo as OllamaModelInfo,
-    PublicApiKeyResponse as PublicApiKeyResponse,
+    AccessRequestCreateResponse as AccessRequestCreateResponse,
     QueryResponse as QueryResponse,
     QueryResult as QueryResult,
     QueryResultMetadata as QueryResultMetadata,

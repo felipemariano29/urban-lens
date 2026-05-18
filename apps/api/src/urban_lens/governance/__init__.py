@@ -1,6 +1,7 @@
 """Governance contracts, persistence, and policy models."""
 
 from urban_lens.governance.contracts import (
+    AccessRequestPayload,
     AuditEventPayload,
     ApiClientPayload,
     ApiKeyPayload,
@@ -13,6 +14,7 @@ from urban_lens.governance.contracts import (
 from urban_lens.governance.store import MetadataStore
 
 __all__ = [
+    "AccessRequestPayload",
     "AuditEventPayload",
     "ApiClientPayload",
     "ApiKeyPayload",

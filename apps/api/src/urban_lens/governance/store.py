@@ -8,6 +8,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from urban_lens.governance.contracts import (
+    AccessRequestPayload,
     AuditEventPayload,
     ApiClientPayload,
     ApiKeyPayload,
@@ -383,6 +384,36 @@ class MetadataStore:
             )
             connection.commit()
         return api_key_id
+
+    def create_access_request(self, payload: AccessRequestPayload) -> str:
+        access_request_id = self._new_id()
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO governance.access_requests (
+                    id,
+                    full_name,
+                    email,
+                    organization,
+                    use_case,
+                    requested_plan_code,
+                    status,
+                    metadata_json
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                """,
+                (
+                    access_request_id,
+                    payload.full_name,
+                    payload.email.lower(),
+                    payload.organization,
+                    payload.use_case,
+                    payload.requested_plan_code,
+                    payload.status,
+                    json.dumps(payload.metadata_json),
+                ),
+            )
+            connection.commit()
+        return access_request_id
 
     def get_service_plan_by_code(self, code: str) -> dict[str, Any] | None:
         with self._connect() as connection, connection.cursor() as cursor:

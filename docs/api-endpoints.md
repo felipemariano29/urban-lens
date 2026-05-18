@@ -29,11 +29,42 @@ JWT roles currently supported:
 Notes:
 
 - The legacy internal service key maps the caller to the `internal_service` role.
-- Governed API keys use the format `ul_<prefix>_<secret>` and are issued by the access endpoint.
+- Governed API keys use the format `ul_<prefix>_<secret>` and are issued only by governed credential flows.
 - Governed API keys inherit role and plan limits from the stored governance record.
 - Governed API keys are also subject to per-minute and per-day quotas derived from the assigned plan or client override.
+- Public onboarding does not issue API keys directly. It records an access request for review.
 - If both headers are absent, protected endpoints return `401`.
 - Role checks are enforced per endpoint.
+
+### `POST /api/v1/system/access-requests`
+
+Purpose:
+- Registers a public access request for review. This endpoint does not mint API keys directly.
+
+Authentication:
+- none
+
+Request body:
+
+```json
+{
+  "full_name": "Ana Silva",
+  "email": "ana.silva@urbanlens.local",
+  "organization": "Urban Lens Security Lab",
+  "use_case": "Need governed read-only analytics access for monthly urban safety reporting."
+}
+```
+
+Main response fields:
+- `request_id`
+- `status`
+- `recommended_plan`
+- `message`
+
+Typical statuses:
+- `201`: access request registered
+- `422`: invalid input payload
+- `502`: governance backend unavailable
 
 ### `POST /api/v1/access/credentials`
 

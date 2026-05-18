@@ -69,6 +69,19 @@ CREATE TABLE IF NOT EXISTS governance.request_audit (
     completed_at TIMESTAMPTZ
 );
 
+CREATE TABLE IF NOT EXISTS governance.access_requests (
+    id UUID PRIMARY KEY,
+    full_name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    organization TEXT,
+    use_case TEXT NOT NULL,
+    requested_plan_code TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending_review' CHECK (status IN ('pending_review', 'approved', 'rejected')),
+    metadata_json JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(metadata_json) = 'object'),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    reviewed_at TIMESTAMPTZ
+);
+
 CREATE INDEX IF NOT EXISTS idx_governance_users_status
     ON governance.users (status);
 
@@ -92,6 +105,9 @@ CREATE INDEX IF NOT EXISTS idx_governance_request_audit_user_id_requested_at
 
 CREATE INDEX IF NOT EXISTS idx_governance_request_audit_route_requested_at
     ON governance.request_audit (route_path, requested_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_governance_access_requests_email_created_at
+    ON governance.access_requests (email, created_at DESC);
 
 INSERT INTO governance.service_plans (
     id,
