@@ -1,12 +1,12 @@
 services:
   mlflow:
     build:
-      context: .
-      dockerfile: docker/mlflow/Dockerfile
+      context: ../..
+      dockerfile: infra/docker/mlflow/Dockerfile
     container_name: mlflow-prod
     restart: unless-stopped
     env_file:
-      - .env.prod
+      - ../../.env.prod
     environment:
       MLFLOW_HOST: "0.0.0.0"
       MLFLOW_PORT: "5000"
@@ -22,12 +22,12 @@ services:
 
   rag-api:
     build:
-      context: .
-      dockerfile: docker/api/Dockerfile
+      context: ../..
+      dockerfile: infra/docker/api/Dockerfile
     container_name: rag-api-prod
     restart: unless-stopped
     env_file:
-      - .env.prod
+      - ../../.env.prod
     environment:
       MLFLOW_TRACKING_URI: "http://mlflow-prod:5000"
     ports:

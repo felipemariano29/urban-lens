@@ -3,7 +3,7 @@ services:
     image: postgres:15-alpine
     container_name: postgres-db
     restart: unless-stopped
-    env_file: .env
+    env_file: ../../.env
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -14,9 +14,9 @@ services:
       - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - type: bind
-        source: ./docker-data/postgres
+        source: ../../docker-data/postgres
         target: /var/lib/postgresql/data
-      - ./sql/init:/docker-entrypoint-initdb.d
+      - ../../sql/init:/docker-entrypoint-initdb.d
     networks:
       - app_network
 
@@ -27,7 +27,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    env_file: .env
+    env_file: ../../.env
     environment:
       PGADMIN_CONFIG_SERVER_MODE: "False"
     healthcheck:
@@ -46,9 +46,9 @@ services:
       - "${PGADMIN_HOST_PORT:-5050}:80"
     volumes:
       - type: bind
-        source: ./docker-data/pgadmin
+        source: ../../docker-data/pgadmin
         target: /var/lib/pgadmin
-      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ../docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
     networks:
       - app_network
 
@@ -56,7 +56,7 @@ services:
     image: quay.io/minio/minio:latest
     container_name: minio-storage
     restart: unless-stopped
-    env_file: .env
+    env_file: ../../.env
     command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
@@ -69,7 +69,7 @@ services:
       - "${MINIO_CONSOLE_HOST_PORT:-9001}:9001"
     volumes:
       - type: bind
-        source: ./docker-data/minio
+        source: ../../docker-data/minio
         target: /data
     networks:
       - app_network
@@ -80,17 +80,17 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-    env_file: .env
+    env_file: ../../.env
     entrypoint: ["/bin/sh", "/scripts/minio-setup.sh"]
     volumes:
-      - ./docker/scripts/minio-setup.sh:/scripts/minio-setup.sh:ro
+      - ../docker/scripts/minio-setup.sh:/scripts/minio-setup.sh:ro
     networks:
       - app_network
 
   mlflow:
     build:
-      context: .
-      dockerfile: docker/mlflow/Dockerfile
+      context: ../..
+      dockerfile: infra/docker/mlflow/Dockerfile
     container_name: mlflow-server
     restart: unless-stopped
     depends_on:
@@ -100,7 +100,7 @@ services:
         condition: service_healthy
       minio-setup:
         condition: service_completed_successfully
-    env_file: .env
+    env_file: ../../.env
     environment:
       MLFLOW_HOST: "0.0.0.0"
       MLFLOW_PORT: "5000"
@@ -151,9 +151,9 @@ services:
       - "${MILVUS_REST_PORT:-9091}:9091"
     volumes:
       - type: bind
-        source: ./docker-data/milvus
+        source: ../../docker-data/milvus
         target: /var/lib/milvus
-      - ./docker/milvus/user.yaml:/milvus/configs/user.yaml:ro
+      - ../docker/milvus/user.yaml:/milvus/configs/user.yaml:ro
     networks:
       - app_network
 
@@ -183,7 +183,7 @@ services:
       - "${ATTU_HOST_PORT:-3001}:3000"
     volumes:
       - type: bind
-        source: ./docker-data/attu
+        source: ../../docker-data/attu
         target: /data
     networks:
       - app_network
@@ -204,7 +204,7 @@ services:
       OLLAMA_NUM_PARALLEL: "${OLLAMA_NUM_PARALLEL:-4}"
     volumes:
       - type: bind
-        source: ./docker-data/ollama
+        source: ../../docker-data/ollama
         target: /root/.ollama
     networks:
       - app_network
@@ -215,17 +215,17 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
-    env_file: .env
+    env_file: ../../.env
     entrypoint: ["/bin/sh", "/scripts/ollama-setup.sh"]
     volumes:
-      - ./docker/scripts/ollama-setup.sh:/scripts/ollama-setup.sh:ro
+      - ../docker/scripts/ollama-setup.sh:/scripts/ollama-setup.sh:ro
     networks:
       - app_network
 
   rag-api:
     build:
-      context: .
-      dockerfile: docker/api/Dockerfile
+      context: ../..
+      dockerfile: infra/docker/api/Dockerfile
     container_name: rag-api
     restart: unless-stopped
     depends_on:
@@ -241,7 +241,7 @@ services:
         condition: service_healthy
       ollama-setup:
         condition: service_completed_successfully
-    env_file: .env
+    env_file: ../../.env
     environment:
       URBAN_LENS_POSTGRES_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}"
       URBAN_LENS_S3_ENDPOINT_URL: "http://minio-storage:9000"
@@ -261,8 +261,8 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: docker/web/Dockerfile
+      context: ../..
+      dockerfile: infra/docker/web/Dockerfile
     container_name: urban-lens-web
     restart: unless-stopped
     depends_on:

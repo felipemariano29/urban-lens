@@ -16,7 +16,7 @@ ENV_EXPORT = __MLFLOW_TRACKING_URI="$${MLFLOW_TRACKING_URI:-}"; \
 	set -a; . ./.env; set +a; \
 	if [ -n "$$__MLFLOW_TRACKING_URI" ]; then export MLFLOW_TRACKING_URI="$$__MLFLOW_TRACKING_URI"; fi; \
 	if [ -n "$$__MLFLOW_HOST_PORT" ]; then export MLFLOW_HOST_PORT="$$__MLFLOW_HOST_PORT"; fi;
-PYTHON_RUN = $(ENV_EXPORT) PYTHONPATH="$(CURDIR)/src:$${PYTHONPATH:-}"
+PYTHON_RUN = $(ENV_EXPORT) PYTHONPATH="$(CURDIR)/apps/api/src:$${PYTHONPATH:-}"
 PIP_RUN = PIP_CONFIG_FILE="$(PIP_CONFIG_FILE)" PIP_INDEX_URL="$(PIP_INDEX_URL)"
 
 ifeq ($(OS),Windows_NT)
@@ -34,15 +34,16 @@ else
 		fi)
 endif
 COMPOSE_MODE ?= cpu
-COMPOSE_FILES := -f docker-compose.yml
+COMPOSE_DIR := infra/compose
+COMPOSE_FILES := -f $(COMPOSE_DIR)/docker-compose.yml
 ifeq ($(COMPOSE_MODE),gpu)
-	COMPOSE_FILES += -f docker-compose.gpu.yml
+	COMPOSE_FILES += -f $(COMPOSE_DIR)/docker-compose.gpu.yml
 endif
 ifeq ($(COMPOSE_MODE),obs)
-	COMPOSE_FILES += -f docker-compose.observability.yml
+	COMPOSE_FILES += -f $(COMPOSE_DIR)/docker-compose.observability.yml
 endif
 ifeq ($(COMPOSE_MODE),full)
-	COMPOSE_FILES += -f docker-compose.observability.yml
+	COMPOSE_FILES += -f $(COMPOSE_DIR)/docker-compose.observability.yml
 endif
 DOCKER_ENGINE_OK := $(shell docker info >/dev/null 2>&1 && echo 1 || echo 0)
 
@@ -172,7 +173,7 @@ require-%:
 
 install: check-python
 	@echo "[INFO] Instalando dependencias Python..."
-	@$(PIP_RUN) $(PYTHON) -m pip install -e ".[dev]"
+	@$(PIP_RUN) $(PYTHON) -m pip install -e "apps/api[dev]"
 
 venv:
 	@if [ -x .venv/bin/python3 ] || [ -x .venv/bin/python ] || [ -x .venv/Scripts/python.exe ]; then \
@@ -216,7 +217,8 @@ up-core: check-compose check-docker-engine check-env
 	@$(COMPOSE) $(COMPOSE_FILES) up -d postgres minio minio-setup mlflow
 
 frontend-install:
-	@if [ -f package.json ]; then \
+	@if [ -f apps/web/package.json ]; then \
+		cd apps/web && \
 		if command -v pnpm >/dev/null 2>&1; then \
 			echo "[INFO] Instalando dependencias do frontend com pnpm..."; \
 			pnpm install; \
@@ -228,11 +230,12 @@ frontend-install:
 			exit 1; \
 		fi; \
 	else \
-		echo "[WARN] package.json nao encontrado. Pulando instalacao do frontend."; \
+		echo "[WARN] apps/web/package.json nao encontrado. Pulando instalacao do frontend."; \
 	fi
 
 frontend:
-	@if [ -f package.json ]; then \
+	@if [ -f apps/web/package.json ]; then \
+		cd apps/web && \
 		if command -v pnpm >/dev/null 2>&1; then \
 			echo "[INFO] Iniciando frontend Next.js com pnpm..."; \
 			pnpm dev; \
@@ -244,7 +247,7 @@ frontend:
 			exit 1; \
 		fi; \
 	else \
-		echo "[WARN] package.json nao encontrado. Frontend nao disponivel nesta branch."; \
+		echo "[WARN] apps/web/package.json nao encontrado. Frontend nao disponivel nesta branch."; \
 	fi
 
 down: check-compose check-docker-engine check-env
@@ -404,18 +407,18 @@ index-docs: check-python
 
 index-mlflow: check-env check-python
 	@echo "[INFO] Indexando runs do MLflow no knowledge corpus..."
-	@$(PYTHON_RUN) $(PYTHON) pipelines/index_mlflow_runs.py \
+	@$(PYTHON_RUN) $(PYTHON) apps/api/pipelines/index_mlflow_runs.py \
 		--max-runs "$(or $(MAX_RUNS),50)"
 
 eval-rag: check-env check-python
 	@echo "[INFO] Executando avaliacao do RAG..."
-	@$(PYTHON_RUN) $(PYTHON) pipelines/evaluate_rag.py \
+	@$(PYTHON_RUN) $(PYTHON) apps/api/pipelines/evaluate_rag.py \
 		$(if $(DATASET),--dataset "$(DATASET)",) \
 		$(if $(TAGS),--tags $(TAGS),) \
 		$(if $(MLFLOW),--mlflow,)
 
 test: check-python
-	@$(PYTHON_RUN) $(PYTHON) -m pytest
+	@$(PYTHON_RUN) $(PYTHON) -m pytest apps/api/tests
 
 index-embeddings-latest: check-env check-python
 	@set -euo pipefail; \
