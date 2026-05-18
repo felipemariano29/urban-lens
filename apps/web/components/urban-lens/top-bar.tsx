@@ -2,6 +2,8 @@
 
 import { Badge } from '@/components/ui/badge'
 import { useHealthCheck } from '@/hooks/use-urban-lens'
+import { useApiKey } from '@/contexts/api-key-context'
+import { ApiKeyModal } from './api-key-modal'
 import type { HealthDependencies } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { ActivityIcon, CircleIcon, DatabaseIcon, CpuIcon, HardDriveIcon } from 'lucide-react'
@@ -82,7 +84,8 @@ function DependencyStatus({
 }
 
 export function TopBar() {
-  const { status, dependencies, isLoading } = useHealthCheck()
+  const { apiKey } = useApiKey()
+  const { status, dependencies, isLoading } = useHealthCheck(apiKey)
 
   const displayStatus =
     status === 'healthy'
@@ -119,7 +122,10 @@ export function TopBar() {
           </div>
         </div>
 
-        <DependencyStatus dependencies={dependencies} />
+        <div className="flex items-center gap-4">
+          <DependencyStatus dependencies={dependencies} />
+          <ApiKeyModal />
+        </div>
       </div>
     </header>
   )

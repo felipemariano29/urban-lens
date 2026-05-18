@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import useSWR from 'swr'
 
-import { buildFrontendApiUrl } from '@/lib/api/client'
+import { buildBackendApiUrl } from '@/lib/api/client'
 import type {
   AvailableModelsResponse,
   AppState,
@@ -15,20 +15,37 @@ import type {
 
 const HISTORY_STORAGE_KEY = 'urban-lens:query-history'
 const HISTORY_LIMIT = 10
+const API_KEY_STORAGE_KEY = 'urban-lens:api-key'
 
-// Fetcher para SWR
-const fetcher = async (url: string) => {
-  const res = await fetch(url)
+// Helper to get stored API key
+function getStoredApiKey(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(API_KEY_STORAGE_KEY)
+}
+
+// Fetcher para SWR com API key
+const createFetcher = (apiKey: string | null) => async (url: string) => {
+  const headers: HeadersInit = {}
+  if (apiKey) {
+    headers['X-API-Key'] = apiKey
+  }
+  
+  const res = await fetch(url, { headers })
   if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`)
+    const error = new Error(`HTTP error! status: ${res.status}`)
+    ;(error as Error & { status: number }).status = res.status
+    throw error
   }
   return res.json()
 }
 
 // Hook para health check
-export function useHealthCheck() {
+export function useHealthCheck(apiKey: string | null = null) {
+  const effectiveKey = apiKey ?? getStoredApiKey()
+  const fetcher = createFetcher(effectiveKey)
+  
   const { data, error, isLoading, mutate } = useSWR<HealthResponse>(
-    buildFrontendApiUrl('/health'),
+    buildBackendApiUrl('/health'),
     fetcher,
     {
       refreshInterval: 60000,
@@ -50,9 +67,12 @@ export function useHealthCheck() {
   }
 }
 
-export function useAvailableModels() {
+export function useAvailableModels(apiKey: string | null = null) {
+  const effectiveKey = apiKey ?? getStoredApiKey()
+  const fetcher = createFetcher(effectiveKey)
+  
   const { data, error, isLoading, mutate } = useSWR<AvailableModelsResponse>(
-    buildFrontendApiUrl('/system/models'),
+    effectiveKey ? buildBackendApiUrl('/system/models') : null,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -67,12 +87,13 @@ export function useAvailableModels() {
     defaultEmbeddingModel: data?.default_embedding_model ?? 'nomic-embed-text',
     isLoading,
     error,
+    needsApiKey: !effectiveKey,
     refresh: mutate,
   }
 }
 
 // Hook principal para queries
-export function useQuery() {
+export function useQuery(apiKey: string | null = null) {
   const [state, setState] = useState<AppState>('idle')
   const [response, setResponse] = useState<ChatQueryResponse | null>(null)
   const [error, setError] = useState<{ code: number; message: string } | null>(null)
@@ -81,6 +102,8 @@ export function useQuery() {
 
   const executeQuery = useCallback(
     async (query: string, filters: QueryFilters, topK: number, model: string) => {
+      const effectiveKey = apiKey ?? getStoredApiKey()
+      
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
@@ -112,11 +135,16 @@ export function useQuery() {
           }
         }
 
-        const apiResponse = await fetch(buildFrontendApiUrl('/chat/query'), {
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        }
+        if (effectiveKey) {
+          headers['X-API-Key'] = effectiveKey
+        }
+
+        const apiResponse = await fetch(buildBackendApiUrl('/chat/query'), {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: JSON.stringify(body),
           signal: abortControllerRef.current.signal,
         })
@@ -156,7 +184,7 @@ export function useQuery() {
         return null
       }
     },
-    []
+    [apiKey]
   )
 
   const restoreResult = useCallback(

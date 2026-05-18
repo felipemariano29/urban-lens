@@ -9,6 +9,7 @@ import {
   validateLsoaCode,
   validateReferenceMonth,
 } from '@/hooks/use-urban-lens'
+import { useApiKey } from '@/contexts/api-key-context'
 import type { HistoryItem, QueryFilters } from '@/lib/types'
 
 import { QueryInput } from './query-input'
@@ -26,14 +27,16 @@ const DEFAULT_TOP_K = 5
 const FALLBACK_CHAT_MODEL = 'llama3'
 
 export function UrbanLens() {
+  const { apiKey } = useApiKey()
+  
   const [query, setQuery] = useState('')
   const [filters, setFilters] = useState<QueryFilters>(DEFAULT_FILTERS)
   const [topK, setTopK] = useState(DEFAULT_TOP_K)
   const [selectedModel, setSelectedModel] = useState(FALLBACK_CHAT_MODEL)
 
-  const { state, response, error, latency, executeQuery, restoreResult, reset } = useQuery()
+  const { state, response, error, latency, executeQuery, restoreResult, reset } = useQuery(apiKey)
   const { history, addToHistory, clearHistory } = useHistory()
-  const { models, defaultChatModel, isLoading: isLoadingModels } = useAvailableModels()
+  const { models, defaultChatModel, isLoading: isLoadingModels, needsApiKey } = useAvailableModels(apiKey)
 
   useEffect(() => {
     if (models.length === 0) {
@@ -115,6 +118,7 @@ export function UrbanLens() {
           selectedModel={selectedModel}
           onSelectedModelChange={setSelectedModel}
           isLoadingModels={isLoadingModels}
+          needsApiKey={needsApiKey}
           history={history}
           onHistorySelect={handleHistorySelect}
           onClearHistory={clearHistory}

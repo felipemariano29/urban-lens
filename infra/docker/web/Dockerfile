@@ -16,6 +16,7 @@ COPY apps/web/package.json apps/web/pnpm-lock.yaml ./
 COPY apps/web/next.config.mjs apps/web/next-env.d.ts apps/web/tsconfig.json apps/web/postcss.config.mjs apps/web/components.json ./
 COPY apps/web/app ./app
 COPY apps/web/components ./components
+COPY apps/web/contexts ./contexts
 COPY apps/web/hooks ./hooks
 COPY apps/web/lib ./lib
 COPY apps/web/public ./public

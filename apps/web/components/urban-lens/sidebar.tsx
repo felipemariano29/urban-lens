@@ -30,6 +30,7 @@ interface SidebarProps {
   selectedModel: string
   onSelectedModelChange: (value: string) => void
   isLoadingModels?: boolean
+  needsApiKey?: boolean
   history: HistoryItem[]
   onHistorySelect: (item: HistoryItem) => void
   onClearHistory: () => void
@@ -45,6 +46,7 @@ export function Sidebar({
   selectedModel,
   onSelectedModelChange,
   isLoadingModels = false,
+  needsApiKey = false,
   history,
   onHistorySelect,
   onClearHistory,
@@ -77,7 +79,7 @@ export function Sidebar({
               <Select
                 value={selectedModel}
                 onValueChange={onSelectedModelChange}
-                disabled={disabled || isLoadingModels || availableModels.length === 0}
+                disabled={disabled || isLoadingModels || availableModels.length === 0 || needsApiKey}
               >
                 <SelectTrigger id="chat-model" className="w-full">
                   <SelectValue placeholder="Selecione um modelo" />
@@ -91,11 +93,13 @@ export function Sidebar({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                {isLoadingModels
-                  ? 'Carregando modelos locais...'
-                  : availableModels.length > 0
-                    ? 'Escolha o modelo de geracao usado na resposta.'
-                    : 'Nenhum modelo listado pelo Ollama.'}
+                {needsApiKey
+                  ? 'Configure sua API Key para carregar os modelos.'
+                  : isLoadingModels
+                    ? 'Carregando modelos locais...'
+                    : availableModels.length > 0
+                      ? 'Escolha o modelo de geracao usado na resposta.'
+                      : 'Nenhum modelo listado pelo Ollama.'}
               </p>
             </div>
           </section>
