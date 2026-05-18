@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-cd /d C:\Users\lucas.neto\Documents\IAcomp\urban-lens
+cd /d %~dp0\..\..\..
 
 if not exist ".env" (
     echo [ERRO] Arquivo .env nao encontrado.
@@ -12,7 +12,7 @@ for /f "usebackq tokens=1,* delims==" %%A in (".env") do (
     set "%%A=%%B"
 )
 
-set "ACTOR=lucas.neto"
+set "ACTOR=system"
 
 call :run_month 03 d57aca10-3109-422f-8a17-692cc071d55c
 call :run_month 04 2f741b65-3598-43fa-b8c4-031bad624348
@@ -42,7 +42,7 @@ echo Regerando Gold para 2024-%MONTH%
 echo ==========================================
 echo SILVER_ID=%SILVER_ID%
 
-python pipelines\silver_to_gold.py --silver-object-key "silver/police_uk/crimes_standardized/year=2024/month=%MONTH%/part-000.parquet" --silver-dataset-version-id "%SILVER_ID%" --actor %ACTOR%
+.venv\Scripts\python.exe -m urban_lens.cli.silver_to_gold --silver-object-key "silver/police_uk/crimes_standardized/year=2024/month=%MONTH%/part-000.parquet" --silver-dataset-version-id "%SILVER_ID%" --actor %ACTOR%
 if errorlevel 1 (
     echo [ERRO] Falha no silver_to_gold de 2024-%MONTH%
     exit /b 1

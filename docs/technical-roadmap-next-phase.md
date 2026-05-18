@@ -31,6 +31,7 @@ The highest priority corrections are:
 3. separate technical knowledge retrieval from crime evidence retrieval
 4. expand governance to include user identity, API keys, plans, quotas, and request audit
 5. extend Sprint 9 so MLflow runs and platform knowledge also become queryable context
+6. finish the monorepo migration by removing stale root-level frontend artifacts and legacy scripts
 
 ## Current Architecture Diagnosis
 
@@ -52,6 +53,8 @@ Impact:
 - navigation is harder than necessary
 - ownership boundaries are unclear
 - runtime concerns and source code concerns are mixed
+- stale root-level frontend folders create false entrypoints and should not coexist with `apps/web`
+- demo and OS-specific helper scripts are easier to maintain under `scripts/`, not in the repository root
 
 #### Frontend is not part of the Docker stack
 
@@ -239,6 +242,8 @@ Make the project easier to navigate and operate before adding more features.
 - relocate Compose files into `infra/compose`
 - keep compatibility wrappers only temporarily
 - normalize environment variable names and defaults
+- remove stale root-level frontend duplicates after migration
+- keep only the environment files required by actual runtime modes
 - fix documentation drift and encoding problems
 
 ### Main files impacted
@@ -256,6 +261,8 @@ Make the project easier to navigate and operate before adding more features.
 
 - a new engineer can identify where API, web, infra, docs, and scripts live in under five minutes
 - startup docs and actual ports/services match
+- there is no competing frontend tree outside `apps/web`
+- local development requires only `.env`; extra `.env.*` files exist only for explicit alternate runtimes
 
 ## Epic 1 - Docker Completion and Health Checks
 

@@ -381,7 +381,7 @@ Run:
 ### Regression checks
 
 - prompt refactor must not break existing `/api/v1/chat/query`
-- current `demo_rag.py` must continue to work
+- current `scripts/demo/demo_rag.py` must continue to work
 - existing RAG tests must still pass
 
 ## Suggested Sprint Backlog

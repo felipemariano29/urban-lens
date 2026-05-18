@@ -23,9 +23,9 @@ This closure considers the project only up to:
 | Sprint 3 | Medallion governance and ingestion pipeline | [architecture/medallion-governance.md](architecture/medallion-governance.md), [architecture/metadata-contract.md](architecture/metadata-contract.md), [../sql/init/001_governance_schema.sql](../sql/init/001_governance_schema.sql), [../src/urban_lens/workflows](../src/urban_lens/workflows) | Attended |
 | Sprint 4 | Training pipeline plus MLflow integration | [../src/urban_lens/forecasting/training.py](../src/urban_lens/forecasting/training.py), [../src/urban_lens/workflows/forecast.py](../src/urban_lens/workflows/forecast.py), [implementation-guide.md](implementation-guide.md) | Attended |
 | Sprint 5 | Embeddings pipeline and vector indexing | [../src/urban_lens/cli/index_embeddings.py](../src/urban_lens/cli/index_embeddings.py), [../src/urban_lens/workflows/embeddings.py](../src/urban_lens/workflows/embeddings.py), [../docker-compose.yml](../docker-compose.yml) with Milvus and Attu | Attended |
-| Sprint 6 | RAG core working via script | [../demo_rag.py](../demo_rag.py), [rag-end-to-end.md](rag-end-to-end.md), [../src/urban_lens/api/routers/query.py](../src/urban_lens/api/routers/query.py) | Attended |
+| Sprint 6 | RAG core working via script | [../scripts/demo/demo_rag.py](../scripts/demo/demo_rag.py), [rag-end-to-end.md](rag-end-to-end.md), [../apps/api/src/urban_lens/api/routers/query.py](../apps/api/src/urban_lens/api/routers/query.py) | Attended |
 | Sprint 7 | FastAPI with `/query` and `/metadata`, validated contracts | [../src/urban_lens/api/routers/query.py](../src/urban_lens/api/routers/query.py), [../src/urban_lens/api/routers/catalog.py](../src/urban_lens/api/routers/catalog.py), [api-contract.md](api-contract.md) | Attended |
-| Sprint 8 | Functional interface | [../components/urban-lens](../components/urban-lens), [../hooks/use-urban-lens.ts](../hooks/use-urban-lens.ts), [../app/api/v1](../app/api/v1), [demo-professor.txt](demo-professor.txt) | Attended |
+| Sprint 8 | Functional interface | [../apps/web/components/urban-lens](../apps/web/components/urban-lens), [../apps/web/hooks/use-urban-lens.ts](../apps/web/hooks/use-urban-lens.ts), [../apps/web/app/api/v1](../apps/web/app/api/v1), [demo-professor.txt](demo-professor.txt) | Attended |
 
 ## Sprint-by-Sprint Notes
 
@@ -134,7 +134,7 @@ Current state:
 
 - semantic retrieval and chat flow are implemented in the API and RAG services
 - the governed RAG contract is documented in [rag-end-to-end.md](rag-end-to-end.md)
-- a runnable demonstration exists in [../demo_rag.py](../demo_rag.py)
+- a runnable demonstration exists in [../scripts/demo/demo_rag.py](../scripts/demo/demo_rag.py)
 
 Assessment:
 

@@ -15,3 +15,8 @@ __pycache__
 .artifacts
 dist
 build
+.env
+.env.*
+!.env.example
+apps/web/.next
+apps/api/tests/__pycache__
