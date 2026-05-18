@@ -1,16 +1,25 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { IBM_Plex_Mono, Space_Grotesk } from 'next/font/google'
+import type { ReactNode } from 'react'
+
 import { ApiKeyProvider } from '@/contexts/api-key-context'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const sansFont = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-ui-sans',
+})
+
+const monoFont = IBM_Plex_Mono({
+  subsets: ['latin'],
+  variable: '--font-ui-mono',
+  weight: ['400', '500'],
+})
 
 export const metadata: Metadata = {
-  title: 'Urban-Lens | Busca Semântica em Dados de Segurança Urbana',
-  description: 'Interface RAG para consulta de dados de criminalidade urbana usando busca semântica.',
-  generator: 'v0.app',
+  title: 'Urban Lens Analytics',
+  description: 'Workspace governado para analytics, consulta RAG e evidencias de seguranca urbana.',
   icons: {
     icon: [
       {
@@ -25,14 +34,12 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: ReactNode
 }>) {
   return (
     <html lang="pt-BR" className="bg-background">
-      <body className="font-sans antialiased">
-        <ApiKeyProvider>
-          {children}
-        </ApiKeyProvider>
+      <body className={`${sansFont.variable} ${monoFont.variable} font-sans antialiased`}>
+        <ApiKeyProvider>{children}</ApiKeyProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

@@ -1,7 +1,16 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { KeyIcon, PlusIcon, EyeIcon, EyeOffIcon, CopyIcon, CheckIcon, Loader2Icon } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
+import {
+  CheckCircle2Icon,
+  KeyRoundIcon,
+  Loader2Icon,
+  LockKeyholeIcon,
+  MailPlusIcon,
+  ShieldCheckIcon,
+  Trash2Icon,
+} from 'lucide-react'
 
 import {
   Dialog,
@@ -14,308 +23,286 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import { useApiKey } from '@/contexts/api-key-context'
-import { getBackendApiBaseUrl } from '@/lib/api/client'
-
-const PLAN_OPTIONS = [
-  { value: 'free', label: 'Free', description: '100 requisições/dia' },
-  { value: 'basic', label: 'Basic', description: '1.000 requisições/dia' },
-  { value: 'pro', label: 'Pro', description: '10.000 requisições/dia' },
-  { value: 'enterprise', label: 'Enterprise', description: 'Ilimitado' },
-]
+import { submitAccessRequest } from '@/hooks/use-urban-lens'
 
 interface ApiKeyModalProps {
-  trigger?: React.ReactNode
+  trigger?: ReactNode
+}
+
+function maskApiKey(value: string | null): string {
+  if (!value) return ''
+  if (value.length <= 12) return '********'
+  return `${value.slice(0, 7)}******${value.slice(-6)}`
 }
 
 export function ApiKeyModal({ trigger }: ApiKeyModalProps) {
   const { apiKey, setApiKey, clearApiKey, isAuthenticated } = useApiKey()
   const [open, setOpen] = useState(false)
-  const [tab, setTab] = useState<string>(isAuthenticated ? 'current' : 'enter')
+  const [tab, setTab] = useState<string>(isAuthenticated ? 'session' : 'existing')
 
-  // Enter key state
   const [inputKey, setInputKey] = useState('')
-  const [showKey, setShowKey] = useState(false)
-
-  // Create key state
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [plan, setPlan] = useState('free')
-  const [isCreating, setIsCreating] = useState(false)
-  const [createError, setCreateError] = useState<string | null>(null)
-  const [createdKey, setCreatedKey] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const [organization, setOrganization] = useState('')
+  const [useCase, setUseCase] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [requestError, setRequestError] = useState<string | null>(null)
+  const [requestResult, setRequestResult] = useState<{ requestId: string; message: string } | null>(null)
 
-  const handleSaveKey = useCallback(() => {
-    if (inputKey.trim()) {
-      setApiKey(inputKey.trim())
-      setInputKey('')
-      setOpen(false)
-    }
-  }, [inputKey, setApiKey])
+  const maskedApiKey = useMemo(() => maskApiKey(apiKey), [apiKey])
 
-  const handleCreateKey = useCallback(async () => {
-    if (!name.trim() || !email.trim()) {
-      setCreateError('Nome e email são obrigatórios')
-      return
-    }
-
-    setIsCreating(true)
-    setCreateError(null)
-
-    try {
-      const response = await fetch(`${getBackendApiBaseUrl()}/system/api-keys`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim(),
-          plan,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Erro ao criar API key')
-      }
-
-      const data = await response.json()
-      setCreatedKey(data.api_key)
-      setApiKey(data.api_key)
-    } catch (error) {
-      setCreateError(error instanceof Error ? error.message : 'Erro desconhecido')
-    } finally {
-      setIsCreating(false)
-    }
-  }, [name, email, plan, setApiKey])
-
-  const handleCopyKey = useCallback(async () => {
-    if (createdKey) {
-      await navigator.clipboard.writeText(createdKey)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }, [createdKey])
-
-  const handleClear = useCallback(() => {
-    clearApiKey()
-    setTab('enter')
-  }, [clearApiKey])
+  const resetRequestState = useCallback(() => {
+    setName('')
+    setEmail('')
+    setOrganization('')
+    setUseCase('')
+    setRequestError(null)
+    setRequestResult(null)
+    setIsSubmitting(false)
+  }, [])
 
   const handleClose = useCallback(() => {
     setOpen(false)
     setInputKey('')
-    setName('')
-    setEmail('')
-    setPlan('free')
-    setCreateError(null)
-    setCreatedKey(null)
-    setCopied(false)
-  }, [])
+    resetRequestState()
+    setTab(isAuthenticated ? 'session' : 'existing')
+  }, [isAuthenticated, resetRequestState])
+
+  const handleSaveExistingKey = useCallback(() => {
+    if (!inputKey.trim()) return
+    setApiKey(inputKey.trim())
+    setInputKey('')
+    setTab('session')
+  }, [inputKey, setApiKey])
+
+  const handleAccessRequest = useCallback(async () => {
+    if (!name.trim() || !email.trim() || !useCase.trim()) {
+      setRequestError('Preencha nome, email e objetivo de uso.')
+      return
+    }
+
+    setIsSubmitting(true)
+    setRequestError(null)
+
+    try {
+      const result = await submitAccessRequest({
+        full_name: name.trim(),
+        email: email.trim(),
+        organization: organization.trim() || null,
+        use_case: useCase.trim(),
+      })
+
+      setRequestResult({
+        requestId: result.request_id,
+        message: result.message,
+      })
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : 'Nao foi possivel registrar a solicitacao.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [email, name, organization, useCase])
+
+  const handleClearSession = useCallback(() => {
+    clearApiKey()
+    setTab('existing')
+  }, [clearApiKey])
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) handleClose()
-      else setOpen(true)
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          handleClose()
+          return
+        }
+        setOpen(true)
+      }}
+    >
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant={isAuthenticated ? 'outline' : 'default'} size="sm" className="gap-2">
-            <KeyIcon className="size-4" />
-            {isAuthenticated ? 'API Key' : 'Configurar API Key'}
+          <Button variant={isAuthenticated ? 'outline' : 'default'} className="gap-2">
+            <KeyRoundIcon className="size-4" />
+            {isAuthenticated ? 'Credencial ativa' : 'Acessar ambiente'}
           </Button>
         )}
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <KeyIcon className="size-5" />
-            Configuração de API Key
-          </DialogTitle>
-          <DialogDescription>
-            Configure sua API key para acessar os recursos do Urban-Lens.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-2xl border-border/70 bg-card/95 p-0 backdrop-blur">
+        <div className="border-b border-border/70 bg-gradient-to-r from-[#10212f] via-[#163246] to-[#1b4e63] p-6 text-white">
+          <DialogHeader>
+            <div className="mb-3 flex items-center gap-2">
+              <Badge className="bg-white/12 text-white hover:bg-white/12">Governed Access</Badge>
+              <Badge className="bg-[#f59e0b] text-[#1b1303] hover:bg-[#f59e0b]">Urban Lens Analytics</Badge>
+            </div>
+            <DialogTitle className="text-2xl font-semibold tracking-tight">
+              Controle de acesso ao ambiente analitico
+            </DialogTitle>
+            <DialogDescription className="max-w-xl text-slate-200">
+              Credenciais sao governadas e auditaveis. Use uma chave existente para operar no painel ou registre uma
+              solicitacao para avaliacao do time administrador.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <Tabs value={tab} onValueChange={setTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-3">
-            {isAuthenticated && <TabsTrigger value="current">Atual</TabsTrigger>}
-            <TabsTrigger value="enter">Inserir</TabsTrigger>
-            <TabsTrigger value="create">Criar</TabsTrigger>
-          </TabsList>
+        <div className="p-6">
+          <Tabs value={tab} onValueChange={setTab} className="space-y-5">
+            <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-3' : 'grid-cols-2'}`}>
+              {isAuthenticated && <TabsTrigger value="session">Sessao atual</TabsTrigger>}
+              <TabsTrigger value="existing">Usar chave</TabsTrigger>
+              <TabsTrigger value="request">Solicitar acesso</TabsTrigger>
+            </TabsList>
 
-          {isAuthenticated && (
-            <TabsContent value="current" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label>API Key ativa</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type={showKey ? 'text' : 'password'}
-                    value={apiKey || ''}
-                    readOnly
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowKey(!showKey)}
-                  >
-                    {showKey ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+            {isAuthenticated && (
+              <TabsContent value="session" className="space-y-4">
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <ShieldCheckIcon className="size-5 text-emerald-600" />
+                    <h3 className="font-semibold text-foreground">Sessao autenticada neste navegador</h3>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+                    <div className="space-y-2">
+                      <Label>Chave em uso</Label>
+                      <Input value={maskedApiKey} readOnly className="font-mono tracking-wide" />
+                      <p className="text-sm text-muted-foreground">
+                        A chave fica apenas nesta sessao do navegador e nao e persistida apos fechar a aba.
+                      </p>
+                    </div>
+                    <Button variant="destructive" onClick={handleClearSession} className="gap-2">
+                      <Trash2Icon className="size-4" />
+                      Encerrar sessao
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+            )}
+
+            <TabsContent value="existing" className="space-y-4">
+              <div className="rounded-2xl border border-border/70 bg-muted/30 p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <LockKeyholeIcon className="size-5 text-primary" />
+                  <h3 className="font-semibold">Usar uma credencial existente</h3>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="api-key-input">Governed API key</Label>
+                    <Input
+                      id="api-key-input"
+                      value={inputKey}
+                      onChange={(event) => setInputKey(event.target.value)}
+                      placeholder="ul_abcdef123456_xxxxxxxxxxxxx"
+                      className="font-mono"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Use a credencial emitida por um administrador. Ela sera mantida apenas durante esta sessao.
+                    </p>
+                  </div>
+                  <Button onClick={handleSaveExistingKey} disabled={!inputKey.trim()} className="gap-2">
+                    <KeyRoundIcon className="size-4" />
+                    Ativar credencial nesta sessao
                   </Button>
                 </div>
               </div>
-              <Button variant="destructive" onClick={handleClear} className="w-full">
-                Remover API Key
-              </Button>
             </TabsContent>
-          )}
 
-          <TabsContent value="enter" className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="api-key-input">API Key</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="api-key-input"
-                  type={showKey ? 'text' : 'password'}
-                  placeholder="ul_xxxxxxxxxxxxxxxx"
-                  value={inputKey}
-                  onChange={(e) => setInputKey(e.target.value)}
-                  className="font-mono text-sm"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowKey(!showKey)}
-                >
-                  {showKey ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Cole sua API key existente ou crie uma nova na aba "Criar".
-              </p>
-            </div>
-            <Button onClick={handleSaveKey} disabled={!inputKey.trim()} className="w-full">
-              Salvar API Key
-            </Button>
-          </TabsContent>
-
-          <TabsContent value="create" className="space-y-4 mt-4">
-            {createdKey ? (
-              <div className="space-y-4">
-                <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
-                  <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
-                    API Key criada com sucesso!
-                  </p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mb-3">
-                    Guarde esta chave em local seguro. Ela não será exibida novamente.
-                  </p>
-                  <div className="flex items-center gap-2">
+            <TabsContent value="request" className="space-y-4">
+              {requestResult ? (
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+                  <div className="mb-4 flex items-center gap-2">
+                    <CheckCircle2Icon className="size-5 text-emerald-600" />
+                    <h3 className="font-semibold">Solicitacao registrada</h3>
+                  </div>
+                  <div className="space-y-3 text-sm">
+                    <p className="text-foreground/90">{requestResult.message}</p>
+                    <div className="rounded-xl border border-border/70 bg-background px-4 py-3">
+                      <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Request ID</p>
+                      <p className="mt-1 font-mono text-sm">{requestResult.requestId}</p>
+                    </div>
+                    <p className="text-muted-foreground">
+                      O endpoint publico nao emite plano elevado nem libera chave automaticamente. A emissao real
+                      permanece no fluxo governado do backend.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-border/70 bg-muted/30 p-5">
+                  <div className="mb-4 flex items-center gap-2">
+                    <MailPlusIcon className="size-5 text-primary" />
+                    <h3 className="font-semibold">Solicitar acesso governado</h3>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="request-name">Nome completo</Label>
+                      <Input
+                        id="request-name"
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                        placeholder="Ex: Ana Silva"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="request-email">Email corporativo</Label>
+                      <Input
+                        id="request-email"
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="ana.silva@org.local"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <Label htmlFor="request-org">Organizacao</Label>
                     <Input
-                      type="text"
-                      value={createdKey}
-                      readOnly
-                      className="font-mono text-xs bg-white dark:bg-black"
+                      id="request-org"
+                      value={organization}
+                      onChange={(event) => setOrganization(event.target.value)}
+                      placeholder="Ex: Urban Safety Operations"
                     />
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <Label htmlFor="request-use-case">Contexto de uso</Label>
+                    <Textarea
+                      id="request-use-case"
+                      value={useCase}
+                      onChange={(event) => setUseCase(event.target.value)}
+                      placeholder="Descreva o motivo da solicitacao, o tipo de analise e o contexto operacional."
+                      rows={5}
+                    />
+                  </div>
+                  {requestError && <p className="mt-4 text-sm text-destructive">{requestError}</p>}
+                  <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <p className="max-w-xl text-sm text-muted-foreground">
+                      O cadastro publico registra a solicitacao para triagem. Chaves PRO ou qualquer expansao de
+                      privilegio devem ser emitidas manualmente por um administrador.
+                    </p>
                     <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={handleCopyKey}
+                      onClick={handleAccessRequest}
+                      disabled={isSubmitting || !name.trim() || !email.trim() || !useCase.trim()}
+                      className="gap-2"
                     >
-                      {copied ? (
-                        <CheckIcon className="size-4 text-green-600" />
+                      {isSubmitting ? (
+                        <>
+                          <Loader2Icon className="size-4 animate-spin" />
+                          Enviando
+                        </>
                       ) : (
-                        <CopyIcon className="size-4" />
+                        <>
+                          <MailPlusIcon className="size-4" />
+                          Registrar solicitacao
+                        </>
                       )}
                     </Button>
                   </div>
                 </div>
-                <Button onClick={handleClose} className="w-full">
-                  Fechar
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="create-name">Nome</Label>
-                  <Input
-                    id="create-name"
-                    placeholder="Seu nome ou organização"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="create-email">Email</Label>
-                  <Input
-                    id="create-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="create-plan">Plano</Label>
-                  <Select value={plan} onValueChange={setPlan}>
-                    <SelectTrigger id="create-plan">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PLAN_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          <span className="flex items-center gap-2">
-                            <span className="font-medium">{option.label}</span>
-                            <span className="text-muted-foreground text-xs">
-                              ({option.description})
-                            </span>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {createError && (
-                  <p className="text-sm text-destructive">{createError}</p>
-                )}
-
-                <Button
-                  onClick={handleCreateKey}
-                  disabled={isCreating || !name.trim() || !email.trim()}
-                  className="w-full gap-2"
-                >
-                  {isCreating ? (
-                    <>
-                      <Loader2Icon className="size-4 animate-spin" />
-                      Criando...
-                    </>
-                  ) : (
-                    <>
-                      <PlusIcon className="size-4" />
-                      Criar API Key
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   )
