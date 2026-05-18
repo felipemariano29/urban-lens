@@ -367,6 +367,7 @@ Introduce real caller identity, traceability, and usage controls suitable for a 
 - browser users should authenticate as themselves
 - service-to-service traffic may still use machine API keys
 - the internal API key should not become the effective end-user identity
+- the web app should terminate governed browser sessions server-side and store API keys only in encrypted `httpOnly` cookies, never in browser storage
 
 ### Recommended API additions
 
