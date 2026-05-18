@@ -31,6 +31,7 @@ Notes:
 - The legacy internal service key maps the caller to the `internal_service` role.
 - Governed API keys use the format `ul_<prefix>_<secret>` and are issued by the access endpoint.
 - Governed API keys inherit role and plan limits from the stored governance record.
+- Governed API keys are also subject to per-minute and per-day quotas derived from the assigned plan or client override.
 - If both headers are absent, protected endpoints return `401`.
 - Role checks are enforced per endpoint.
 
@@ -143,6 +144,7 @@ Request body:
 
 Plan behaviour:
 - Governed API keys may be blocked when `top_k` exceeds the maximum allowed by the caller plan.
+- Governed API keys may also receive `429` when the request quota for the current minute or day is exhausted.
 
 Response shape:
 - `results[]`
@@ -162,6 +164,7 @@ Typical statuses:
 - `200`: ranked evidence returned
 - `401`: missing or invalid credentials
 - `403`: plan or role restriction violated
+- `429`: governed plan quota exhausted
 - `502`: RAG backend unavailable
 
 ### `POST /api/v1/chat/query`
@@ -193,6 +196,7 @@ Notes:
 - `filters.chunk_type` is only honored for `developer` and `admin`.
 - Governed API keys may be restricted to a subset of Ollama models according to the assigned service plan.
 - Governed API keys may also have a lower `top_k` cap than the global request schema allows.
+- Governed API keys may receive `429` when the request quota for the current minute or day is exhausted.
 
 Response shape:
 - `answer`
@@ -211,6 +215,7 @@ Typical statuses:
 - `200`: generated answer or fallback with evidence payload
 - `401`: missing or invalid credentials
 - `403`: authenticated caller lacks permission
+- `429`: governed plan quota exhausted
 - `502`: RAG backend unavailable
 
 ### `GET /api/v1/metadata`
