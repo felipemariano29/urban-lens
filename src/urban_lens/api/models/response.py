@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from urban_lens.rag.contracts import EvidenceCitation, RagAnswer, RagContextChunk, AccessProfile
+from urban_lens.rag.contracts import EvidenceCitation, RagAnswer, RagContextChunk, AccessProfile, RagTimings
 
 
 class RunMetricsSchema(BaseModel):
@@ -97,6 +97,7 @@ class ChatQueryResponse(BaseModel):
     context: List[RagContextChunk] = Field(default_factory=list, description="Retrieved context chunks.")
     profile: AccessProfile = Field(..., description="Normalized access profile applied to the response.")
     fallback_reason: Optional[str] = Field(None, description="Machine-readable fallback reason, when any.")
+    timings_ms: RagTimings = Field(..., description="Detailed chat pipeline timings in milliseconds.")
 
 
 class OllamaModelInfo(BaseModel):

@@ -85,9 +85,17 @@ class RagAnswer(BaseModel):
     model: str = Field(..., description="Local Ollama model used for generation.")
 
 
+class RagTimings(BaseModel):
+    embedding_ms: float = Field(..., ge=0.0, description="Time spent generating the query embedding.")
+    retrieval_ms: float = Field(..., ge=0.0, description="Time spent retrieving context from the vector store.")
+    generation_ms: float = Field(..., ge=0.0, description="Time spent generating the final answer text.")
+    total_ms: float = Field(..., ge=0.0, description="End-to-end chat pipeline duration.")
+
+
 class RagResponse(BaseModel):
     answer: RagAnswer
     evidences: list[EvidenceCitation] = Field(default_factory=list)
     context: list[RagContextChunk] = Field(default_factory=list)
     profile: AccessProfile
     fallback_reason: str | None = None
+    timings_ms: RagTimings

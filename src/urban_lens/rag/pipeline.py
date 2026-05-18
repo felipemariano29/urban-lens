@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import time
+
 from urban_lens.core.settings import AppConfig
 from urban_lens.infrastructure.embedder import OllamaEmbedder
 from urban_lens.infrastructure.vector_store import MilvusVectorStore
 from urban_lens.rag.composition import compose_structured_answer
-from urban_lens.rag.contracts import AccessProfile, EvidenceCitation, RagAnswer, RagQuery, RagResponse
+from urban_lens.rag.contracts import AccessProfile, EvidenceCitation, RagAnswer, RagQuery, RagResponse, RagTimings
 from urban_lens.rag.generation import OllamaGenerator, build_prompt, detect_question_language, remove_repeated_question_prefix
 from urban_lens.rag.query_understanding import detect_query_intent, enrich_filters_from_question
 from urban_lens.rag.retrieval import build_context_text, filters_to_vector_store, milvus_hits_to_context
@@ -35,12 +37,28 @@ class RagPipeline:
         self.generator = generator or OllamaGenerator(config.ollama_base_url)
 
     def run(self, request: RagQuery) -> RagResponse:
+        started_at = time.perf_counter()
+        generation_ms = 0.0
         effective_filters = enrich_filters_from_question(request)
         intent = detect_query_intent(request.query)
-        embeddings = self.embedder.embed([request.query])
-        if not embeddings:
-            return self._fallback(request, [], "embedding_empty")
 
+        embedding_started_at = time.perf_counter()
+        embeddings = self.embedder.embed([request.query])
+        embedding_ms = (time.perf_counter() - embedding_started_at) * 1000
+        if not embeddings:
+            return self._fallback(
+                request,
+                [],
+                "embedding_empty",
+                self._timings(
+                    started_at=started_at,
+                    embedding_ms=embedding_ms,
+                    retrieval_ms=0.0,
+                    generation_ms=generation_ms,
+                ),
+            )
+
+        retrieval_started_at = time.perf_counter()
         raw_hits = self.vector_store.search(
             query_embedding=embeddings[0],
             top_k=request.top_k,
@@ -54,10 +72,21 @@ class RagPipeline:
                 effective_filters=effective_filters,
                 vector_store=self.vector_store,
             )
+        retrieval_ms = (time.perf_counter() - retrieval_started_at) * 1000
         context = milvus_hits_to_context(raw_hits, request.profile)
         enough_context = bool(context) and max(chunk.score for chunk in context) >= request.min_score
         if not enough_context:
-            return self._fallback(request, context, "insufficient_retrieved_evidence")
+            return self._fallback(
+                request,
+                context,
+                "insufficient_retrieved_evidence",
+                self._timings(
+                    started_at=started_at,
+                    embedding_ms=embedding_ms,
+                    retrieval_ms=retrieval_ms,
+                    generation_ms=generation_ms,
+                ),
+            )
 
         structured_answer = compose_structured_answer(request.query, context)
         if structured_answer:
@@ -66,28 +95,68 @@ class RagPipeline:
                 evidences=_citations_from_context(context),
                 context=context,
                 profile=request.profile,
+                timings_ms=self._timings(
+                    started_at=started_at,
+                    embedding_ms=embedding_ms,
+                    retrieval_ms=retrieval_ms,
+                    generation_ms=generation_ms,
+                ),
             )
 
         context_text = build_context_text(context, request.max_context_chars)
         prompt = build_prompt(request.query, context_text, request.profile)
+        generation_started_at = time.perf_counter()
         answer_text = remove_repeated_question_prefix(self.generator.generate(prompt, request.model), request.query)
+        generation_ms = (time.perf_counter() - generation_started_at) * 1000
         if not answer_text:
-            return self._fallback(request, context, "empty_generation")
+            return self._fallback(
+                request,
+                context,
+                "empty_generation",
+                self._timings(
+                    started_at=started_at,
+                    embedding_ms=embedding_ms,
+                    retrieval_ms=retrieval_ms,
+                    generation_ms=generation_ms,
+                ),
+            )
 
         return RagResponse(
             answer=RagAnswer(text=answer_text, status="answered", model=request.model),
             evidences=_citations_from_context(context),
             context=context,
             profile=request.profile,
+            timings_ms=self._timings(
+                started_at=started_at,
+                embedding_ms=embedding_ms,
+                retrieval_ms=retrieval_ms,
+                generation_ms=generation_ms,
+            ),
         )
 
-    def _fallback(self, request: RagQuery, context, reason: str) -> RagResponse:
+    def _fallback(self, request: RagQuery, context, reason: str, timings: RagTimings) -> RagResponse:
         return RagResponse(
             answer=RagAnswer(text=_fallback_text_for(request.query), status="insufficient_evidence", model=request.model),
             evidences=_citations_from_context(context),
             context=context,
             profile=request.profile,
             fallback_reason=reason,
+            timings_ms=timings,
+        )
+
+    def _timings(
+        self,
+        *,
+        started_at: float,
+        embedding_ms: float,
+        retrieval_ms: float,
+        generation_ms: float,
+    ) -> RagTimings:
+        return RagTimings(
+            embedding_ms=round(embedding_ms, 1),
+            retrieval_ms=round(retrieval_ms, 1),
+            generation_ms=round(generation_ms, 1),
+            total_ms=round((time.perf_counter() - started_at) * 1000, 1),
         )
 
 
