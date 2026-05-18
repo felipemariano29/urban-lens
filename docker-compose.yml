@@ -4,6 +4,12 @@ services:
     container_name: postgres-db
     restart: unless-stopped
     env_file: .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     ports:
       - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
@@ -82,6 +88,12 @@ services:
       AWS_DEFAULT_REGION: "${URBAN_LENS_S3_REGION:-us-east-1}"
       MLFLOW_S3_ENDPOINT_URL: "http://minio-storage:9000"
       AWS_S3_FORCE_PATH_STYLE: "true"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/')"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     ports:
       - "${MLFLOW_HOST_PORT:-5005}:5000"
     networks:
@@ -136,6 +148,12 @@ services:
     image: ollama/ollama:latest
     container_name: ollama
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     ports:
       - "${OLLAMA_HOST_PORT:-11434}:11434"
     environment:
@@ -185,6 +203,12 @@ services:
       MLFLOW_TRACKING_URI: "http://mlflow-server:5000"
       URBAN_LENS_MILVUS_URI: "http://milvus-standalone:19530"
       URBAN_LENS_OLLAMA_BASE_URL: "http://ollama:11434"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health')"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     ports:
       - "${RAG_API_HOST_PORT:-8000}:8000"
     networks:
