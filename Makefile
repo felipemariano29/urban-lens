@@ -38,8 +38,9 @@ COMPOSE_FILES := -f docker-compose.yml
 ifeq ($(COMPOSE_MODE),gpu)
 	COMPOSE_FILES += -f docker-compose.gpu.yml
 endif
+DOCKER_ENGINE_OK := $(shell docker info >/dev/null 2>&1 && echo 1 || echo 0)
 
-.PHONY: help check-compose check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-core down destroy reset logs logs-core logs-app logs-mlflow ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs test frontend frontend-install
+.PHONY: help check-compose check-docker-engine check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-core down destroy reset logs logs-core logs-app logs-mlflow ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs test frontend frontend-install
 
 help:
 	@printf "\n"
@@ -112,17 +113,28 @@ help:
 	@printf "\033[1;36m=======================================\033[0m\n\n"
 
 check-compose:
-	@if [ -z "$(COMPOSE)" ]; then \
-		echo "[ERR] Nenhum compose compativel foi encontrado."; \
-		echo "[INFO] Instale o podman-compose com:"; \
-		echo "   sudo apt update && sudo apt install podman-compose"; \
-		exit 1; \
-	fi
-	@if [ "$(COMPOSE)" = "podman-compose" ]; then \
-		echo "[OK] Usando podman-compose"; \
-	else \
-		echo "[WARN] Usando docker-compose"; \
-	fi
+ifeq ($(strip $(COMPOSE)),)
+	@echo [ERR] Nenhum compose compativel foi encontrado.
+	@echo [INFO] Instale o podman-compose com:
+	@echo    sudo apt update && sudo apt install podman-compose
+	@docker compose version
+else ifeq ($(COMPOSE),podman-compose)
+	@echo [OK] Usando podman-compose
+else ifeq ($(COMPOSE),docker compose)
+	@echo [OK] Usando docker compose
+else
+	@echo [WARN] Usando docker-compose
+endif
+
+check-docker-engine:
+ifeq ($(DOCKER_ENGINE_OK),1)
+	@echo [OK] Docker Engine disponivel.
+else
+	@echo [ERR] Docker Engine indisponivel.
+	@echo [INFO] Inicie o Docker Desktop e aguarde o engine ficar pronto.
+	@echo [INFO] No Windows, confirme tambem que o backend Linux/WSL2 esta ativo.
+	$(error Docker Engine indisponivel. Inicie o Docker Desktop e tente novamente.)
+endif
 
 check-env:
 	@if [ ! -f .env ]; then \
@@ -176,11 +188,11 @@ up-cpu:
 up-gpu:
 	@$(MAKE) up COMPOSE_MODE=gpu
 
-up: check-compose check-env
+up: check-compose check-docker-engine check-env
 	@echo "[INFO] Subindo containers com COMPOSE_MODE=$(COMPOSE_MODE)..."
 	@$(COMPOSE) $(COMPOSE_FILES) up -d
 
-up-core: check-compose check-env
+up-core: check-compose check-docker-engine check-env
 	@echo "[INFO] Subindo Postgres, MinIO e MLflow com COMPOSE_MODE=$(COMPOSE_MODE)..."
 	@$(COMPOSE) $(COMPOSE_FILES) up -d postgres minio minio-setup mlflow
 
@@ -216,15 +228,15 @@ frontend:
 		echo "[WARN] package.json nao encontrado. Frontend nao disponivel nesta branch."; \
 	fi
 
-down: check-compose check-env
+down: check-compose check-docker-engine check-env
 	@echo "[INFO] Parando containers sem remover dados..."
 	@$(COMPOSE) $(COMPOSE_FILES) stop
 
-destroy: check-compose check-env
+destroy: check-compose check-docker-engine check-env
 	@echo "[INFO] Removendo containers e rede local..."
 	@$(COMPOSE) $(COMPOSE_FILES) down
 
-reset: check-compose check-env
+reset: check-compose check-docker-engine check-env
 	@echo "[INFO] Removendo containers e volumes..."
 	@if [ "$(COMPOSE)" = "podman-compose" ]; then \
 		$(COMPOSE) $(COMPOSE_FILES) down -v; \
@@ -234,23 +246,23 @@ reset: check-compose check-env
 	@echo "[INFO] Subindo ambiente limpo..."
 	@$(COMPOSE) $(COMPOSE_FILES) up -d --build
 
-logs: check-compose check-env
+logs: check-compose check-docker-engine check-env
 	@echo "[INFO] Exibindo logs..."
 	@$(COMPOSE) $(COMPOSE_FILES) logs -f
 
-logs-core: check-compose check-env
+logs-core: check-compose check-docker-engine check-env
 	@echo "[INFO] Exibindo logs de postgres, minio, mlflow, milvus, ollama e rag-api..."
 	@$(COMPOSE) $(COMPOSE_FILES) logs -f postgres minio mlflow milvus ollama rag-api
 
-logs-app: check-compose check-env
+logs-app: check-compose check-docker-engine check-env
 	@echo "[INFO] Exibindo logs de frontend e rag-api..."
 	@$(COMPOSE) $(COMPOSE_FILES) logs -f frontend rag-api
 
-logs-mlflow: check-compose check-env
+logs-mlflow: check-compose check-docker-engine check-env
 	@echo "[INFO] Exibindo logs do MLflow..."
 	@$(COMPOSE) $(COMPOSE_FILES) logs -f mlflow
 
-ps: check-compose check-env
+ps: check-compose check-docker-engine check-env
 	@$(COMPOSE) $(COMPOSE_FILES) ps
 
 snapshots:
