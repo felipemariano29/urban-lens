@@ -16,6 +16,9 @@ export function getFrontendApiBaseUrl(): string {
 export function getBackendApiBaseUrl(): string {
   const configured = process.env.NEXT_PUBLIC_BACKEND_URL?.trim()
   if (!configured) {
+    if (typeof window !== 'undefined') {
+      return DEFAULT_FRONTEND_API_BASE_URL
+    }
     return DEFAULT_BACKEND_API_BASE_URL
   }
   return trimTrailingSlash(configured)

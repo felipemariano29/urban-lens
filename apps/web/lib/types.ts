@@ -116,6 +116,44 @@ export interface AvailableModelsResponse {
   models: OllamaModelInfo[]
 }
 
+export interface CurrentUserResponse {
+  role: string
+  auth_type: 'jwt' | 'governed_api_key' | 'internal_api_key'
+  user_id?: string | null
+  client_id?: string | null
+  api_key_id?: string | null
+  subject?: string | null
+  plan_code?: string | null
+  plan_max_top_k?: number | null
+  requests_per_minute?: number | null
+  requests_per_day?: number | null
+  allowed_models: string[]
+}
+
+export interface UsageStatsResponse {
+  client_id: string
+  requests_last_minute: number
+  requests_last_day: number
+  requests_per_minute_limit?: number | null
+  requests_per_day_limit?: number | null
+  remaining_minute?: number | null
+  remaining_day?: number | null
+}
+
+export interface AccessRequestCreateRequest {
+  full_name: string
+  email: string
+  organization?: string | null
+  use_case: string
+}
+
+export interface AccessRequestCreateResponse {
+  request_id: string
+  status: string
+  recommended_plan: string
+  message: string
+}
+
 export interface HistoryItem {
   id: string
   query: string

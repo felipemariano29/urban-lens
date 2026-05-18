@@ -27,7 +27,7 @@ function buildUpstreamHeaders(request: NextRequest, initHeaders?: HeadersInit): 
   const contentType = request.headers.get('content-type')
   const requestId = request.headers.get('x-request-id')
   const authorization = request.headers.get('authorization')
-  const apiKey = process.env.URBAN_LENS_INTERNAL_API_KEY?.trim()
+  const apiKey = request.headers.get('x-api-key')
 
   if (contentType && !headers.has('Content-Type')) {
     headers.set('Content-Type', contentType)

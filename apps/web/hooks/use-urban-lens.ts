@@ -5,25 +5,28 @@ import useSWR from 'swr'
 
 import { buildBackendApiUrl } from '@/lib/api/client'
 import type {
+  AccessRequestCreateRequest,
+  AccessRequestCreateResponse,
   AvailableModelsResponse,
   AppState,
   ChatQueryResponse,
+  CurrentUserResponse,
   QueryFilters,
   HealthResponse,
   HistoryItem,
+  UsageStatsResponse,
 } from '@/lib/types'
 
 const HISTORY_STORAGE_KEY = 'urban-lens:query-history'
 const HISTORY_LIMIT = 10
 const API_KEY_STORAGE_KEY = 'urban-lens:api-key'
 
-// Helper to get stored API key
+// Session-scoped storage for governed credentials.
 function getStoredApiKey(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem(API_KEY_STORAGE_KEY)
+  return window.sessionStorage.getItem(API_KEY_STORAGE_KEY)
 }
 
-// Fetcher para SWR com API key
 const createFetcher = (apiKey: string | null) => async (url: string) => {
   const headers: HeadersInit = {}
   if (apiKey) {
@@ -39,7 +42,6 @@ const createFetcher = (apiKey: string | null) => async (url: string) => {
   return res.json()
 }
 
-// Hook para health check
 export function useHealthCheck(apiKey: string | null = null) {
   const effectiveKey = apiKey ?? getStoredApiKey()
   const fetcher = createFetcher(effectiveKey)
@@ -92,7 +94,65 @@ export function useAvailableModels(apiKey: string | null = null) {
   }
 }
 
-// Hook principal para queries
+export function useAccessProfile(apiKey: string | null = null) {
+  const effectiveKey = apiKey ?? getStoredApiKey()
+  const fetcher = createFetcher(effectiveKey)
+
+  const { data, error, isLoading, mutate } = useSWR<CurrentUserResponse>(
+    effectiveKey ? buildBackendApiUrl('/access/me') : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      shouldRetryOnError: false,
+    }
+  )
+
+  return {
+    profile: data ?? null,
+    isLoading,
+    error,
+    refresh: mutate,
+  }
+}
+
+export function useUsageStats(apiKey: string | null = null) {
+  const effectiveKey = apiKey ?? getStoredApiKey()
+  const fetcher = createFetcher(effectiveKey)
+
+  const { data, error, isLoading, mutate } = useSWR<UsageStatsResponse>(
+    effectiveKey ? buildBackendApiUrl('/access/me/usage') : null,
+    fetcher,
+    {
+      refreshInterval: 60000,
+      revalidateOnFocus: false,
+      shouldRetryOnError: false,
+    }
+  )
+
+  return {
+    usage: data ?? null,
+    isLoading,
+    error,
+    refresh: mutate,
+  }
+}
+
+export async function submitAccessRequest(payload: AccessRequestCreateRequest): Promise<AccessRequestCreateResponse> {
+  const response = await fetch(buildBackendApiUrl('/system/access-requests'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.message || data.detail || 'Nao foi possivel registrar a solicitacao de acesso.')
+  }
+  return data as AccessRequestCreateResponse
+}
+
 export function useQuery(apiKey: string | null = null) {
   const [state, setState] = useState<AppState>('idle')
   const [response, setResponse] = useState<ChatQueryResponse | null>(null)
@@ -229,7 +289,6 @@ export function useQuery(apiKey: string | null = null) {
   }
 }
 
-// Hook para historico persistido no navegador
 export function useHistory() {
   const [history, setHistory] = useState<HistoryItem[]>([])
   const hasLoadedHistoryRef = useRef(false)

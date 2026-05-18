@@ -18,7 +18,7 @@ export function ApiKeyProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem(API_KEY_STORAGE_KEY)
+    const stored = window.sessionStorage.getItem(API_KEY_STORAGE_KEY)
     if (stored) {
       setApiKeyState(stored)
     }
@@ -28,15 +28,15 @@ export function ApiKeyProvider({ children }: { children: ReactNode }) {
   const setApiKey = useCallback((key: string | null) => {
     setApiKeyState(key)
     if (key) {
-      localStorage.setItem(API_KEY_STORAGE_KEY, key)
+      window.sessionStorage.setItem(API_KEY_STORAGE_KEY, key)
     } else {
-      localStorage.removeItem(API_KEY_STORAGE_KEY)
+      window.sessionStorage.removeItem(API_KEY_STORAGE_KEY)
     }
   }, [])
 
   const clearApiKey = useCallback(() => {
     setApiKeyState(null)
-    localStorage.removeItem(API_KEY_STORAGE_KEY)
+    window.sessionStorage.removeItem(API_KEY_STORAGE_KEY)
   }, [])
 
   if (!isHydrated) {
