@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   CheckCircle2Icon,
@@ -12,6 +12,8 @@ import {
   Trash2Icon,
 } from 'lucide-react'
 
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -20,12 +22,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
 import { useApiKey } from '@/contexts/api-key-context'
 import { submitAccessRequest } from '@/hooks/use-urban-lens'
 
@@ -33,50 +33,53 @@ interface ApiKeyModalProps {
   trigger?: ReactNode
 }
 
-function maskApiKey(value: string | null): string {
-  if (!value) return ''
-  if (value.length <= 12) return '********'
-  return `${value.slice(0, 7)}******${value.slice(-6)}`
-}
-
 export function ApiKeyModal({ trigger }: ApiKeyModalProps) {
-  const { apiKey, setApiKey, clearApiKey, isAuthenticated } = useApiKey()
+  const { maskedApiKey, setApiKey, clearApiKey, isAuthenticated } = useApiKey()
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<string>(isAuthenticated ? 'session' : 'existing')
-
   const [inputKey, setInputKey] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [organization, setOrganization] = useState('')
   const [useCase, setUseCase] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false)
+  const [isActivatingKey, setIsActivatingKey] = useState(false)
   const [requestError, setRequestError] = useState<string | null>(null)
   const [requestResult, setRequestResult] = useState<{ requestId: string; message: string } | null>(null)
 
-  const maskedApiKey = useMemo(() => maskApiKey(apiKey), [apiKey])
-
-  const resetRequestState = useCallback(() => {
+  const resetState = useCallback(() => {
+    setInputKey('')
     setName('')
     setEmail('')
     setOrganization('')
     setUseCase('')
     setRequestError(null)
     setRequestResult(null)
-    setIsSubmitting(false)
-  }, [])
+    setIsSubmittingRequest(false)
+    setIsActivatingKey(false)
+    setTab(isAuthenticated ? 'session' : 'existing')
+  }, [isAuthenticated])
 
   const handleClose = useCallback(() => {
     setOpen(false)
-    setInputKey('')
-    resetRequestState()
-    setTab(isAuthenticated ? 'session' : 'existing')
-  }, [isAuthenticated, resetRequestState])
+    resetState()
+  }, [resetState])
 
-  const handleSaveExistingKey = useCallback(() => {
+  const handleSaveExistingKey = useCallback(async () => {
     if (!inputKey.trim()) return
-    setApiKey(inputKey.trim())
-    setInputKey('')
-    setTab('session')
+
+    setIsActivatingKey(true)
+    setRequestError(null)
+
+    try {
+      await setApiKey(inputKey.trim())
+      setInputKey('')
+      setTab('session')
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : 'Nao foi possivel validar a chave informada.')
+    } finally {
+      setIsActivatingKey(false)
+    }
   }, [inputKey, setApiKey])
 
   const handleAccessRequest = useCallback(async () => {
@@ -85,7 +88,7 @@ export function ApiKeyModal({ trigger }: ApiKeyModalProps) {
       return
     }
 
-    setIsSubmitting(true)
+    setIsSubmittingRequest(true)
     setRequestError(null)
 
     try {
@@ -103,12 +106,12 @@ export function ApiKeyModal({ trigger }: ApiKeyModalProps) {
     } catch (error) {
       setRequestError(error instanceof Error ? error.message : 'Nao foi possivel registrar a solicitacao.')
     } finally {
-      setIsSubmitting(false)
+      setIsSubmittingRequest(false)
     }
   }, [email, name, organization, useCase])
 
-  const handleClearSession = useCallback(() => {
-    clearApiKey()
+  const handleClearSession = useCallback(async () => {
+    await clearApiKey()
     setTab('existing')
   }, [clearApiKey])
 
@@ -125,26 +128,28 @@ export function ApiKeyModal({ trigger }: ApiKeyModalProps) {
     >
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant={isAuthenticated ? 'outline' : 'default'} className="gap-2">
+          <Button variant={isAuthenticated ? 'outline' : 'default'} className="gap-2 rounded-full">
             <KeyRoundIcon className="size-4" />
-            {isAuthenticated ? 'Credencial ativa' : 'Acessar ambiente'}
+            {isAuthenticated ? 'Credencial ativa' : 'Conectar chave'}
           </Button>
         )}
       </DialogTrigger>
 
-      <DialogContent className="max-w-2xl border-border/70 bg-card/95 p-0 backdrop-blur">
-        <div className="border-b border-border/70 bg-gradient-to-r from-[#10212f] via-[#163246] to-[#1b4e63] p-6 text-white">
+      <DialogContent className="max-w-2xl border-white/10 bg-[#10161e] p-0 text-white backdrop-blur">
+        <div className="border-b border-white/10 bg-[#121922] p-6">
           <DialogHeader>
-            <div className="mb-3 flex items-center gap-2">
-              <Badge className="bg-white/12 text-white hover:bg-white/12">Governed Access</Badge>
-              <Badge className="bg-[#f59e0b] text-[#1b1303] hover:bg-[#f59e0b]">Urban Lens Analytics</Badge>
+            <div className="mb-3 flex items-center gap-2 text-xs">
+              <Badge className="border border-white/10 bg-white/6 text-slate-200 hover:bg-white/6">
+                Acesso governado
+              </Badge>
+              <Badge className="bg-[#7dd3fc] text-[#08202b] hover:bg-[#7dd3fc]">
+                Urban Lens Analytics
+              </Badge>
             </div>
-            <DialogTitle className="text-2xl font-semibold tracking-tight">
-              Controle de acesso ao ambiente analitico
-            </DialogTitle>
-            <DialogDescription className="max-w-xl text-slate-200">
-              Credenciais sao governadas e auditaveis. Use uma chave existente para operar no painel ou registre uma
-              solicitacao para avaliacao do time administrador.
+            <DialogTitle className="text-2xl font-semibold tracking-tight">Gerenciar credencial</DialogTitle>
+            <DialogDescription className="max-w-xl text-slate-400">
+              A sessao do painel exige uma chave valida. A chave bruta e validada no servidor e fica apenas em
+              cookie httpOnly durante esta sessao.
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -152,24 +157,28 @@ export function ApiKeyModal({ trigger }: ApiKeyModalProps) {
         <div className="p-6">
           <Tabs value={tab} onValueChange={setTab} className="space-y-5">
             <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-3' : 'grid-cols-2'}`}>
-              {isAuthenticated && <TabsTrigger value="session">Sessao atual</TabsTrigger>}
+              {isAuthenticated ? <TabsTrigger value="session">Sessao atual</TabsTrigger> : null}
               <TabsTrigger value="existing">Usar chave</TabsTrigger>
               <TabsTrigger value="request">Solicitar acesso</TabsTrigger>
             </TabsList>
 
-            {isAuthenticated && (
+            {isAuthenticated ? (
               <TabsContent value="session" className="space-y-4">
                 <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
                   <div className="mb-3 flex items-center gap-2">
-                    <ShieldCheckIcon className="size-5 text-emerald-600" />
-                    <h3 className="font-semibold text-foreground">Sessao autenticada neste navegador</h3>
+                    <ShieldCheckIcon className="size-5 text-emerald-500" />
+                    <h3 className="font-semibold text-white">Sessao autenticada neste navegador</h3>
                   </div>
                   <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
                     <div className="space-y-2">
                       <Label>Chave em uso</Label>
-                      <Input value={maskedApiKey} readOnly className="font-mono tracking-wide" />
-                      <p className="text-sm text-muted-foreground">
-                        A chave fica apenas nesta sessao do navegador e nao e persistida apos fechar a aba.
+                      <Input
+                        value={maskedApiKey ?? '*******'}
+                        readOnly
+                        className="border-white/10 bg-black/20 font-mono tracking-wide text-white"
+                      />
+                      <p className="text-sm text-slate-400">
+                        O frontend nao mantem a chave em `localStorage` nem em `sessionStorage`.
                       </p>
                     </div>
                     <Button variant="destructive" onClick={handleClearSession} className="gap-2">
@@ -179,31 +188,44 @@ export function ApiKeyModal({ trigger }: ApiKeyModalProps) {
                   </div>
                 </div>
               </TabsContent>
-            )}
+            ) : null}
 
             <TabsContent value="existing" className="space-y-4">
-              <div className="rounded-2xl border border-border/70 bg-muted/30 p-5">
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
                 <div className="mb-4 flex items-center gap-2">
-                  <LockKeyholeIcon className="size-5 text-primary" />
-                  <h3 className="font-semibold">Usar uma credencial existente</h3>
+                  <LockKeyholeIcon className="size-5 text-[#7dd3fc]" />
+                  <h3 className="font-semibold text-white">Usar uma chave existente</h3>
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="api-key-input">Governed API key</Label>
+                    <Label htmlFor="api-key-input">API key governada</Label>
                     <Input
                       id="api-key-input"
                       value={inputKey}
                       onChange={(event) => setInputKey(event.target.value)}
                       placeholder="ul_abcdef123456_xxxxxxxxxxxxx"
-                      className="font-mono"
+                      className="border-white/10 bg-[#0d1218] font-mono text-white"
                     />
-                    <p className="text-sm text-muted-foreground">
-                      Use a credencial emitida por um administrador. Ela sera mantida apenas durante esta sessao.
+                    <p className="text-sm text-slate-400">
+                      A chave e validada no backend antes de liberar a sessao.
                     </p>
                   </div>
-                  <Button onClick={handleSaveExistingKey} disabled={!inputKey.trim()} className="gap-2">
-                    <KeyRoundIcon className="size-4" />
-                    Ativar credencial nesta sessao
+
+                  {requestError && tab === 'existing' ? (
+                    <p className="text-sm text-destructive">{requestError}</p>
+                  ) : null}
+
+                  <Button
+                    onClick={handleSaveExistingKey}
+                    disabled={!inputKey.trim() || isActivatingKey}
+                    className="gap-2 rounded-full"
+                  >
+                    {isActivatingKey ? (
+                      <Loader2Icon className="size-4 animate-spin" />
+                    ) : (
+                      <KeyRoundIcon className="size-4" />
+                    )}
+                    Ativar nesta sessao
                   </Button>
                 </div>
               </div>
@@ -211,29 +233,30 @@ export function ApiKeyModal({ trigger }: ApiKeyModalProps) {
 
             <TabsContent value="request" className="space-y-4">
               {requestResult ? (
-                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-white">
                   <div className="mb-4 flex items-center gap-2">
-                    <CheckCircle2Icon className="size-5 text-emerald-600" />
+                    <CheckCircle2Icon className="size-5 text-emerald-500" />
                     <h3 className="font-semibold">Solicitacao registrada</h3>
                   </div>
                   <div className="space-y-3 text-sm">
-                    <p className="text-foreground/90">{requestResult.message}</p>
-                    <div className="rounded-xl border border-border/70 bg-background px-4 py-3">
-                      <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Request ID</p>
+                    <p className="text-slate-200">{requestResult.message}</p>
+                    <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
+                      <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Request ID</p>
                       <p className="mt-1 font-mono text-sm">{requestResult.requestId}</p>
                     </div>
-                    <p className="text-muted-foreground">
-                      O endpoint publico nao emite plano elevado nem libera chave automaticamente. A emissao real
-                      permanece no fluxo governado do backend.
+                    <p className="text-slate-400">
+                      O endpoint publico nao emite chave automaticamente. Emissao, rotacao e revogacao permanecem
+                      no fluxo administrativo governado.
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-border/70 bg-muted/30 p-5">
+                <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
                   <div className="mb-4 flex items-center gap-2">
-                    <MailPlusIcon className="size-5 text-primary" />
-                    <h3 className="font-semibold">Solicitar acesso governado</h3>
+                    <MailPlusIcon className="size-5 text-[#7dd3fc]" />
+                    <h3 className="font-semibold text-white">Solicitar acesso governado</h3>
                   </div>
+
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="request-name">Nome completo</Label>
@@ -255,6 +278,7 @@ export function ApiKeyModal({ trigger }: ApiKeyModalProps) {
                       />
                     </div>
                   </div>
+
                   <div className="mt-4 space-y-2">
                     <Label htmlFor="request-org">Organizacao</Label>
                     <Input
@@ -264,6 +288,7 @@ export function ApiKeyModal({ trigger }: ApiKeyModalProps) {
                       placeholder="Ex: Urban Safety Operations"
                     />
                   </div>
+
                   <div className="mt-4 space-y-2">
                     <Label htmlFor="request-use-case">Contexto de uso</Label>
                     <Textarea
@@ -274,18 +299,22 @@ export function ApiKeyModal({ trigger }: ApiKeyModalProps) {
                       rows={5}
                     />
                   </div>
-                  {requestError && <p className="mt-4 text-sm text-destructive">{requestError}</p>}
+
+                  {requestError && tab === 'request' ? (
+                    <p className="mt-4 text-sm text-destructive">{requestError}</p>
+                  ) : null}
+
                   <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <p className="max-w-xl text-sm text-muted-foreground">
-                      O cadastro publico registra a solicitacao para triagem. Chaves PRO ou qualquer expansao de
-                      privilegio devem ser emitidas manualmente por um administrador.
+                    <p className="max-w-xl text-sm text-slate-400">
+                      O cadastro publico registra a solicitacao para triagem. Planos elevados e privilegios extras
+                      continuam dependentes de aprovacao manual.
                     </p>
                     <Button
                       onClick={handleAccessRequest}
-                      disabled={isSubmitting || !name.trim() || !email.trim() || !useCase.trim()}
+                      disabled={isSubmittingRequest || !name.trim() || !email.trim() || !useCase.trim()}
                       className="gap-2"
                     >
-                      {isSubmitting ? (
+                      {isSubmittingRequest ? (
                         <>
                           <Loader2Icon className="size-4 animate-spin" />
                           Enviando

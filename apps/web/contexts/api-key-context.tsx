@@ -1,42 +1,92 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 
-const API_KEY_STORAGE_KEY = 'urban-lens:api-key'
+interface SessionStateResponse {
+  authenticated: boolean
+  masked_key: string | null
+}
 
 interface ApiKeyContextType {
   apiKey: string | null
-  setApiKey: (key: string | null) => void
-  clearApiKey: () => void
+  maskedApiKey: string | null
+  setApiKey: (key: string) => Promise<void>
+  clearApiKey: () => Promise<void>
   isAuthenticated: boolean
+  isLoading: boolean
 }
 
 const ApiKeyContext = createContext<ApiKeyContextType | null>(null)
 
 export function ApiKeyProvider({ children }: { children: ReactNode }) {
   const [apiKey, setApiKeyState] = useState<string | null>(null)
+  const [maskedApiKey, setMaskedApiKey] = useState<string | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
-    const stored = window.sessionStorage.getItem(API_KEY_STORAGE_KEY)
-    if (stored) {
-      setApiKeyState(stored)
+    let isMounted = true
+
+    fetch('/api/v1/access/session', { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error('Nao foi possivel carregar a sessao atual.')
+        }
+        return (await response.json()) as SessionStateResponse
+      })
+      .then((session) => {
+        if (!isMounted) return
+        setApiKeyState(session.authenticated ? 'governed-session' : null)
+        setMaskedApiKey(session.masked_key)
+      })
+      .catch(() => {
+        if (!isMounted) return
+        setApiKeyState(null)
+        setMaskedApiKey(null)
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsHydrated(true)
+        }
+      })
+
+    return () => {
+      isMounted = false
     }
-    setIsHydrated(true)
   }, [])
 
-  const setApiKey = useCallback((key: string | null) => {
-    setApiKeyState(key)
-    if (key) {
-      window.sessionStorage.setItem(API_KEY_STORAGE_KEY, key)
-    } else {
-      window.sessionStorage.removeItem(API_KEY_STORAGE_KEY)
+  const setApiKey = useCallback(async (key: string) => {
+    const response = await fetch('/api/v1/access/session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ apiKey: key }),
+    })
+
+    if (!response.ok) {
+      let message = 'Nao foi possivel validar a API key informada.'
+
+      try {
+        const body = (await response.json()) as { message?: string }
+        if (body.message) {
+          message = body.message
+        }
+      } catch {}
+
+      throw new Error(message)
     }
+
+    const session = (await response.json()) as SessionStateResponse
+    setApiKeyState(session.authenticated ? 'governed-session' : null)
+    setMaskedApiKey(session.masked_key)
   }, [])
 
-  const clearApiKey = useCallback(() => {
+  const clearApiKey = useCallback(async () => {
+    await fetch('/api/v1/access/session', {
+      method: 'DELETE',
+    })
     setApiKeyState(null)
-    window.sessionStorage.removeItem(API_KEY_STORAGE_KEY)
+    setMaskedApiKey(null)
   }, [])
 
   if (!isHydrated) {
@@ -47,9 +97,11 @@ export function ApiKeyProvider({ children }: { children: ReactNode }) {
     <ApiKeyContext.Provider
       value={{
         apiKey,
+        maskedApiKey,
         setApiKey,
         clearApiKey,
         isAuthenticated: !!apiKey,
+        isLoading: !isHydrated,
       }}
     >
       {children}

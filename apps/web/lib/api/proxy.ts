@@ -1,6 +1,9 @@
 import 'server-only'
 
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+
+import { decryptApiKey, getSessionCookieName } from '@/lib/api/session'
 
 const DEFAULT_BACKEND_API_BASE_URL = `http://localhost:${process.env.RAG_API_HOST_PORT || '8000'}`
 const DEFAULT_PROXY_TIMEOUT_MS = 180_000
@@ -22,12 +25,15 @@ function buildBackendApiUrl(path: string): string {
   return `${getBackendApiBaseUrl()}${normalizedPath}`
 }
 
-function buildUpstreamHeaders(request: NextRequest, initHeaders?: HeadersInit): Headers {
+async function buildUpstreamHeaders(request: NextRequest, initHeaders?: HeadersInit): Promise<Headers> {
   const headers = new Headers(initHeaders)
   const contentType = request.headers.get('content-type')
   const requestId = request.headers.get('x-request-id')
   const authorization = request.headers.get('authorization')
-  const apiKey = request.headers.get('x-api-key')
+  const requestApiKey = request.headers.get('x-api-key')
+  const cookieStore = await cookies()
+  const sessionApiKey = decryptApiKey(cookieStore.get(getSessionCookieName())?.value)
+  const apiKey = requestApiKey || sessionApiKey
 
   if (contentType && !headers.has('Content-Type')) {
     headers.set('Content-Type', contentType)
@@ -78,7 +84,7 @@ export async function proxyUrbanLensRequest(
   try {
     const upstream = await fetch(buildBackendApiUrl(path), {
       ...init,
-      headers: buildUpstreamHeaders(request, init?.headers),
+      headers: await buildUpstreamHeaders(request, init?.headers),
       cache: 'no-store',
       signal: controller.signal,
     })

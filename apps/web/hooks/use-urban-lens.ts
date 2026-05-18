@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import useSWR from 'swr'
 
-import { buildBackendApiUrl } from '@/lib/api/client'
+import { buildFrontendApiUrl } from '@/lib/api/client'
 import type {
   AccessRequestCreateRequest,
   AccessRequestCreateResponse,
@@ -19,21 +19,9 @@ import type {
 
 const HISTORY_STORAGE_KEY = 'urban-lens:query-history'
 const HISTORY_LIMIT = 10
-const API_KEY_STORAGE_KEY = 'urban-lens:api-key'
 
-// Session-scoped storage for governed credentials.
-function getStoredApiKey(): string | null {
-  if (typeof window === 'undefined') return null
-  return window.sessionStorage.getItem(API_KEY_STORAGE_KEY)
-}
-
-const createFetcher = (apiKey: string | null) => async (url: string) => {
-  const headers: HeadersInit = {}
-  if (apiKey) {
-    headers['X-API-Key'] = apiKey
-  }
-  
-  const res = await fetch(url, { headers })
+const createFetcher = () => async (url: string) => {
+  const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) {
     const error = new Error(`HTTP error! status: ${res.status}`)
     ;(error as Error & { status: number }).status = res.status
@@ -43,11 +31,10 @@ const createFetcher = (apiKey: string | null) => async (url: string) => {
 }
 
 export function useHealthCheck(apiKey: string | null = null) {
-  const effectiveKey = apiKey ?? getStoredApiKey()
-  const fetcher = createFetcher(effectiveKey)
+  const fetcher = createFetcher()
   
   const { data, error, isLoading, mutate } = useSWR<HealthResponse>(
-    buildBackendApiUrl('/health'),
+    buildFrontendApiUrl('/health'),
     fetcher,
     {
       refreshInterval: 60000,
@@ -70,11 +57,10 @@ export function useHealthCheck(apiKey: string | null = null) {
 }
 
 export function useAvailableModels(apiKey: string | null = null) {
-  const effectiveKey = apiKey ?? getStoredApiKey()
-  const fetcher = createFetcher(effectiveKey)
+  const fetcher = createFetcher()
   
   const { data, error, isLoading, mutate } = useSWR<AvailableModelsResponse>(
-    effectiveKey ? buildBackendApiUrl('/system/models') : null,
+    apiKey ? buildFrontendApiUrl('/system/models') : null,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -89,17 +75,16 @@ export function useAvailableModels(apiKey: string | null = null) {
     defaultEmbeddingModel: data?.default_embedding_model ?? 'nomic-embed-text',
     isLoading,
     error,
-    needsApiKey: !effectiveKey,
+    needsApiKey: !apiKey,
     refresh: mutate,
   }
 }
 
 export function useAccessProfile(apiKey: string | null = null) {
-  const effectiveKey = apiKey ?? getStoredApiKey()
-  const fetcher = createFetcher(effectiveKey)
+  const fetcher = createFetcher()
 
   const { data, error, isLoading, mutate } = useSWR<CurrentUserResponse>(
-    effectiveKey ? buildBackendApiUrl('/access/me') : null,
+    apiKey ? buildFrontendApiUrl('/access/me') : null,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -116,11 +101,10 @@ export function useAccessProfile(apiKey: string | null = null) {
 }
 
 export function useUsageStats(apiKey: string | null = null) {
-  const effectiveKey = apiKey ?? getStoredApiKey()
-  const fetcher = createFetcher(effectiveKey)
+  const fetcher = createFetcher()
 
   const { data, error, isLoading, mutate } = useSWR<UsageStatsResponse>(
-    effectiveKey ? buildBackendApiUrl('/access/me/usage') : null,
+    apiKey ? buildFrontendApiUrl('/access/me/usage') : null,
     fetcher,
     {
       refreshInterval: 60000,
@@ -138,7 +122,7 @@ export function useUsageStats(apiKey: string | null = null) {
 }
 
 export async function submitAccessRequest(payload: AccessRequestCreateRequest): Promise<AccessRequestCreateResponse> {
-  const response = await fetch(buildBackendApiUrl('/system/access-requests'), {
+  const response = await fetch(buildFrontendApiUrl('/system/access-requests'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -162,8 +146,6 @@ export function useQuery(apiKey: string | null = null) {
 
   const executeQuery = useCallback(
     async (query: string, filters: QueryFilters, topK: number, model: string) => {
-      const effectiveKey = apiKey ?? getStoredApiKey()
-      
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
@@ -195,16 +177,11 @@ export function useQuery(apiKey: string | null = null) {
           }
         }
 
-        const headers: HeadersInit = {
-          'Content-Type': 'application/json',
-        }
-        if (effectiveKey) {
-          headers['X-API-Key'] = effectiveKey
-        }
-
-        const apiResponse = await fetch(buildBackendApiUrl('/chat/query'), {
+        const apiResponse = await fetch(buildFrontendApiUrl('/chat/query'), {
           method: 'POST',
-          headers,
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify(body),
           signal: abortControllerRef.current.signal,
         })
