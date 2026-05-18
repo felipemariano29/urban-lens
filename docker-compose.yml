@@ -214,6 +214,35 @@ services:
     networks:
       - app_network
 
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    container_name: urban-lens-web
+    restart: unless-stopped
+    depends_on:
+      rag-api:
+        condition: service_healthy
+    environment:
+      PORT: "3000"
+      URBAN_LENS_API_BASE_URL: "http://rag-api:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    ports:
+      - "${WEB_HOST_PORT:-3000}:3000"
+    networks:
+      - app_network
+
 networks:
   app_network:
     driver: bridge

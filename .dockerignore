@@ -1,0 +1,17 @@
+.git
+.gitignore
+.next
+.venv
+node_modules
+docker-data
+data
+tests
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+*.parquet
+.artifacts
+dist
+build
