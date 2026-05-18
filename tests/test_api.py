@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import time
+from datetime import UTC, datetime, timedelta
 from typing import Generator
 from unittest.mock import MagicMock, patch
 
@@ -24,6 +26,32 @@ def _auth(role: str, **extra) -> dict:
 
 def _api_key_header(key: str = "test-svc-key") -> dict:
     return {"X-API-Key": key}
+
+
+def _governed_api_key() -> str:
+    return "ul_abc123def456_secret-token-value"
+
+
+def _governed_api_key_record(**overrides) -> dict:
+    api_key = _governed_api_key()
+    record = {
+        "api_key_id": "api-key-1",
+        "client_id": "client-1",
+        "user_id": "user-1",
+        "key_prefix": "abc123def456",
+        "key_hash": hashlib.sha256(api_key.encode("utf-8")).hexdigest(),
+        "api_key_status": "active",
+        "client_status": "active",
+        "user_status": "active",
+        "expires_at": datetime.now(UTC) + timedelta(days=7),
+        "email": "viewer@urbanlens.local",
+        "role": "viewer",
+        "plan_code": "FREE",
+        "plan_max_top_k": 5,
+        "allowed_models": ["llama3", "phi3"],
+    }
+    record.update(overrides)
+    return record
 
 
 @pytest.fixture(autouse=True)
@@ -202,6 +230,38 @@ class TestAuthentication:
                 headers={**_auth("viewer"), **_api_key_header()},
             )
         assert resp.status_code == 200
+
+    def test_valid_governed_api_key_grants_authenticated_access(self, client):
+        mock_hits = [{"id": "c1", "score": 0.9, "content": "text", "metadata": {}}]
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=_governed_api_key_record()),
+            patch("urban_lens.governance.store.MetadataStore.touch_api_key_usage"),
+            patch("urban_lens.api.services.rag_service.run_query", return_value=mock_hits),
+        ):
+            resp = client.post(
+                "/api/v1/query",
+                json={"query": "test"},
+                headers=_api_key_header(_governed_api_key()),
+            )
+        assert resp.status_code == 200
+
+    def test_expired_governed_api_key_returns_401(self, client):
+        expired_record = _governed_api_key_record(expires_at=datetime.now(UTC) - timedelta(minutes=1))
+        with patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=expired_record):
+            resp = client.post(
+                "/api/v1/query",
+                json={"query": "test"},
+                headers=_api_key_header(_governed_api_key()),
+            )
+        assert resp.status_code == 401
+
+    def test_malformed_governed_api_key_returns_401(self, client):
+        resp = client.post(
+            "/api/v1/query",
+            json={"query": "test"},
+            headers=_api_key_header("invalid-key-format"),
+        )
+        assert resp.status_code == 401
 
 
 # ---------------------------------------------------------------------------
