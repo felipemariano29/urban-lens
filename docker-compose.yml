@@ -55,15 +55,9 @@ services:
     depends_on:
       - minio
     env_file: .env
-    entrypoint: >
-      /bin/sh -c "
-      echo 'Aguardando o MinIO iniciar...';
-      sleep 8;
-      /usr/bin/mc alias set myminio http://minio-storage:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
-      /usr/bin/mc mb myminio/$${MINIO_DEFAULT_BUCKET} --ignore-existing;
-      echo 'Setup concluído!';
-      exit 0;
-      "
+    entrypoint: ["/bin/sh", "/scripts/minio-setup.sh"]
+    volumes:
+      - ./docker/scripts/minio-setup.sh:/scripts/minio-setup.sh:ro
     networks:
       - app_network
 
@@ -166,17 +160,9 @@ services:
     container_name: ollama-setup
     depends_on:
       - ollama
-    entrypoint: >
-      /bin/sh -c "
-      echo 'Aguardando Ollama iniciar...';
-      sleep 20;
-      echo 'Baixando modelo de embeddings...';
-      OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text;
-      echo 'Baixando modelo LLM para chat...';
-      OLLAMA_HOST=ollama:11434 ollama pull llama3;
-      echo 'Setup Ollama concluido!';
-      exit 0;
-      "
+    entrypoint: ["/bin/sh", "/scripts/ollama-setup.sh"]
+    volumes:
+      - ./docker/scripts/ollama-setup.sh:/scripts/ollama-setup.sh:ro
     networks:
       - app_network
 
