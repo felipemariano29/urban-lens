@@ -74,6 +74,147 @@ Typical statuses:
 - `403`: insufficient role
 - `404`: service plan not found
 
+### `GET /api/v1/access/clients`
+
+Purpose:
+- Lists API clients with their plan information, rate limits, and active key counts.
+
+Authentication:
+- `admin`, `operator`, `internal_service`
+
+Query parameters:
+- `user_id`: optional filter by owner user ID
+- `include_inactive`: optional boolean to include suspended or revoked clients
+
+Main response fields:
+- `clients[]`
+- `total`
+
+Each client includes:
+- `client_id`
+- `user_id`
+- `client_name`
+- `status`
+- `requests_per_minute_override`
+- `requests_per_day_override`
+- `last_used_at`
+- `created_at`
+- `user_email`
+- `user_full_name`
+- `user_role`
+- `plan_code`
+- `plan_name`
+- `plan_requests_per_minute`
+- `plan_requests_per_day`
+- `active_keys_count`
+
+Typical statuses:
+- `200`: clients listed
+- `401`: missing or invalid credentials
+- `403`: insufficient role
+- `502`: governance backend unavailable
+
+### `GET /api/v1/access/keys`
+
+Purpose:
+- Lists API keys with their status, usage timestamps, and parent client information.
+
+Authentication:
+- `admin`, `operator`, `internal_service`
+
+Query parameters:
+- `client_id`: optional filter by parent API client ID
+- `include_revoked`: optional boolean to include revoked keys
+
+Main response fields:
+- `keys[]`
+- `total`
+
+Each key includes:
+- `api_key_id`
+- `client_id`
+- `key_prefix`
+- `status`
+- `expires_at`
+- `issued_at`
+- `last_used_at`
+- `revoked_at`
+- `client_name`
+- `user_email`
+
+Typical statuses:
+- `200`: keys listed
+- `401`: missing or invalid credentials
+- `403`: insufficient role
+- `502`: governance backend unavailable
+
+### `POST /api/v1/access/keys/{api_key_id}/revoke`
+
+Purpose:
+- Permanently revokes an API key. The key cannot be used after revocation.
+
+Authentication:
+- `admin`, `operator`, `internal_service`
+
+Path parameters:
+- `api_key_id`: the unique API key identifier
+
+Request body (optional):
+```json
+{
+  "reason": "Security incident - key potentially compromised"
+}
+```
+
+Main response fields:
+- `api_key_id`
+- `key_prefix`
+- `status`
+- `revoked_at`
+- `message`
+
+Typical statuses:
+- `200`: key revoked
+- `401`: missing or invalid credentials
+- `403`: insufficient role
+- `404`: API key not found
+- `422`: API key already revoked
+
+### `POST /api/v1/access/keys/{api_key_id}/rotate`
+
+Purpose:
+- Rotates an API key by revoking the old key and issuing a new one for the same client.
+- The new plaintext key is returned only once.
+
+Authentication:
+- `admin`, `operator`, `internal_service`
+
+Path parameters:
+- `api_key_id`: the unique API key identifier
+
+Request body (optional):
+```json
+{
+  "expires_at": "2027-06-30T23:59:59Z"
+}
+```
+
+Main response fields:
+- `old_api_key_id`
+- `new_api_key_id`
+- `client_id`
+- `key_prefix`
+- `api_key`
+- `expires_at`
+- `message`
+
+Typical statuses:
+- `200`: key rotated, new key returned
+- `401`: missing or invalid credentials
+- `403`: insufficient role
+- `404`: API key not found
+- `422`: API key not active or cannot be rotated
+
 ## Endpoints
 
 ### `GET /api/v1/health`
