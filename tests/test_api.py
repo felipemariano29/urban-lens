@@ -47,8 +47,14 @@ def _governed_api_key_record(**overrides) -> dict:
         "expires_at": datetime.now(UTC) + timedelta(days=7),
         "email": "viewer@urbanlens.local",
         "role": "viewer",
+        "requests_per_minute_override": None,
+        "requests_per_day_override": None,
         "plan_code": "FREE",
+        "plan_requests_per_minute": 30,
+        "plan_requests_per_day": 500,
         "plan_max_top_k": 5,
+        "effective_requests_per_minute": 30,
+        "effective_requests_per_day": 500,
         "allowed_models": ["llama3", "phi3"],
     }
     record.update(overrides)
@@ -236,6 +242,7 @@ class TestAuthentication:
         mock_hits = [{"id": "c1", "score": 0.9, "content": "text", "metadata": {}}]
         with (
             patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=_governed_api_key_record()),
+            patch("urban_lens.governance.store.MetadataStore.count_client_requests", return_value={"minute_count": 0, "day_count": 0}),
             patch("urban_lens.governance.store.MetadataStore.touch_api_key_usage"),
             patch("urban_lens.api.services.rag_service.run_query", return_value=mock_hits),
         ):
@@ -274,9 +281,46 @@ class TestAuthentication:
         assert resp.status_code == 200
         assert record_request_audit.called
 
+    def test_governed_api_key_rate_limit_returns_429(self, client):
+        governed_record = _governed_api_key_record(effective_requests_per_minute=2)
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record),
+            patch("urban_lens.governance.store.MetadataStore.count_client_requests", return_value={"minute_count": 2, "day_count": 2}),
+        ):
+            resp = client.post(
+                "/api/v1/query",
+                json={"query": "test"},
+                headers=_api_key_header(_governed_api_key()),
+            )
+        assert resp.status_code == 429
+        assert "last minute" in resp.json()["message"]
+
+    def test_governed_api_key_daily_quota_returns_429(self, client):
+        governed_record = _governed_api_key_record(
+            effective_requests_per_minute=30,
+            effective_requests_per_day=10,
+        )
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record),
+            patch(
+                "urban_lens.governance.store.MetadataStore.count_client_requests",
+                return_value={"minute_count": 1, "day_count": 10},
+            ),
+        ):
+            resp = client.post(
+                "/api/v1/query",
+                json={"query": "test"},
+                headers=_api_key_header(_governed_api_key()),
+            )
+        assert resp.status_code == 429
+        assert "last day" in resp.json()["message"]
+
     def test_governed_query_rejects_top_k_above_plan_limit(self, client):
         governed_record = _governed_api_key_record(plan_max_top_k=3)
-        with patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record):
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record),
+            patch("urban_lens.governance.store.MetadataStore.count_client_requests", return_value={"minute_count": 0, "day_count": 0}),
+        ):
             resp = client.post(
                 "/api/v1/query",
                 json={"query": "test", "top_k": 4},
@@ -287,7 +331,10 @@ class TestAuthentication:
 
     def test_governed_chat_rejects_disallowed_model(self, client):
         governed_record = _governed_api_key_record(allowed_models=["llama3"])
-        with patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record):
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record),
+            patch("urban_lens.governance.store.MetadataStore.count_client_requests", return_value={"minute_count": 0, "day_count": 0}),
+        ):
             resp = client.post(
                 "/api/v1/chat/query",
                 json={"query": "test", "model": "phi3"},
@@ -315,6 +362,7 @@ class TestAuthentication:
         }
         with (
             patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record),
+            patch("urban_lens.governance.store.MetadataStore.count_client_requests", return_value={"minute_count": 0, "day_count": 0}),
             patch("urban_lens.governance.store.MetadataStore.touch_api_key_usage"),
             patch("urban_lens.api.services.rag_service.run_chat_query", return_value=mock_response) as run_chat_query,
         ):
@@ -347,6 +395,7 @@ class TestAuthentication:
         }
         with (
             patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record),
+            patch("urban_lens.governance.store.MetadataStore.count_client_requests", return_value={"minute_count": 0, "day_count": 0}),
             patch("urban_lens.governance.store.MetadataStore.touch_api_key_usage"),
             patch("urban_lens.api.services.rag_service.run_chat_query", return_value=mock_response),
             patch("urban_lens.governance.store.MetadataStore.record_request_audit") as record_request_audit,

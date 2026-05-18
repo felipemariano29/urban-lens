@@ -24,6 +24,8 @@ class UserProfile:
     plan_id: str | None = None
     plan_code: str | None = None
     plan_max_top_k: int | None = None
+    requests_per_minute: int | None = None
+    requests_per_day: int | None = None
     allowed_models: tuple[str, ...] = ()
     auth_type: str = "jwt"
 
@@ -113,6 +115,7 @@ def _authenticate_governed_api_key(api_key: str) -> UserProfile:
     if not hmac.compare_digest(expected_hash, computed_hash):
         raise _invalid_api_key()
 
+    _enforce_governed_rate_limits(store, record)
     store.touch_api_key_usage(record["api_key_id"], record["client_id"])
     role = str(record["role"])
     if role not in VALID_ROLES:
@@ -130,6 +133,8 @@ def _authenticate_governed_api_key(api_key: str) -> UserProfile:
         plan_id=record.get("plan_id"),
         plan_code=record.get("plan_code"),
         plan_max_top_k=record.get("plan_max_top_k"),
+        requests_per_minute=record.get("effective_requests_per_minute"),
+        requests_per_day=record.get("effective_requests_per_day"),
         allowed_models=tuple(record.get("allowed_models") or ()),
         auth_type="governed_api_key",
     )
@@ -147,3 +152,43 @@ def _invalid_api_key(detail: str = "Invalid API key.") -> HTTPException:
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail=detail,
     )
+
+
+def _enforce_governed_rate_limits(store, record: dict[str, object]) -> None:
+    requests_per_minute = _coerce_limit(record.get("effective_requests_per_minute"))
+    requests_per_day = _coerce_limit(record.get("effective_requests_per_day"))
+    if requests_per_minute is None and requests_per_day is None:
+        return
+
+    usage = store.count_client_requests(
+        str(record["client_id"]),
+        window_minutes=1 if requests_per_minute is not None else None,
+        window_days=1 if requests_per_day is not None else None,
+    )
+    minute_count = usage.get("minute_count", 0)
+    day_count = usage.get("day_count", 0)
+
+    if requests_per_minute is not None and minute_count >= requests_per_minute:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                f"Rate limit exceeded for plan '{record.get('plan_code') or 'unknown'}': "
+                f"{minute_count} requests in the last minute, limit is {requests_per_minute}."
+            ),
+        )
+
+    if requests_per_day is not None and day_count >= requests_per_day:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                f"Daily quota exceeded for plan '{record.get('plan_code') or 'unknown'}': "
+                f"{day_count} requests in the last day, limit is {requests_per_day}."
+            ),
+        )
+
+
+def _coerce_limit(raw_value: object) -> int | None:
+    if raw_value is None:
+        return None
+    limit = int(raw_value)
+    return limit if limit > 0 else None

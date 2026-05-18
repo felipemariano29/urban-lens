@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from urban_lens.governance.contracts import (
@@ -471,6 +471,8 @@ class MetadataStore:
             "plan_requests_per_day": row[20],
             "plan_max_top_k": row[21],
             "allowed_models": row[22],
+            "effective_requests_per_minute": row[11] if row[11] is not None else row[19],
+            "effective_requests_per_day": row[12] if row[12] is not None else row[20],
         }
 
     def touch_api_key_usage(self, api_key_id: str, client_id: str) -> None:
@@ -494,6 +496,46 @@ class MetadataStore:
                 (now, client_id),
             )
             connection.commit()
+
+    def count_client_requests(
+        self,
+        client_id: str,
+        *,
+        window_minutes: int | None = None,
+        window_days: int | None = None,
+    ) -> dict[str, int]:
+        minute_count = 0
+        day_count = 0
+        now = datetime.now(UTC)
+
+        with self._connect() as connection, connection.cursor() as cursor:
+            if window_minutes is not None:
+                cursor.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM governance.request_audit
+                    WHERE client_id = %s
+                      AND completed_at >= %s
+                    """,
+                    (client_id, now.replace(microsecond=0) - timedelta(minutes=window_minutes)),
+                )
+                row = cursor.fetchone()
+                minute_count = int(row[0]) if row else 0
+
+            if window_days is not None:
+                cursor.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM governance.request_audit
+                    WHERE client_id = %s
+                      AND completed_at >= %s
+                    """,
+                    (client_id, now.replace(microsecond=0) - timedelta(days=window_days)),
+                )
+                row = cursor.fetchone()
+                day_count = int(row[0]) if row else 0
+
+        return {"minute_count": minute_count, "day_count": day_count}
 
     def record_request_audit(self, payload: RequestAuditPayload) -> str:
         request_audit_id = self._new_id()
