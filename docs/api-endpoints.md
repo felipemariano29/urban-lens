@@ -215,6 +215,54 @@ Typical statuses:
 - `404`: API key not found
 - `422`: API key not active or cannot be rotated
 
+### `GET /api/v1/access/me`
+
+Purpose:
+- Returns information about the currently authenticated user.
+
+Authentication:
+- Any valid authentication (JWT, governed API key, or internal service key)
+
+Main response fields:
+- `role`
+- `auth_type`
+- `user_id` (for governed API keys)
+- `client_id` (for governed API keys)
+- `api_key_id` (for governed API keys)
+- `subject` (for JWT auth)
+- `plan_code` (for governed API keys)
+- `plan_max_top_k` (for governed API keys)
+- `requests_per_minute` (for governed API keys)
+- `requests_per_day` (for governed API keys)
+- `allowed_models` (for governed API keys)
+
+Typical statuses:
+- `200`: current user info returned
+- `401`: missing or invalid credentials
+
+### `GET /api/v1/access/me/usage`
+
+Purpose:
+- Returns current usage statistics for the authenticated API client.
+- Only available for governed API keys.
+
+Authentication:
+- Governed API key only
+
+Main response fields:
+- `client_id`
+- `requests_last_minute`
+- `requests_last_day`
+- `requests_per_minute_limit`
+- `requests_per_day_limit`
+- `remaining_minute`
+- `remaining_day`
+
+Typical statuses:
+- `200`: usage stats returned
+- `401`: missing or invalid credentials
+- `403`: usage stats only available for governed API keys
+
 ## Endpoints
 
 ### `GET /api/v1/health`
