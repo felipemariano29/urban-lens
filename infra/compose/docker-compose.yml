@@ -20,6 +20,20 @@ services:
     networks:
       - app_network
 
+  postgres-setup:
+    image: postgres:15-alpine
+    container_name: postgres-setup
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: ../../.env
+    entrypoint: ["/bin/sh", "/scripts/postgres-setup.sh"]
+    volumes:
+      - ../../sql/init:/sql/init:ro
+      - ../docker/scripts/postgres-setup.sh:/scripts/postgres-setup.sh:ro
+    networks:
+      - app_network
+
   pgadmin:
     image: dpage/pgadmin4:9
     container_name: pgadmin
@@ -96,6 +110,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      postgres-setup:
+        condition: service_completed_successfully
       minio:
         condition: service_healthy
       minio-setup:
@@ -231,6 +247,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      postgres-setup:
+        condition: service_completed_successfully
       minio:
         condition: service_healthy
       mlflow:
