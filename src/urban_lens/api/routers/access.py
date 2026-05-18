@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from urban_lens.api.core.auth import UserProfile
+from urban_lens.api.core.auth import UserProfile, get_current_profile
 from urban_lens.api.dependencies import require_roles
 from urban_lens.api.schemas import (
     AccessCredentialRequest,
@@ -16,6 +16,8 @@ from urban_lens.api.schemas import (
     ApiKeyRevokeResponse,
     ApiKeyRotateRequest,
     ApiKeyRotateResponse,
+    CurrentUserResponse,
+    UsageStatsResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -191,3 +193,87 @@ def rotate_key(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Access governance backend returned an error.",
         )
+
+
+@router.get(
+    "/me",
+    response_model=CurrentUserResponse,
+    summary="Get current authenticated user info",
+    description=(
+        "Returns information about the currently authenticated user, including role, "
+        "authentication method, and plan limits if using a governed API key."
+    ),
+    responses={
+        200: {"description": "Current user information returned."},
+        401: {"description": "Missing or invalid authentication credentials."},
+    },
+)
+def get_current_user(
+    profile: UserProfile = Depends(get_current_profile),
+) -> CurrentUserResponse:
+    return CurrentUserResponse(
+        role=profile.role,
+        auth_type=profile.auth_type,
+        user_id=profile.user_id,
+        client_id=profile.client_id,
+        api_key_id=profile.api_key_id,
+        subject=profile.subject,
+        plan_code=profile.plan_code,
+        plan_max_top_k=profile.plan_max_top_k,
+        requests_per_minute=profile.requests_per_minute,
+        requests_per_day=profile.requests_per_day,
+        allowed_models=list(profile.allowed_models),
+    )
+
+
+@router.get(
+    "/me/usage",
+    response_model=UsageStatsResponse,
+    summary="Get current API usage statistics",
+    description=(
+        "Returns current usage statistics for the authenticated API client, "
+        "including requests made and remaining quota. Only available for governed API keys."
+    ),
+    responses={
+        200: {"description": "Usage statistics returned."},
+        401: {"description": "Missing or invalid authentication credentials."},
+        403: {"description": "Usage stats only available for governed API keys."},
+    },
+)
+def get_usage_stats(
+    profile: UserProfile = Depends(get_current_profile),
+) -> UsageStatsResponse:
+    if profile.client_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usage statistics are only available for governed API keys.",
+        )
+
+    from urban_lens.core.settings import AppConfig
+    from urban_lens.governance import MetadataStore
+
+    config = AppConfig.from_env()
+    store = MetadataStore(dsn=config.postgres_dsn)
+
+    counts = store.count_client_requests(
+        profile.client_id,
+        window_minutes=1,
+        window_days=1,
+    )
+
+    remaining_minute = None
+    remaining_day = None
+    if profile.requests_per_minute is not None:
+        remaining_minute = max(0, profile.requests_per_minute - counts["minute_count"])
+    if profile.requests_per_day is not None:
+        remaining_day = max(0, profile.requests_per_day - counts["day_count"])
+
+    return UsageStatsResponse(
+        client_id=profile.client_id,
+        requests_last_minute=counts["minute_count"],
+        requests_last_day=counts["day_count"],
+        requests_per_minute_limit=profile.requests_per_minute,
+        requests_per_day_limit=profile.requests_per_day,
+        remaining_minute=remaining_minute,
+        remaining_day=remaining_day,
+    )
