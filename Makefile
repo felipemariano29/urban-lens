@@ -1,8 +1,8 @@
-SHELL := /bin/bash
-# Detect Windows and use 'python' instead of 'python3'
 ifeq ($(OS),Windows_NT)
+    SHELL := C:/Windows/System32/bash.exe
     SYSTEM_PYTHON ?= python
 else
+    SHELL := /bin/bash
     SYSTEM_PYTHON ?= python3
 endif
 PYTHON ?= $(shell if [ -x .venv/bin/python3 ]; then echo .venv/bin/python3; elif [ -x .venv/bin/python ]; then echo .venv/bin/python; elif [ -x .venv/Scripts/python.exe ]; then echo .venv/Scripts/python; else echo $(SYSTEM_PYTHON); fi)
@@ -19,18 +19,27 @@ ENV_EXPORT = __MLFLOW_TRACKING_URI="$${MLFLOW_TRACKING_URI:-}"; \
 PYTHON_RUN = $(ENV_EXPORT) PYTHONPATH="$(CURDIR)/src:$${PYTHONPATH:-}"
 PIP_RUN = PIP_CONFIG_FILE="$(PIP_CONFIG_FILE)" PIP_INDEX_URL="$(PIP_INDEX_URL)"
 
-COMPOSE := $(shell \
-	if command -v podman-compose >/dev/null 2>&1; then \
-		echo "podman-compose"; \
-	elif command -v docker-compose >/dev/null 2>&1; then \
-		echo "docker-compose"; \
-	elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
-		echo "docker compose"; \
-	else \
-		echo ""; \
-	fi)
+ifeq ($(OS),Windows_NT)
+	COMPOSE := docker compose
+else
+	COMPOSE := $(shell \
+		if command -v podman-compose >/dev/null 2>&1; then \
+			echo "podman-compose"; \
+		elif command -v docker-compose >/dev/null 2>&1; then \
+			echo "docker-compose"; \
+		elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
+			echo "docker compose"; \
+		else \
+			echo ""; \
+		fi)
+endif
+COMPOSE_MODE ?= cpu
+COMPOSE_FILES := -f docker-compose.yml
+ifeq ($(COMPOSE_MODE),gpu)
+	COMPOSE_FILES += -f docker-compose.gpu.yml
+endif
 
-.PHONY: help check-compose check-env check-python require-% venv install setup fullstack urls up up-core down destroy reset logs logs-mlflow ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs test frontend frontend-install
+.PHONY: help check-compose check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-core down destroy reset logs logs-core logs-app logs-mlflow ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs test frontend frontend-install
 
 help:
 	@printf "\n"
@@ -39,17 +48,21 @@ help:
 	@printf "\033[1;36m=======================================\033[0m\n\n"
 
 	@printf "\033[1;33mDocker\033[0m\n"
-	@printf "  \033[1;37mmake fullstack\033[0m -> Subir stack completa (backend + frontend) e mostrar URLs\n"
-	@printf "  \033[1;37mmake up\033[0m        -> Subir os containers\n"
+	@printf "  \033[1;37mmake fullstack\033[0m -> Subir stack completa no Docker e mostrar URLs\n"
+	@printf "  \033[1;37mmake up\033[0m        -> Subir os containers (modo atual: COMPOSE_MODE=$(COMPOSE_MODE))\n"
+	@printf "  \033[1;37mmake up-cpu\033[0m    -> Subir a stack completa sem overlay de GPU\n"
+	@printf "  \033[1;37mmake up-gpu\033[0m    -> Subir a stack completa com overlay de GPU para Ollama\n"
 	@printf "  \033[1;37mmake up-core\033[0m   -> Subir Postgres + MinIO + MLflow\n"
 	@printf "  \033[1;37mmake down\033[0m      -> Parar containers sem remover estado local\n"
 	@printf "  \033[1;37mmake destroy\033[0m   -> Remover containers e rede local\n"
 	@printf "  \033[1;37mmake reset\033[0m     -> Reset completo (remove volumes)\n"
-	@printf "  \033[1;37mmake logs\033[0m      -> Ver logs em tempo real\n\n"
+	@printf "  \033[1;37mmake logs\033[0m      -> Ver logs de toda a stack em tempo real\n"
+	@printf "  \033[1;37mmake logs-core\033[0m -> Ver logs dos servicos principais de dados e backend\n"
+	@printf "  \033[1;37mmake logs-app\033[0m  -> Ver logs da aplicacao web e API\n\n"
 
 	@printf "\033[1;33mFrontend\033[0m\n"
-	@printf "  \033[1;37mmake frontend\033[0m  -> Subir frontend Next.js em http://localhost:3000\n"
-	@printf "  \033[1;37mmake frontend-install\033[0m -> Instalar dependencias do frontend\n\n"
+	@printf "  \033[1;37mmake frontend\033[0m  -> Rodar frontend Next.js localmente fora do Docker\n"
+	@printf "  \033[1;37mmake frontend-install\033[0m -> Instalar dependencias do frontend local\n\n"
 
 	@printf "\033[1;33mExperimentos / MLflow\033[0m\n"
 	@printf "  \033[1;37mmake train\033[0m     -> Treinar usando os datasets Gold ML mais recentes\n"
@@ -155,18 +168,21 @@ endif
 
 fullstack:
 	@$(MAKE) up
-	@$(MAKE) frontend-install
 	@$(MAKE) urls
-	@printf "\n\033[1;32mIniciando frontend em http://localhost:3000...\033[0m\n\n"
-	@$(MAKE) frontend
+
+up-cpu:
+	@$(MAKE) up COMPOSE_MODE=cpu
+
+up-gpu:
+	@$(MAKE) up COMPOSE_MODE=gpu
 
 up: check-compose check-env
-	@echo "[INFO] Subindo containers..."
-	@$(COMPOSE) up -d
+	@echo "[INFO] Subindo containers com COMPOSE_MODE=$(COMPOSE_MODE)..."
+	@$(COMPOSE) $(COMPOSE_FILES) up -d
 
 up-core: check-compose check-env
-	@echo "[INFO] Subindo Postgres, MinIO e MLflow..."
-	@$(COMPOSE) up -d postgres minio minio-setup mlflow
+	@echo "[INFO] Subindo Postgres, MinIO e MLflow com COMPOSE_MODE=$(COMPOSE_MODE)..."
+	@$(COMPOSE) $(COMPOSE_FILES) up -d postgres minio minio-setup mlflow
 
 frontend-install:
 	@if [ -f package.json ]; then \
@@ -202,32 +218,40 @@ frontend:
 
 down: check-compose check-env
 	@echo "[INFO] Parando containers sem remover dados..."
-	@$(COMPOSE) stop
+	@$(COMPOSE) $(COMPOSE_FILES) stop
 
 destroy: check-compose check-env
 	@echo "[INFO] Removendo containers e rede local..."
-	@$(COMPOSE) down
+	@$(COMPOSE) $(COMPOSE_FILES) down
 
 reset: check-compose check-env
 	@echo "[INFO] Removendo containers e volumes..."
 	@if [ "$(COMPOSE)" = "podman-compose" ]; then \
-		$(COMPOSE) down -v; \
+		$(COMPOSE) $(COMPOSE_FILES) down -v; \
 	else \
-		$(COMPOSE) down -v --remove-orphans; \
+		$(COMPOSE) $(COMPOSE_FILES) down -v --remove-orphans; \
 	fi
 	@echo "[INFO] Subindo ambiente limpo..."
-	@$(COMPOSE) up -d --build
+	@$(COMPOSE) $(COMPOSE_FILES) up -d --build
 
 logs: check-compose check-env
 	@echo "[INFO] Exibindo logs..."
-	@$(COMPOSE) logs -f
+	@$(COMPOSE) $(COMPOSE_FILES) logs -f
+
+logs-core: check-compose check-env
+	@echo "[INFO] Exibindo logs de postgres, minio, mlflow, milvus, ollama e rag-api..."
+	@$(COMPOSE) $(COMPOSE_FILES) logs -f postgres minio mlflow milvus ollama rag-api
+
+logs-app: check-compose check-env
+	@echo "[INFO] Exibindo logs de frontend e rag-api..."
+	@$(COMPOSE) $(COMPOSE_FILES) logs -f frontend rag-api
 
 logs-mlflow: check-compose check-env
 	@echo "[INFO] Exibindo logs do MLflow..."
-	@$(COMPOSE) logs -f mlflow
+	@$(COMPOSE) $(COMPOSE_FILES) logs -f mlflow
 
 ps: check-compose check-env
-	@$(COMPOSE) ps
+	@$(COMPOSE) $(COMPOSE_FILES) ps
 
 snapshots:
 	@if [ ! -d data ]; then \
@@ -247,7 +271,8 @@ urls: check-env
 	echo "Milvus REST:    http://localhost:$${MILVUS_REST_PORT:-9091}"; \
 	echo "Attu:           http://localhost:$${ATTU_HOST_PORT:-3001}"; \
 	echo "Ollama:         http://localhost:$${OLLAMA_HOST_PORT:-11434}"; \
-	echo "RAG API:        http://localhost:$${RAG_API_HOST_PORT:-8000}"
+	echo "RAG API:        http://localhost:$${RAG_API_HOST_PORT:-8000}"; \
+	echo "Frontend:       http://localhost:$${WEB_HOST_PORT:-3000}"
 
 mlflow-url: check-env
 	@$(ENV_EXPORT) echo "MLflow: http://localhost:$${MLFLOW_HOST_PORT:-5005}"
