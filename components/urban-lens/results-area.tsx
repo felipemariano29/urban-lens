@@ -76,6 +76,7 @@ export function ResultsArea({
   const isFallback = response.answer.status === 'insufficient_evidence'
   const evidenceSummary = summarizeEvidence(response)
   const answerCrimeTypes = extractCrimeTypesFromAnswer(response.answer.text)
+  const pipelineTimings = response.timings_ms
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -92,7 +93,8 @@ export function ResultsArea({
             <span>{response.context.length} chunk(s) recuperado(s)</span>
             <span>perfil {formatProfilePt(response.profile)}</span>
             <span>modelo {response.answer.model}</span>
-            {latency && <span>{latency}ms</span>}
+            <span>pipeline {pipelineTimings.total_ms}ms</span>
+            {latency && <span>roundtrip {latency}ms</span>}
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={onReset}>
@@ -116,6 +118,7 @@ export function ResultsArea({
             </CardHeader>
             <CardContent className="pt-0 space-y-3">
               <AnswerSummary response={response} />
+              <TimingSummary timings={pipelineTimings} />
               <FormattedAnswer text={response.answer.text} />
               {answerCrimeTypes.length > 0 && (
                 <div className="space-y-2">
@@ -183,6 +186,17 @@ function AnswerSummary({ response }: { response: ChatQueryResponse }) {
         label="Areas citadas"
         value={summary.lsoaCodes.length > 0 ? summary.lsoaCodes.slice(0, 3).join(', ') : 'Nao identificado'}
       />
+    </div>
+  )
+}
+
+function TimingSummary({ timings }: { timings: ChatQueryResponse['timings_ms'] }) {
+  return (
+    <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 text-sm md:grid-cols-4">
+      <SummaryBlock label="Pipeline" value={`${timings.total_ms} ms`} />
+      <SummaryBlock label="Embedding" value={`${timings.embedding_ms} ms`} />
+      <SummaryBlock label="Retrieval" value={`${timings.retrieval_ms} ms`} />
+      <SummaryBlock label="Geracao" value={`${timings.generation_ms} ms`} />
     </div>
   )
 }

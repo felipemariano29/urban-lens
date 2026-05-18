@@ -41,6 +41,13 @@ export interface RagAnswer {
   model: string
 }
 
+export interface RagTimings {
+  embedding_ms: number
+  retrieval_ms: number
+  generation_ms: number
+  total_ms: number
+}
+
 export interface RagChunkMetadata {
   chunk_type?: string
   reference_month?: string
@@ -80,6 +87,7 @@ export interface ChatQueryResponse {
   context: RagContextChunk[]
   profile: 'intel_user' | 'developer' | 'admin'
   fallback_reason: string | null
+  timings_ms: RagTimings
 }
 
 export interface HealthDependencies {
