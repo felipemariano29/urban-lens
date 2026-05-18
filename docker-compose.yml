@@ -169,7 +169,9 @@ services:
     image: ollama/ollama:latest
     container_name: ollama-setup
     depends_on:
-      - ollama
+      ollama:
+        condition: service_healthy
+    env_file: .env
     entrypoint: ["/bin/sh", "/scripts/ollama-setup.sh"]
     volumes:
       - ./docker/scripts/ollama-setup.sh:/scripts/ollama-setup.sh:ro
