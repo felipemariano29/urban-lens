@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -48,3 +49,27 @@ class ChatQueryRequest(BaseModel):
         None,
         description="Local Ollama model used for answer generation. Defaults to the configured chat model.",
     )
+
+
+class AccessCredentialRequest(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "full_name": "Ana Silva",
+                "email": "ana.silva@urbanlens.local",
+                "organization": "Urban Lens Security Lab",
+                "role": "viewer",
+                "plan_code": "FREE",
+                "client_name": "grafana-demo",
+                "expires_at": "2026-12-31T23:59:59Z",
+            }
+        }
+    )
+
+    full_name: str = Field(..., min_length=3, description="Human-readable account owner name.")
+    email: str = Field(..., description="Unique user email used for account lookup and ownership.")
+    organization: Optional[str] = Field(None, description="Optional organization or team name.")
+    role: str = Field("viewer", description="Application role assigned to the user.")
+    plan_code: str = Field("FREE", description="Service plan code such as FREE or PRO.")
+    client_name: str = Field(..., min_length=3, description="Logical API client name for the issued key.")
+    expires_at: Optional[datetime] = Field(None, description="Optional UTC expiration timestamp for the issued key.")

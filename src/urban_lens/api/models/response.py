@@ -111,3 +111,15 @@ class AvailableModelsResponse(BaseModel):
     default_chat_model: str = Field(..., description="Default chat model used when the client does not select one.")
     default_embedding_model: str = Field(..., description="Embedding model configured for vector search.")
     models: List[OllamaModelInfo] = Field(..., description="Models currently available in the local Ollama runtime.")
+
+
+class AccessCredentialResponse(BaseModel):
+    user_id: str = Field(..., description="Governance user identifier.")
+    client_id: str = Field(..., description="Governance API client identifier.")
+    api_key_id: str = Field(..., description="Governance API key identifier.")
+    role: str = Field(..., description="Application role assigned to the user.")
+    plan_code: str = Field(..., description="Service plan code applied to the API client.")
+    client_name: str = Field(..., description="Logical API client name.")
+    key_prefix: str = Field(..., description="Stored API key prefix used for lookup.")
+    api_key: str = Field(..., description="Plaintext API key returned only once at issuance time.")
+    expires_at: Optional[datetime] = Field(None, description="Optional API key expiration timestamp.")

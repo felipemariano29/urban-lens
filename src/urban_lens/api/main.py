@@ -32,6 +32,13 @@ _TAGS_METADATA = [
         ),
     },
     {
+        "name": "Access",
+        "description": (
+            "Governed access-management endpoints for issuing API credentials tied to service plans. "
+            "Restricted to `admin` and `internal_service`."
+        ),
+    },
+    {
         "name": "Catalog",
         "description": (
             "Governance data catalog listing registered datasets. "
