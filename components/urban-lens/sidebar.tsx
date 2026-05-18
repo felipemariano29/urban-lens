@@ -13,11 +13,12 @@ import {
 } from '@/components/ui/select'
 import {
   CRIME_TYPE_OPTIONS,
+  type OllamaModelInfo,
   type QueryFilters,
   type HistoryItem,
 } from '@/lib/types'
 import { validateLsoaCode, validateReferenceMonth } from '@/hooks/use-urban-lens'
-import { FilterIcon, HistoryIcon, ClockIcon, TrashIcon } from 'lucide-react'
+import { BotIcon, FilterIcon, HistoryIcon, ClockIcon, TrashIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
@@ -25,6 +26,10 @@ interface SidebarProps {
   onFiltersChange: (filters: QueryFilters) => void
   topK: number
   onTopKChange: (value: number) => void
+  availableModels: OllamaModelInfo[]
+  selectedModel: string
+  onSelectedModelChange: (value: string) => void
+  isLoadingModels?: boolean
   history: HistoryItem[]
   onHistorySelect: (item: HistoryItem) => void
   onClearHistory: () => void
@@ -36,6 +41,10 @@ export function Sidebar({
   onFiltersChange,
   topK,
   onTopKChange,
+  availableModels,
+  selectedModel,
+  onSelectedModelChange,
+  isLoadingModels = false,
   history,
   onHistorySelect,
   onClearHistory,
@@ -55,6 +64,42 @@ export function Sidebar({
     <aside className="flex h-full w-80 min-w-80 shrink-0 flex-col border-r bg-sidebar">
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-6 p-4">
+          <section>
+            <div className="mb-4 flex items-center gap-2">
+              <BotIcon className="size-4 text-muted-foreground" />
+              <h2 className="font-semibold text-sm">Modelo</h2>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="chat-model" className="text-xs">
+                Modelo Ollama
+              </Label>
+              <Select
+                value={selectedModel}
+                onValueChange={onSelectedModelChange}
+                disabled={disabled || isLoadingModels || availableModels.length === 0}
+              >
+                <SelectTrigger id="chat-model" className="w-full">
+                  <SelectValue placeholder="Selecione um modelo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableModels.map((model) => (
+                    <SelectItem key={model.name} value={model.name}>
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {isLoadingModels
+                  ? 'Carregando modelos locais...'
+                  : availableModels.length > 0
+                    ? 'Escolha o modelo de geracao usado na resposta.'
+                    : 'Nenhum modelo listado pelo Ollama.'}
+              </p>
+            </div>
+          </section>
+
           <section>
             <div className="flex items-center gap-2 mb-4">
               <FilterIcon className="size-4 text-muted-foreground" />
@@ -201,6 +246,9 @@ export function Sidebar({
                       <ClockIcon className="size-3 text-muted-foreground" />
                       <span className="text-xs text-muted-foreground">
                         {formatTime(item.timestamp)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {item.model}
                       </span>
                     </div>
                   </button>

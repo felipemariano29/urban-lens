@@ -1,8 +1,14 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-import { useHistory, useQuery, validateLsoaCode, validateReferenceMonth } from '@/hooks/use-urban-lens'
+import {
+  useAvailableModels,
+  useHistory,
+  useQuery,
+  validateLsoaCode,
+  validateReferenceMonth,
+} from '@/hooks/use-urban-lens'
 import type { HistoryItem, QueryFilters } from '@/lib/types'
 
 import { QueryInput } from './query-input'
@@ -17,14 +23,31 @@ const DEFAULT_FILTERS: QueryFilters = {
 }
 
 const DEFAULT_TOP_K = 5
+const FALLBACK_CHAT_MODEL = 'llama3'
 
 export function UrbanLens() {
   const [query, setQuery] = useState('')
   const [filters, setFilters] = useState<QueryFilters>(DEFAULT_FILTERS)
   const [topK, setTopK] = useState(DEFAULT_TOP_K)
+  const [selectedModel, setSelectedModel] = useState(FALLBACK_CHAT_MODEL)
 
   const { state, response, error, latency, executeQuery, restoreResult, reset } = useQuery()
   const { history, addToHistory, clearHistory } = useHistory()
+  const { models, defaultChatModel, isLoading: isLoadingModels } = useAvailableModels()
+
+  useEffect(() => {
+    if (models.length === 0) {
+      if (selectedModel !== defaultChatModel) {
+        setSelectedModel(defaultChatModel)
+      }
+      return
+    }
+
+    const hasSelectedModel = models.some((model) => model.name === selectedModel)
+    if (!hasSelectedModel) {
+      setSelectedModel(models[0]?.name || defaultChatModel)
+    }
+  }, [defaultChatModel, models, selectedModel])
 
   const isLsoaValid = !filters.lsoa_code || validateLsoaCode(filters.lsoa_code)
   const isMonthValid =
@@ -38,13 +61,13 @@ export function UrbanLens() {
   const handleSubmit = useCallback(async () => {
     if (!canSubmit) return
 
-    addToHistory(query, filters, topK, null, null)
+    addToHistory(query, filters, topK, selectedModel, null, null)
 
-    const result = await executeQuery(query, filters, topK)
+    const result = await executeQuery(query, filters, topK, selectedModel)
     if (!result) return
 
-    addToHistory(query, filters, topK, result.response, result.latency)
-  }, [canSubmit, query, filters, topK, addToHistory, executeQuery])
+    addToHistory(query, filters, topK, selectedModel, result.response, result.latency)
+  }, [canSubmit, query, filters, topK, selectedModel, addToHistory, executeQuery])
 
   const handleReset = useCallback(() => {
     reset()
@@ -52,25 +75,26 @@ export function UrbanLens() {
 
   const handleRetry = useCallback(() => {
     if (query.trim()) {
-      void executeQuery(query, filters, topK)
+      void executeQuery(query, filters, topK, selectedModel)
       return
     }
 
     reset()
-  }, [query, filters, topK, executeQuery, reset])
+  }, [query, filters, topK, selectedModel, executeQuery, reset])
 
   const handleHistorySelect = useCallback(
     (item: HistoryItem) => {
       setQuery(item.query)
       setFilters(item.filters)
       setTopK(item.topK)
+      setSelectedModel(item.model)
 
       if (item.response) {
         restoreResult(item.response, item.latency)
         return
       }
 
-      void executeQuery(item.query, item.filters, item.topK)
+      void executeQuery(item.query, item.filters, item.topK, item.model)
     },
     [executeQuery, restoreResult]
   )
@@ -87,6 +111,10 @@ export function UrbanLens() {
           onFiltersChange={setFilters}
           topK={topK}
           onTopKChange={setTopK}
+          availableModels={models}
+          selectedModel={selectedModel}
+          onSelectedModelChange={setSelectedModel}
+          isLoadingModels={isLoadingModels}
           history={history}
           onHistorySelect={handleHistorySelect}
           onClearHistory={clearHistory}

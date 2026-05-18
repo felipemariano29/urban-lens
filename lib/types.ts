@@ -12,6 +12,7 @@ export interface QueryRequest {
   query: string
   filters?: QueryFilters | null
   top_k?: number
+  model?: string
 }
 
 export interface ResultMetadata {
@@ -94,11 +95,25 @@ export interface HealthResponse {
   dependencies: HealthDependencies
 }
 
+export interface OllamaModelInfo {
+  name: string
+  size_bytes?: number | null
+  digest?: string | null
+  modified_at?: string | null
+}
+
+export interface AvailableModelsResponse {
+  default_chat_model: string
+  default_embedding_model: string
+  models: OllamaModelInfo[]
+}
+
 export interface HistoryItem {
   id: string
   query: string
   filters: QueryFilters
   topK: number
+  model: string
   response: ChatQueryResponse | null
   latency: number | null
   timestamp: Date

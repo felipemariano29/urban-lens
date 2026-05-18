@@ -5,6 +5,7 @@ import useSWR from 'swr'
 
 import { buildFrontendApiUrl } from '@/lib/api/client'
 import type {
+  AvailableModelsResponse,
   AppState,
   ChatQueryResponse,
   QueryFilters,
@@ -49,6 +50,27 @@ export function useHealthCheck() {
   }
 }
 
+export function useAvailableModels() {
+  const { data, error, isLoading, mutate } = useSWR<AvailableModelsResponse>(
+    buildFrontendApiUrl('/system/models'),
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      shouldRetryOnError: true,
+      errorRetryCount: 2,
+    }
+  )
+
+  return {
+    models: data?.models ?? [],
+    defaultChatModel: data?.default_chat_model ?? 'llama3',
+    defaultEmbeddingModel: data?.default_embedding_model ?? 'nomic-embed-text',
+    isLoading,
+    error,
+    refresh: mutate,
+  }
+}
+
 // Hook principal para queries
 export function useQuery() {
   const [state, setState] = useState<AppState>('idle')
@@ -58,7 +80,7 @@ export function useQuery() {
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const executeQuery = useCallback(
-    async (query: string, filters: QueryFilters, topK: number) => {
+    async (query: string, filters: QueryFilters, topK: number, model: string) => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
@@ -77,6 +99,7 @@ export function useQuery() {
         const body: Record<string, unknown> = {
           query,
           top_k: topK,
+          model,
         }
 
         if (hasFilters) {
@@ -198,7 +221,13 @@ export function useHistory() {
       }
 
       const normalizedHistory = parsedHistory
-        .filter((item): item is Omit<HistoryItem, 'timestamp'> & { timestamp: string } => {
+        .filter(
+          (
+            item
+          ): item is Omit<HistoryItem, 'timestamp' | 'model'> & {
+            timestamp: string
+            model?: string
+          } => {
           return (
             typeof item === 'object' &&
             item !== null &&
@@ -212,6 +241,7 @@ export function useHistory() {
         .map((item) => ({
           ...item,
           topK: typeof item.topK === 'number' ? item.topK : 5,
+          model: typeof item.model === 'string' ? item.model : 'llama3',
           latency: typeof item.latency === 'number' ? item.latency : null,
           response:
             typeof item.response === 'object' && item.response !== null
@@ -243,6 +273,7 @@ export function useHistory() {
       query: string,
       filters: QueryFilters,
       topK: number,
+      model: string,
       response: ChatQueryResponse | null,
       latency: number | null
     ) => {
@@ -252,6 +283,7 @@ export function useHistory() {
             !(
               item.query === query &&
               item.topK === topK &&
+              item.model === model &&
               JSON.stringify(item.filters) === JSON.stringify(filters)
             )
         )
@@ -261,6 +293,7 @@ export function useHistory() {
           query,
           filters,
           topK,
+          model,
           response,
           latency,
           timestamp: new Date(),
