@@ -13,7 +13,7 @@ const nextConfig = {
     unoptimized: true,
   },
   turbopack: {
-    root: __dirname,
+    root: path.join(__dirname, '..', '..'),
   },
 }
 
