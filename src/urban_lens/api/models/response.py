@@ -184,3 +184,31 @@ class ApiKeyRotateResponse(BaseModel):
     api_key: str = Field(..., description="Plaintext new API key returned only once.")
     expires_at: Optional[datetime] = Field(None, description="New key expiration timestamp.")
     message: str = Field(..., description="Human-readable confirmation message.")
+
+
+class CurrentUserResponse(BaseModel):
+    """Response for GET /api/v1/access/me - current authenticated user info."""
+
+    role: str = Field(..., description="Authenticated user role.")
+    auth_type: str = Field(..., description="Authentication method used: jwt, governed_api_key, or internal_api_key.")
+    user_id: Optional[str] = Field(None, description="User identifier (for governed API keys).")
+    client_id: Optional[str] = Field(None, description="API client identifier (for governed API keys).")
+    api_key_id: Optional[str] = Field(None, description="API key identifier (for governed API keys).")
+    subject: Optional[str] = Field(None, description="JWT subject claim (for JWT auth).")
+    plan_code: Optional[str] = Field(None, description="Service plan code (for governed API keys).")
+    plan_max_top_k: Optional[int] = Field(None, description="Maximum top_k allowed by plan.")
+    requests_per_minute: Optional[int] = Field(None, description="Rate limit per minute.")
+    requests_per_day: Optional[int] = Field(None, description="Rate limit per day.")
+    allowed_models: List[str] = Field(default_factory=list, description="Allowed LLM models for chat.")
+
+
+class UsageStatsResponse(BaseModel):
+    """Response for GET /api/v1/access/me/usage - current usage statistics."""
+
+    client_id: str = Field(..., description="API client identifier.")
+    requests_last_minute: int = Field(..., description="Requests made in the last minute.")
+    requests_last_day: int = Field(..., description="Requests made in the last 24 hours.")
+    requests_per_minute_limit: Optional[int] = Field(None, description="Rate limit per minute.")
+    requests_per_day_limit: Optional[int] = Field(None, description="Rate limit per day.")
+    remaining_minute: Optional[int] = Field(None, description="Remaining requests this minute.")
+    remaining_day: Optional[int] = Field(None, description="Remaining requests today.")
