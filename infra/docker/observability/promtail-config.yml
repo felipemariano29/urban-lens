@@ -37,7 +37,6 @@ scrape_configs:
             model: model
       - labels:
           level:
-          request_id:
           route:
           method:
           status_code:

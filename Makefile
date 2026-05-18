@@ -33,9 +33,11 @@ else
 			echo ""; \
 		fi)
 endif
+CONTAINER_ENGINE := $(if $(filter podman-compose,$(COMPOSE)),podman,docker)
 COMPOSE_MODE ?= cpu
 COMPOSE_DIR := infra/compose
 COMPOSE_FILES := --env-file .env -f $(COMPOSE_DIR)/docker-compose.yml
+OBS_COMPOSE_FILES := --env-file .env -f $(COMPOSE_DIR)/docker-compose.yml -f $(COMPOSE_DIR)/docker-compose.observability.yml
 ifeq ($(COMPOSE_MODE),gpu)
 	COMPOSE_FILES += -f $(COMPOSE_DIR)/docker-compose.gpu.yml
 endif
@@ -45,7 +47,7 @@ endif
 ifeq ($(COMPOSE_MODE),full)
 	COMPOSE_FILES += -f $(COMPOSE_DIR)/docker-compose.observability.yml
 endif
-DOCKER_ENGINE_OK := $(shell docker info >/dev/null 2>&1 && echo 1 || echo 0)
+ENGINE_OK := $(shell if [ "$(CONTAINER_ENGINE)" = "podman" ]; then podman info >/dev/null 2>&1 && echo 1 || echo 0; else docker info >/dev/null 2>&1 && echo 1 || echo 0; fi)
 
 .PHONY: help check-compose check-docker-engine check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-obs up-full up-core down destroy reset logs logs-core logs-app logs-mlflow logs-obs ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs index-mlflow eval-rag test frontend frontend-install
 
@@ -141,13 +143,19 @@ else
 endif
 
 check-docker-engine:
-ifeq ($(DOCKER_ENGINE_OK),1)
-	@echo [OK] Docker Engine disponivel.
+ifeq ($(ENGINE_OK),1)
+	@echo [OK] $(CONTAINER_ENGINE) engine disponivel.
+else
+ifeq ($(CONTAINER_ENGINE),podman)
+	@echo [ERR] Podman Engine indisponivel.
+	@echo [INFO] Inicie o servico do Podman ou a maquina configurada antes de continuar.
+	$(error Podman Engine indisponivel. Inicie o Podman e tente novamente.)
 else
 	@echo [ERR] Docker Engine indisponivel.
 	@echo [INFO] Inicie o Docker Desktop e aguarde o engine ficar pronto.
 	@echo [INFO] No Windows, confirme tambem que o backend Linux/WSL2 esta ativo.
 	$(error Docker Engine indisponivel. Inicie o Docker Desktop e tente novamente.)
+endif
 endif
 
 check-env:
@@ -286,7 +294,7 @@ logs-mlflow: check-compose check-docker-engine check-env
 
 logs-obs: check-compose check-docker-engine check-env
 	@echo "[INFO] Exibindo logs da observabilidade (prometheus, grafana, loki)..."
-	@$(COMPOSE) --env-file .env -f $(COMPOSE_DIR)/docker-compose.yml -f $(COMPOSE_DIR)/docker-compose.observability.yml logs -f prometheus grafana loki promtail
+	@$(COMPOSE) $(OBS_COMPOSE_FILES) logs -f prometheus grafana loki promtail postgres-exporter
 
 ps: check-compose check-docker-engine check-env
 	@$(COMPOSE) $(COMPOSE_FILES) ps
@@ -399,7 +407,7 @@ index-embeddings: check-env check-python require-RAG_OBJECT_KEY require-RAG_DATA
 		--batch-size "$(or $(BATCH_SIZE),32)" \
 		--actor "$(ACTOR)"
 
-index-docs: check-python
+index-docs: check-env check-python
 	@$(PYTHON_RUN) $(PYTHON) -m urban_lens.cli.index_docs \
 		--docs-dir "$(or $(DOCS_DIR),docs)" \
 		--batch-size "$(or $(BATCH_SIZE),32)" \
