@@ -211,6 +211,8 @@ Credentials are defined in `.env`.
 
 PostgreSQL loads SQL files from `sql/init/` on first startup because that directory is mounted into `/docker-entrypoint-initdb.d`.
 
+The Compose stack also runs an idempotent `postgres-setup` step before `mlflow` and `rag-api`, reapplying the SQL files with `psql` so local environments do not depend on a pristine volume for new tables to appear.
+
 The governance schema used by the pipeline is:
 
 - `sql/init/001_governance_schema.sql`
