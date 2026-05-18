@@ -799,3 +799,218 @@ class TestInternalRoutes:
     def test_unauthenticated_returns_401(self, client):
         resp = client.get("/internal/status")
         assert resp.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# /api/v1/access - Access Management
+# ---------------------------------------------------------------------------
+
+
+def _mock_api_client_list():
+    return [
+        {
+            "client_id": "client-1",
+            "user_id": "user-1",
+            "client_name": "test-client",
+            "status": "active",
+            "requests_per_minute_override": None,
+            "requests_per_day_override": None,
+            "last_used_at": datetime.now(UTC),
+            "created_at": datetime.now(UTC),
+            "updated_at": None,
+            "user_email": "test@urbanlens.local",
+            "user_full_name": "Test User",
+            "user_role": "viewer",
+            "plan_code": "FREE",
+            "plan_name": "Free Plan",
+            "plan_requests_per_minute": 30,
+            "plan_requests_per_day": 500,
+            "active_keys_count": 1,
+        }
+    ]
+
+
+def _mock_api_key_list():
+    return [
+        {
+            "api_key_id": "key-1",
+            "client_id": "client-1",
+            "key_prefix": "abc123def456",
+            "status": "active",
+            "expires_at": datetime.now(UTC) + timedelta(days=30),
+            "issued_at": datetime.now(UTC) - timedelta(days=1),
+            "last_used_at": datetime.now(UTC),
+            "revoked_at": None,
+            "metadata_json": {},
+            "client_name": "test-client",
+            "user_email": "test@urbanlens.local",
+        }
+    ]
+
+
+def _mock_api_key_by_id():
+    return {
+        "api_key_id": "key-1",
+        "client_id": "client-1",
+        "key_prefix": "abc123def456",
+        "status": "active",
+        "expires_at": datetime.now(UTC) + timedelta(days=30),
+        "issued_at": datetime.now(UTC) - timedelta(days=1),
+        "last_used_at": datetime.now(UTC),
+        "revoked_at": None,
+        "client_name": "test-client",
+        "user_email": "test@urbanlens.local",
+        "user_id": "user-1",
+    }
+
+
+class TestAccessManagement:
+    # --- GET /api/v1/access/clients ---
+
+    def test_list_clients_returns_200_for_admin(self, client):
+        with patch("urban_lens.governance.store.MetadataStore.list_api_clients", return_value=_mock_api_client_list()):
+            resp = client.get("/api/v1/access/clients", headers=_auth("admin"))
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["total"] == 1
+        assert len(body["clients"]) == 1
+        assert body["clients"][0]["client_name"] == "test-client"
+
+    def test_list_clients_returns_200_for_operator(self, client):
+        with patch("urban_lens.governance.store.MetadataStore.list_api_clients", return_value=_mock_api_client_list()):
+            resp = client.get("/api/v1/access/clients", headers=_auth("operator"))
+        assert resp.status_code == 200
+
+    def test_list_clients_returns_403_for_viewer(self, client):
+        resp = client.get("/api/v1/access/clients", headers=_auth("viewer"))
+        assert resp.status_code == 403
+
+    def test_list_clients_returns_401_without_auth(self, client):
+        resp = client.get("/api/v1/access/clients")
+        assert resp.status_code == 401
+
+    def test_list_clients_filters_by_user_id(self, client):
+        with patch("urban_lens.governance.store.MetadataStore.list_api_clients", return_value=_mock_api_client_list()) as mock_list:
+            resp = client.get("/api/v1/access/clients?user_id=user-1", headers=_auth("admin"))
+        assert resp.status_code == 200
+        mock_list.assert_called_once()
+        assert mock_list.call_args.kwargs["user_id"] == "user-1"
+
+    # --- GET /api/v1/access/keys ---
+
+    def test_list_keys_returns_200_for_admin(self, client):
+        with patch("urban_lens.governance.store.MetadataStore.list_api_keys", return_value=_mock_api_key_list()):
+            resp = client.get("/api/v1/access/keys", headers=_auth("admin"))
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["total"] == 1
+        assert len(body["keys"]) == 1
+        assert body["keys"][0]["key_prefix"] == "abc123def456"
+
+    def test_list_keys_returns_403_for_viewer(self, client):
+        resp = client.get("/api/v1/access/keys", headers=_auth("viewer"))
+        assert resp.status_code == 403
+
+    def test_list_keys_filters_by_client_id(self, client):
+        with patch("urban_lens.governance.store.MetadataStore.list_api_keys", return_value=_mock_api_key_list()) as mock_list:
+            resp = client.get("/api/v1/access/keys?client_id=client-1", headers=_auth("admin"))
+        assert resp.status_code == 200
+        mock_list.assert_called_once()
+        assert mock_list.call_args.kwargs["client_id"] == "client-1"
+
+    # --- POST /api/v1/access/keys/{api_key_id}/revoke ---
+
+    def test_revoke_key_returns_200_for_admin(self, client):
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_by_id", return_value=_mock_api_key_by_id()),
+            patch("urban_lens.governance.store.MetadataStore.revoke_api_key", return_value=True),
+        ):
+            resp = client.post("/api/v1/access/keys/key-1/revoke", headers=_auth("admin"))
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["status"] == "revoked"
+        assert body["api_key_id"] == "key-1"
+
+    def test_revoke_key_returns_403_for_viewer(self, client):
+        resp = client.post("/api/v1/access/keys/key-1/revoke", headers=_auth("viewer"))
+        assert resp.status_code == 403
+
+    def test_revoke_key_returns_404_for_unknown_key(self, client):
+        with patch("urban_lens.governance.store.MetadataStore.get_api_key_by_id", return_value=None):
+            resp = client.post("/api/v1/access/keys/unknown-key/revoke", headers=_auth("admin"))
+        assert resp.status_code == 404
+
+    def test_revoke_key_returns_422_for_already_revoked(self, client):
+        revoked_record = _mock_api_key_by_id()
+        revoked_record["status"] = "revoked"
+        with patch("urban_lens.governance.store.MetadataStore.get_api_key_by_id", return_value=revoked_record):
+            resp = client.post("/api/v1/access/keys/key-1/revoke", headers=_auth("admin"))
+        assert resp.status_code == 422
+
+    def test_revoke_key_accepts_reason(self, client):
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_by_id", return_value=_mock_api_key_by_id()),
+            patch("urban_lens.governance.store.MetadataStore.revoke_api_key", return_value=True) as mock_revoke,
+        ):
+            resp = client.post(
+                "/api/v1/access/keys/key-1/revoke",
+                json={"reason": "Security incident"},
+                headers=_auth("admin"),
+            )
+        assert resp.status_code == 200
+        mock_revoke.assert_called_once()
+        assert mock_revoke.call_args.kwargs["reason"] == "Security incident"
+
+    # --- POST /api/v1/access/keys/{api_key_id}/rotate ---
+
+    def test_rotate_key_returns_200_for_admin(self, client):
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_by_id", return_value=_mock_api_key_by_id()),
+            patch("urban_lens.governance.store.MetadataStore.rotate_api_key", return_value="new-key-id"),
+        ):
+            resp = client.post("/api/v1/access/keys/key-1/rotate", headers=_auth("admin"))
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["old_api_key_id"] == "key-1"
+        assert body["new_api_key_id"] == "new-key-id"
+        assert body["api_key"].startswith("ul_")
+        assert "rotated" in body["message"].lower()
+
+    def test_rotate_key_returns_403_for_viewer(self, client):
+        resp = client.post("/api/v1/access/keys/key-1/rotate", headers=_auth("viewer"))
+        assert resp.status_code == 403
+
+    def test_rotate_key_returns_404_for_unknown_key(self, client):
+        with patch("urban_lens.governance.store.MetadataStore.get_api_key_by_id", return_value=None):
+            resp = client.post("/api/v1/access/keys/unknown-key/rotate", headers=_auth("admin"))
+        assert resp.status_code == 404
+
+    def test_rotate_key_returns_422_for_inactive_key(self, client):
+        inactive_record = _mock_api_key_by_id()
+        inactive_record["status"] = "revoked"
+        with patch("urban_lens.governance.store.MetadataStore.get_api_key_by_id", return_value=inactive_record):
+            resp = client.post("/api/v1/access/keys/key-1/rotate", headers=_auth("admin"))
+        assert resp.status_code == 422
+
+    def test_rotate_key_accepts_expiration(self, client):
+        future_date = datetime.now(UTC) + timedelta(days=365)
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_by_id", return_value=_mock_api_key_by_id()),
+            patch("urban_lens.governance.store.MetadataStore.rotate_api_key", return_value="new-key-id") as mock_rotate,
+        ):
+            resp = client.post(
+                "/api/v1/access/keys/key-1/rotate",
+                json={"expires_at": future_date.isoformat()},
+                headers=_auth("admin"),
+            )
+        assert resp.status_code == 200
+        mock_rotate.assert_called_once()
+        assert mock_rotate.call_args.kwargs["expires_at"] is not None
+
+    def test_rotate_key_with_internal_service_key(self, client_with_svc_key):
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_by_id", return_value=_mock_api_key_by_id()),
+            patch("urban_lens.governance.store.MetadataStore.rotate_api_key", return_value="new-key-id"),
+        ):
+            resp = client_with_svc_key.post("/api/v1/access/keys/key-1/rotate", headers=_api_key_header())
+        assert resp.status_code == 200
