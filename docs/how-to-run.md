@@ -114,6 +114,13 @@ Or directly:
 docker compose up -d
 ```
 
+For explicit mode selection:
+
+```bash
+make up-cpu
+make up-gpu
+```
+
 This starts:
 
 - PostgreSQL
@@ -125,14 +132,15 @@ This starts:
 - Attu
 - Ollama
 - rag-api
+- frontend
 
-To start the frontend locally, run:
+Run `make fullstack` to start the full Docker stack and then print the local URLs.
+
+If you need to run the frontend outside Docker for local UI development, use:
 
 ```bash
 make frontend
 ```
-
-Or run `make fullstack` to start the backend stack and then launch the frontend dev server.
 
 ## Available Services
 
@@ -169,7 +177,7 @@ Credentials are defined in `.env`.
 
 ### Frontend
 
-- URL: `http://localhost:3000`
+- URL: `http://localhost:${WEB_HOST_PORT:-3000}`
 - The browser calls Next.js route handlers first, and those handlers proxy to FastAPI using the server-side API key.
 
 ### MLflow
@@ -250,9 +258,13 @@ Use `docs/architecture/medallion-governance.md` as the source of truth for layer
 ```bash
 make help
 make up
+make up-cpu
+make up-gpu
 make down
 make reset
 make logs
+make logs-core
+make logs-app
 docker compose ps
 python3 -m pytest
 ```

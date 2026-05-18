@@ -39,6 +39,13 @@ Start all services with:
 make up
 ```
 
+For explicit runtime selection:
+
+```bash
+make up-cpu
+make up-gpu
+```
+
 Required services and their roles:
 
 | Service | Purpose | Default port |
@@ -48,6 +55,7 @@ Required services and their roles:
 | MLflow | Experiment tracking and model artifact storage | 5005 |
 | Milvus | Vector index for crime evidence and documentation chunks | 19530 |
 | Ollama | Local LLM and embedding model server | 11434 |
+| Frontend | Next.js query interface and proxy layer | 3000 |
 
 On first startup, `minio-setup` creates the `urban-lens` and `milvus` buckets, and `ollama-setup` downloads the `nomic-embed-text` embedding model. The model download requires internet access and may take several minutes.
 
