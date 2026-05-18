@@ -537,6 +537,267 @@ class MetadataStore:
 
         return {"minute_count": minute_count, "day_count": day_count}
 
+    def list_api_clients(
+        self,
+        *,
+        user_id: str | None = None,
+        include_inactive: bool = False,
+    ) -> list[dict[str, Any]]:
+        """List API clients with their plan and user information."""
+        clauses: list[str] = []
+        values: list[object] = []
+
+        if user_id is not None:
+            clauses.append("ac.user_id = %s")
+            values.append(user_id)
+        if not include_inactive:
+            clauses.append("ac.status = 'active'")
+
+        query = """
+            SELECT
+                ac.id,
+                ac.user_id,
+                ac.client_name,
+                ac.status,
+                ac.requests_per_minute_override,
+                ac.requests_per_day_override,
+                ac.last_used_at,
+                ac.created_at,
+                ac.updated_at,
+                u.email,
+                u.full_name,
+                u.role,
+                sp.code AS plan_code,
+                sp.name AS plan_name,
+                sp.requests_per_minute AS plan_requests_per_minute,
+                sp.requests_per_day AS plan_requests_per_day,
+                (SELECT COUNT(*) FROM governance.api_keys ak WHERE ak.client_id = ac.id AND ak.status = 'active') AS active_keys_count
+            FROM governance.api_clients ac
+            JOIN governance.users u ON u.id = ac.user_id
+            JOIN governance.service_plans sp ON sp.id = ac.plan_id
+        """
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY ac.created_at DESC"
+
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(query, values)
+            rows = cursor.fetchall()
+
+        return [
+            {
+                "client_id": str(row[0]),
+                "user_id": str(row[1]),
+                "client_name": row[2],
+                "status": row[3],
+                "requests_per_minute_override": row[4],
+                "requests_per_day_override": row[5],
+                "last_used_at": row[6],
+                "created_at": row[7],
+                "updated_at": row[8],
+                "user_email": row[9],
+                "user_full_name": row[10],
+                "user_role": row[11],
+                "plan_code": row[12],
+                "plan_name": row[13],
+                "plan_requests_per_minute": row[14],
+                "plan_requests_per_day": row[15],
+                "active_keys_count": row[16],
+            }
+            for row in rows
+        ]
+
+    def list_api_keys(
+        self,
+        *,
+        client_id: str | None = None,
+        include_revoked: bool = False,
+    ) -> list[dict[str, Any]]:
+        """List API keys for a client or all keys."""
+        clauses: list[str] = []
+        values: list[object] = []
+
+        if client_id is not None:
+            clauses.append("ak.client_id = %s")
+            values.append(client_id)
+        if not include_revoked:
+            clauses.append("ak.status != 'revoked'")
+
+        query = """
+            SELECT
+                ak.id,
+                ak.client_id,
+                ak.key_prefix,
+                ak.status,
+                ak.expires_at,
+                ak.issued_at,
+                ak.last_used_at,
+                ak.revoked_at,
+                ak.metadata_json,
+                ac.client_name,
+                u.email AS user_email
+            FROM governance.api_keys ak
+            JOIN governance.api_clients ac ON ac.id = ak.client_id
+            JOIN governance.users u ON u.id = ac.user_id
+        """
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY ak.issued_at DESC"
+
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(query, values)
+            rows = cursor.fetchall()
+
+        return [
+            {
+                "api_key_id": str(row[0]),
+                "client_id": str(row[1]),
+                "key_prefix": row[2],
+                "status": row[3],
+                "expires_at": row[4],
+                "issued_at": row[5],
+                "last_used_at": row[6],
+                "revoked_at": row[7],
+                "metadata_json": row[8],
+                "client_name": row[9],
+                "user_email": row[10],
+            }
+            for row in rows
+        ]
+
+    def revoke_api_key(self, api_key_id: str, *, reason: str | None = None) -> bool:
+        """Revoke an API key. Returns True if the key was found and revoked."""
+        now = datetime.now(UTC)
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE governance.api_keys
+                SET status = 'revoked',
+                    revoked_at = %s,
+                    metadata_json = metadata_json || %s::jsonb
+                WHERE id = %s AND status = 'active'
+                """,
+                (
+                    now,
+                    json.dumps({"revocation_reason": reason or "manual_revocation"}),
+                    api_key_id,
+                ),
+            )
+            affected = cursor.rowcount
+            connection.commit()
+        return affected > 0
+
+    def rotate_api_key(
+        self,
+        api_key_id: str,
+        *,
+        new_key_prefix: str,
+        new_key_hash: str,
+        expires_at: datetime | None = None,
+    ) -> str | None:
+        """Rotate an API key by revoking the old one and issuing a new one with same client.
+
+        Returns the new API key ID if successful, None otherwise.
+        """
+        now = datetime.now(UTC)
+        new_api_key_id = self._new_id()
+
+        with self._connect() as connection, connection.cursor() as cursor:
+            # Get the client_id from the old key
+            cursor.execute(
+                """
+                SELECT client_id FROM governance.api_keys
+                WHERE id = %s AND status = 'active'
+                """,
+                (api_key_id,),
+            )
+            row = cursor.fetchone()
+            if row is None:
+                return None
+
+            client_id = str(row[0])
+
+            # Revoke the old key
+            cursor.execute(
+                """
+                UPDATE governance.api_keys
+                SET status = 'revoked',
+                    revoked_at = %s,
+                    metadata_json = metadata_json || '{"revocation_reason": "key_rotation"}'::jsonb
+                WHERE id = %s
+                """,
+                (now, api_key_id),
+            )
+
+            # Issue the new key
+            cursor.execute(
+                """
+                INSERT INTO governance.api_keys (
+                    id,
+                    client_id,
+                    key_prefix,
+                    key_hash,
+                    status,
+                    expires_at,
+                    metadata_json
+                ) VALUES (%s, %s, %s, %s, 'active', %s, %s::jsonb)
+                """,
+                (
+                    new_api_key_id,
+                    client_id,
+                    new_key_prefix,
+                    new_key_hash,
+                    expires_at,
+                    json.dumps({"rotated_from": api_key_id}),
+                ),
+            )
+            connection.commit()
+
+        return new_api_key_id
+
+    def get_api_key_by_id(self, api_key_id: str) -> dict[str, Any] | None:
+        """Get API key details by ID."""
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    ak.id,
+                    ak.client_id,
+                    ak.key_prefix,
+                    ak.status,
+                    ak.expires_at,
+                    ak.issued_at,
+                    ak.last_used_at,
+                    ak.revoked_at,
+                    ac.client_name,
+                    u.email AS user_email,
+                    u.id AS user_id
+                FROM governance.api_keys ak
+                JOIN governance.api_clients ac ON ac.id = ak.client_id
+                JOIN governance.users u ON u.id = ac.user_id
+                WHERE ak.id = %s
+                """,
+                (api_key_id,),
+            )
+            row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        return {
+            "api_key_id": str(row[0]),
+            "client_id": str(row[1]),
+            "key_prefix": row[2],
+            "status": row[3],
+            "expires_at": row[4],
+            "issued_at": row[5],
+            "last_used_at": row[6],
+            "revoked_at": row[7],
+            "client_name": row[8],
+            "user_email": row[9],
+            "user_id": str(row[10]),
+        }
+
     def record_request_audit(self, payload: RequestAuditPayload) -> str:
         request_audit_id = self._new_id()
         with self._connect() as connection, connection.cursor() as cursor:
