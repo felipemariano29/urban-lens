@@ -1014,3 +1014,80 @@ class TestAccessManagement:
         ):
             resp = client_with_svc_key.post("/api/v1/access/keys/key-1/rotate", headers=_api_key_header())
         assert resp.status_code == 200
+
+    # --- GET /api/v1/access/me ---
+
+    def test_get_me_returns_200_for_jwt_user(self, client):
+        resp = client.get("/api/v1/access/me", headers=_auth("viewer"))
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["role"] == "viewer"
+        assert body["auth_type"] == "jwt"
+
+    def test_get_me_returns_200_for_governed_api_key(self, client):
+        governed_record = _governed_api_key_record(
+            plan_code="PRO",
+            plan_max_top_k=10,
+            effective_requests_per_minute=60,
+            effective_requests_per_day=5000,
+            allowed_models=["llama3", "mistral"],
+        )
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record),
+            patch("urban_lens.governance.store.MetadataStore.count_client_requests", return_value={"minute_count": 0, "day_count": 0}),
+            patch("urban_lens.governance.store.MetadataStore.touch_api_key_usage"),
+        ):
+            resp = client.get("/api/v1/access/me", headers=_api_key_header(_governed_api_key()))
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["role"] == "viewer"
+        assert body["auth_type"] == "governed_api_key"
+        assert body["plan_code"] == "PRO"
+        assert body["plan_max_top_k"] == 10
+        assert body["requests_per_minute"] == 60
+        assert "llama3" in body["allowed_models"]
+
+    def test_get_me_returns_200_for_internal_service(self, client_with_svc_key):
+        resp = client_with_svc_key.get("/api/v1/access/me", headers=_api_key_header())
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["role"] == "internal_service"
+        assert body["auth_type"] == "internal_api_key"
+
+    def test_get_me_returns_401_without_auth(self, client):
+        resp = client.get("/api/v1/access/me")
+        assert resp.status_code == 401
+
+    # --- GET /api/v1/access/me/usage ---
+
+    def test_get_usage_returns_200_for_governed_api_key(self, client):
+        governed_record = _governed_api_key_record(
+            effective_requests_per_minute=60,
+            effective_requests_per_day=500,
+        )
+        with (
+            patch("urban_lens.governance.store.MetadataStore.get_api_key_record", return_value=governed_record),
+            patch("urban_lens.governance.store.MetadataStore.count_client_requests", return_value={"minute_count": 5, "day_count": 50}),
+            patch("urban_lens.governance.store.MetadataStore.touch_api_key_usage"),
+        ):
+            resp = client.get("/api/v1/access/me/usage", headers=_api_key_header(_governed_api_key()))
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["client_id"] == "client-1"
+        assert body["requests_last_minute"] == 5
+        assert body["requests_last_day"] == 50
+        assert body["remaining_minute"] == 55
+        assert body["remaining_day"] == 450
+
+    def test_get_usage_returns_403_for_jwt_user(self, client):
+        resp = client.get("/api/v1/access/me/usage", headers=_auth("viewer"))
+        assert resp.status_code == 403
+        assert "governed API keys" in resp.json()["detail"]
+
+    def test_get_usage_returns_403_for_internal_service(self, client_with_svc_key):
+        resp = client_with_svc_key.get("/api/v1/access/me/usage", headers=_api_key_header())
+        assert resp.status_code == 403
+
+    def test_get_usage_returns_401_without_auth(self, client):
+        resp = client.get("/api/v1/access/me/usage")
+        assert resp.status_code == 401
