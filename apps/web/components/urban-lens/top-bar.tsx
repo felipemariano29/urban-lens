@@ -3,11 +3,11 @@
 import { ActivityIcon, CpuIcon, GaugeIcon, HardDriveIcon, KeyRoundIcon, ShieldIcon } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
-import { useAccessProfile, useHealthCheck, useUsageStats } from '@/hooks/use-urban-lens'
 import { useApiKey } from '@/contexts/api-key-context'
-import { ApiKeyModal } from './api-key-modal'
+import { useAccessProfile, useHealthCheck, useUsageStats } from '@/hooks/use-urban-lens'
 import type { HealthDependencies } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { ApiKeyModal } from './api-key-modal'
 
 function StatusDot({
   status,
@@ -28,22 +28,25 @@ function StatusDot({
 
 function DependencyStrip({ dependencies }: { dependencies: HealthDependencies | null }) {
   if (!dependencies) {
-    return <span className="text-sm text-muted-foreground">telemetria operacional indisponivel</span>
+    return null
   }
 
   const items = [
-    { label: 'catalog', value: dependencies.catalog, icon: GaugeIcon },
+    { label: 'catalogo', value: dependencies.catalog, icon: GaugeIcon },
     { label: 'embedder', value: dependencies.rag_embedder, icon: CpuIcon },
-    { label: 'vector', value: dependencies.rag_vector_store, icon: HardDriveIcon },
+    { label: 'vetor', value: dependencies.rag_vector_store, icon: HardDriveIcon },
   ]
 
   return (
-    <div className="flex flex-wrap items-center gap-3 text-sm">
+    <div className="hidden xl:flex flex-wrap items-center gap-2 text-xs">
       {items.map((item) => (
-        <div key={item.label} className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2.5 py-1">
-          <item.icon className="size-3.5 text-muted-foreground" />
-          <span className="text-muted-foreground">{item.label}</span>
-          <span className={item.value === 'ok' ? 'text-emerald-600' : 'text-rose-600'}>{item.value}</span>
+        <div
+          key={item.label}
+          className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/6 px-2.5 py-1"
+        >
+          <item.icon className="size-3.5 text-slate-500" />
+          <span className="text-slate-400">{item.label}</span>
+          <span className={item.value === 'ok' ? 'text-emerald-400' : 'text-rose-400'}>{item.value}</span>
         </div>
       ))}
     </div>
@@ -53,11 +56,11 @@ function DependencyStrip({ dependencies }: { dependencies: HealthDependencies | 
 function roleLabel(role: string | undefined): string {
   switch (role) {
     case 'internal_service':
-      return 'internal'
+      return 'interno'
     case 'intel_user':
       return 'intel'
     default:
-      return role || 'anon'
+      return role || 'n/d'
   }
 }
 
@@ -71,68 +74,50 @@ export function TopBar() {
     status === 'healthy' ? 'healthy' : status === 'degraded' ? 'degraded' : status || 'unknown'
 
   return (
-    <header className="border-b border-white/10 bg-[#0f1a24]/90 text-white backdrop-blur">
-      <div className="flex flex-col gap-4 px-5 py-4 lg:px-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge className="border border-white/10 bg-white/8 text-white hover:bg-white/8">Urban Intelligence</Badge>
-              <Badge className="bg-[#f59e0b] text-[#201203] hover:bg-[#f59e0b]">Analytics Workspace</Badge>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <ActivityIcon className="size-5 text-[#64d3ff]" />
-                <h1 className="text-2xl font-semibold tracking-tight">Urban Lens Analytics</h1>
-              </div>
-              <p className="max-w-3xl text-sm text-slate-300">
-                Painel governado para exploracao de evidencias, consulta RAG e operacao local sobre dados de seguranca
-                urbana.
-              </p>
+    <header className="border-b border-white/8 bg-[#0a0f14]/94 text-white backdrop-blur">
+      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-3 lg:px-8">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="flex items-center gap-3">
+            <ActivityIcon className="size-5 text-[#7dd3fc]" />
+            <div className="min-w-0">
+              <h1 className="truncate text-base font-semibold tracking-tight">Urban Lens Analytics</h1>
+              <p className="text-xs text-slate-400">RAG governado para analise de seguranca urbana</p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 lg:items-end">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1.5 text-sm">
-                <StatusDot status={displayStatus as 'healthy' | 'degraded' | 'error' | 'unknown'} />
-                <span className="text-slate-200">{isLoading ? 'verificando stack' : displayStatus}</span>
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1.5 text-sm">
-                <ShieldIcon className="size-4 text-[#64d3ff]" />
-                <span className="text-slate-200">
-                  {isAuthenticated ? `sessao ${roleLabel(profile?.role)}` : 'sem credencial ativa'}
-                </span>
-              </div>
-              <ApiKeyModal
-                trigger={
-                  <button className="inline-flex items-center gap-2 rounded-full border border-[#64d3ff]/30 bg-[#64d3ff]/10 px-3 py-1.5 text-sm font-medium text-[#dff7ff] transition hover:bg-[#64d3ff]/18">
-                    <KeyRoundIcon className="size-4" />
-                    {isAuthenticated ? 'Gerenciar sessao' : 'Entrar com chave'}
-                  </button>
-                }
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-300">
-              {profile?.plan_code && (
-                <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1">
-                  plano {profile.plan_code.toLowerCase()}
-                </span>
-              )}
-              {usage?.remaining_day !== undefined && usage?.remaining_day !== null && (
-                <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1">
-                  {usage.remaining_day} consultas restantes hoje
-                </span>
-              )}
-              {profile?.plan_max_top_k && (
-                <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1">
-                  top-k max {profile.plan_max_top_k}
-                </span>
-              )}
-            </div>
+          <div className="hidden lg:flex flex-wrap items-center gap-2">
+            <Badge className="border border-white/10 bg-white/6 text-slate-200 hover:bg-white/6">
+              <StatusDot status={displayStatus as 'healthy' | 'degraded' | 'error' | 'unknown'} />
+              <span className="ml-1">{isLoading ? 'verificando' : displayStatus}</span>
+            </Badge>
+            <Badge className="border border-white/10 bg-white/6 text-slate-200 hover:bg-white/6">
+              <ShieldIcon className="mr-1 size-3.5 text-[#7dd3fc]" />
+              {isAuthenticated ? `perfil ${roleLabel(profile?.role)}` : 'chave obrigatoria'}
+            </Badge>
+            {profile?.plan_code ? (
+              <Badge className="border border-white/10 bg-white/6 text-slate-200 hover:bg-white/6">
+                plano {profile.plan_code.toLowerCase()}
+              </Badge>
+            ) : null}
+            {usage?.requests_per_day_limit ? (
+              <Badge className="border border-white/10 bg-white/6 text-slate-200 hover:bg-white/6">
+                hoje {usage.requests_last_day}/{usage.requests_per_day_limit}
+              </Badge>
+            ) : null}
           </div>
         </div>
 
-        <DependencyStrip dependencies={dependencies} />
+        <div className="flex items-center gap-2">
+          <DependencyStrip dependencies={dependencies} />
+          <ApiKeyModal
+            trigger={
+              <button className="inline-flex h-10 items-center gap-2 rounded-full border border-[#7dd3fc]/25 bg-[#7dd3fc]/10 px-4 text-sm font-medium text-[#d9f6ff] transition hover:bg-[#7dd3fc]/18">
+                <KeyRoundIcon className="size-4" />
+                {isAuthenticated ? 'Gerenciar chave' : 'Conectar chave'}
+              </button>
+            }
+          />
+        </div>
       </div>
     </header>
   )

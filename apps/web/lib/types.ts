@@ -48,6 +48,14 @@ export interface RagTimings {
   total_ms: number
 }
 
+export interface RagTokenUsage {
+  prompt_tokens: number
+  completion_tokens: number
+  total_tokens: number
+  context_limit_tokens: number
+  usage_ratio: number
+}
+
 export interface RagChunkMetadata {
   chunk_type?: string
   reference_month?: string
@@ -88,6 +96,7 @@ export interface ChatQueryResponse {
   profile: 'intel_user' | 'developer' | 'admin'
   fallback_reason: string | null
   timings_ms: RagTimings
+  token_usage: RagTokenUsage
 }
 
 export interface HealthDependencies {
@@ -138,6 +147,10 @@ export interface UsageStatsResponse {
   requests_per_day_limit?: number | null
   remaining_minute?: number | null
   remaining_day?: number | null
+  requests_minute_usage_ratio?: number | null
+  requests_day_usage_ratio?: number | null
+  tokens_last_minute: number
+  tokens_last_day: number
 }
 
 export interface AccessRequestCreateRequest {

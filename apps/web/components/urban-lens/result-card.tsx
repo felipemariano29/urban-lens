@@ -16,9 +16,9 @@ interface ResultCardProps {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 0.8) return 'bg-emerald-50 text-emerald-800 border-emerald-200'
-  if (score >= 0.6) return 'bg-amber-50 text-amber-800 border-amber-200'
-  return 'bg-rose-50 text-rose-800 border-rose-200'
+  if (score >= 0.8) return 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+  if (score >= 0.6) return 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+  return 'bg-rose-500/10 text-rose-300 border-rose-500/20'
 }
 
 function getScoreLabel(score: number): string {
@@ -54,7 +54,7 @@ export function ResultCard({ evidence, rank }: ResultCardProps) {
       : excerpt
 
   return (
-    <Card className="border-black/5 bg-[#fbfdfe] py-4 shadow-[0_10px_35px_rgba(12,26,41,0.04)]">
+    <Card className="border-white/8 bg-black/18 py-4 text-white shadow-[0_10px_35px_rgba(0,0,0,0.18)]">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
@@ -103,10 +103,10 @@ export function ResultCard({ evidence, rank }: ResultCardProps) {
       </CardHeader>
 
       <CardContent className="pt-0">
-          <div className="border-t border-slate-200 pt-3">
+          <div className="border-t border-white/8 pt-3">
           <div className="flex gap-3">
             <QuoteIcon className="size-4 shrink-0 text-muted-foreground mt-0.5" />
-            <p className="text-sm leading-relaxed text-foreground/90">
+            <p className="text-sm leading-relaxed text-slate-200">
               {displayContent}
             </p>
           </div>

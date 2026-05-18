@@ -47,17 +47,17 @@ export function QueryInput({
   const canSubmit = value.trim().length > 0 && !disabled
 
   return (
-    <section className="rounded-[28px] border border-black/5 bg-white/90 p-5 shadow-[0_18px_80px_rgba(12,26,41,0.08)] backdrop-blur md:p-6">
+    <section className="rounded-[24px] border border-white/8 bg-[#121821]/92 p-5 shadow-[0_18px_80px_rgba(0,0,0,0.32)] backdrop-blur md:p-6">
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#dff7ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#0e5973]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
             <RadarIcon className="size-3.5" />
-            Investigative prompt
+            Nova consulta
           </div>
-          <h2 className="text-xl font-semibold tracking-tight text-[#122333]">Construa uma consulta analitica</h2>
-          <p className="max-w-3xl text-sm text-slate-600">
-            Envie uma pergunta investigativa em linguagem natural. O motor vai recuperar contexto, citar evidencias e
-            responder dentro da politica de acesso ativa.
+          <h2 className="text-xl font-semibold tracking-tight text-white">Consulta analitica</h2>
+          <p className="max-w-3xl text-sm text-slate-400">
+            Envie uma pergunta em linguagem natural. O pipeline recupera contexto, aplica a politica de acesso e
+            retorna resposta com evidencias.
           </p>
         </div>
         <div className="flex items-center gap-1 text-xs text-slate-500">
@@ -78,21 +78,21 @@ export function QueryInput({
           rows={5}
           placeholder="Exemplo: compare burglary e vehicle crime em Westminster em 2024-01 e cite as evidencias mais relevantes."
           className={cn(
-            'min-h-[148px] resize-none rounded-2xl border-slate-200 bg-[#f7fafb] px-4 py-3 text-base leading-7 text-slate-900 placeholder:text-slate-500',
+            'min-h-[136px] resize-none rounded-2xl border-white/10 bg-[#0b1016] px-4 py-3 text-base leading-7 text-white placeholder:text-slate-500',
             disabled && 'opacity-60'
           )}
         />
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Prompts sugeridos</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Sugestoes</p>
             <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((suggestion) => (
                 <button
                   key={suggestion}
                   type="button"
                   onClick={() => onChange(suggestion)}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 transition hover:border-[#64d3ff] hover:text-[#0e5973]"
+                  className="rounded-full border border-white/10 bg-white/4 px-3 py-1.5 text-sm text-slate-300 transition hover:border-[#64d3ff]/40 hover:text-white"
                 >
                   {suggestion}
                 </button>
@@ -101,7 +101,7 @@ export function QueryInput({
           </div>
 
           <Button onClick={onSubmit} disabled={!canSubmit} className="h-11 gap-2 rounded-full px-6">
-            Executar analise
+            Consultar
             <ArrowRightIcon className="size-4" />
           </Button>
         </div>

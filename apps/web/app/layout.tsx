@@ -37,7 +37,7 @@ export default function RootLayout({
   children: ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className="bg-background">
+    <html lang="pt-BR" className="dark bg-background">
       <body className={`${sansFont.variable} ${monoFont.variable} font-sans antialiased`}>
         <ApiKeyProvider>{children}</ApiKeyProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}

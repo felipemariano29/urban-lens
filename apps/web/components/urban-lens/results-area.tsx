@@ -58,7 +58,7 @@ export function ResultsArea({ state, response, error, latency, onReset, onRetry 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-        <Card className="border-black/5 bg-white/90 py-5 shadow-[0_14px_50px_rgba(12,26,41,0.06)]">
+        <Card className="border-white/8 bg-[#121821]/92 py-5 text-white shadow-[0_14px_50px_rgba(0,0,0,0.28)]">
           <CardHeader className="pb-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-2">
@@ -69,11 +69,9 @@ export function ResultsArea({ state, response, error, latency, onReset, onRetry 
                   <Badge variant="outline">{response.answer.model}</Badge>
                   <Badge variant="outline">perfil {formatProfilePt(response.profile)}</Badge>
                 </div>
-                <CardTitle className="text-xl tracking-tight text-[#112231]">
-                  Sintese investigativa governada
-                </CardTitle>
-                <p className="text-sm text-slate-600">
-                  Resposta gerada com citacao de evidencias e trilha de execucao do pipeline RAG.
+                <CardTitle className="text-xl tracking-tight text-white">Resposta governada</CardTitle>
+                <p className="text-sm text-slate-400">
+                  Resposta gerada com evidências citadas, tempos do pipeline e uso de tokens.
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={onReset} className="gap-2 rounded-full">
@@ -88,6 +86,7 @@ export function ResultsArea({ state, response, error, latency, onReset, onRetry 
               totalContext={response.context.length}
               latency={latency}
               timings={response.timings_ms}
+              tokenUsage={response.token_usage}
             />
             <AnswerSummaryCard response={response} />
             <AnswerBody text={response.answer.text} />
@@ -106,11 +105,11 @@ export function ResultsArea({ state, response, error, latency, onReset, onRetry 
           </CardContent>
         </Card>
 
-        <Card className="border-black/5 bg-[#122333] py-5 text-white shadow-[0_14px_50px_rgba(12,26,41,0.08)]">
+        <Card className="border-white/8 bg-[#0f141b] py-5 text-white shadow-[0_14px_50px_rgba(0,0,0,0.28)]">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-2">
               <LayoutTemplateIcon className="size-5 text-[#64d3ff]" />
-              <CardTitle className="text-lg">Operational frame</CardTitle>
+              <CardTitle className="text-lg">Resumo operacional</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4 pt-0 text-sm text-slate-200">
@@ -133,27 +132,27 @@ export function ResultsArea({ state, response, error, latency, onReset, onRetry 
               </div>
             )}
             <div className="rounded-2xl border border-white/10 bg-white/6 p-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Pipeline timings</p>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Pipeline</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <TimingPill label="Embedding" value={response.timings_ms.embedding_ms} />
-                <TimingPill label="Retrieval" value={response.timings_ms.retrieval_ms} />
-                <TimingPill label="Generation" value={response.timings_ms.generation_ms} />
-                <TimingPill label="End-to-end" value={response.timings_ms.total_ms} />
+                <TimingPill label="Busca" value={response.timings_ms.retrieval_ms} />
+                <TimingPill label="Geração" value={response.timings_ms.generation_ms} />
+                <TimingPill label="Total" value={response.timings_ms.total_ms} />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="min-h-0 flex-1 border-black/5 bg-white/90 py-5 shadow-[0_14px_50px_rgba(12,26,41,0.06)]">
+      <Card className="min-h-0 flex-1 border-white/8 bg-[#121821]/92 py-5 text-white shadow-[0_14px_50px_rgba(0,0,0,0.28)]">
         <CardHeader className="pb-4">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <FileSearchIcon className="size-5 text-[#0e5973]" />
-                <CardTitle className="text-lg text-[#112231]">Evidence ledger</CardTitle>
+                <CardTitle className="text-lg text-white">Evidências</CardTitle>
               </div>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-slate-400">
                 Evidencias efetivamente citadas para sustentar a resposta retornada ao operador.
               </p>
             </div>
@@ -168,7 +167,7 @@ export function ResultsArea({ state, response, error, latency, onReset, onRetry 
               ))}
 
               {response.evidences.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                <div className="rounded-2xl border border-dashed border-white/12 bg-black/20 p-6 text-sm text-slate-400">
                   Nenhuma evidencia autorizada foi retornada para esta consulta.
                 </div>
               )}
@@ -193,25 +192,35 @@ function InsightGrid({
   totalContext,
   latency,
   timings,
+  tokenUsage,
 }: {
   totalEvidence: number
   totalContext: number
   latency: number | null
   timings: ChatQueryResponse['timings_ms']
+  tokenUsage: ChatQueryResponse['token_usage']
 }) {
   const items = [
     { label: 'Evidencias', value: String(totalEvidence) },
     { label: 'Chunks recuperados', value: String(totalContext) },
     { label: 'Pipeline', value: `${timings.total_ms} ms` },
     { label: 'Roundtrip', value: latency ? `${latency} ms` : 'n/a' },
+    { label: 'Tokens', value: tokenUsage.total_tokens.toLocaleString('pt-BR') },
+    {
+      label: 'Uso do contexto',
+      value:
+        tokenUsage.context_limit_tokens > 0
+          ? `${tokenUsage.total_tokens}/${tokenUsage.context_limit_tokens}`
+          : 'n/a',
+    },
   ]
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {items.map((item) => (
-        <div key={item.label} className="rounded-2xl border border-slate-200 bg-[#f8fafc] px-4 py-3">
+        <div key={item.label} className="rounded-2xl border border-white/8 bg-black/18 px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-          <p className="mt-2 text-lg font-semibold text-[#112231]">{item.value}</p>
+          <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
         </div>
       ))}
     </div>
@@ -224,15 +233,15 @@ function AnswerSummaryCard({ response }: { response: ChatQueryResponse }) {
   return (
     <div className="grid gap-3 lg:grid-cols-3">
       <SummaryCard
-        title="Coverage window"
+        title="Janela"
         value={summary.months.length > 0 ? summary.months.join(', ') : 'Nao identificado'}
       />
       <SummaryCard
-        title="Evidence footprint"
+        title="Cobertura"
         value={summary.chunkTypes.length > 0 ? summary.chunkTypes.slice(0, 2).join(' | ') : 'Nao identificado'}
       />
       <SummaryCard
-        title="Spatial footprint"
+        title="Recorte espacial"
         value={summary.lsoaCodes.length > 0 ? summary.lsoaCodes.slice(0, 3).join(', ') : 'Nao identificado'}
       />
     </div>
@@ -241,9 +250,9 @@ function AnswerSummaryCard({ response }: { response: ChatQueryResponse }) {
 
 function SummaryCard({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-[#f8fafc] px-4 py-3">
+    <div className="rounded-2xl border border-white/8 bg-black/18 px-4 py-3">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{title}</p>
-      <p className="mt-2 text-sm font-medium text-[#112231]">{value}</p>
+      <p className="mt-2 text-sm font-medium text-white">{value}</p>
     </div>
   )
 }
@@ -272,21 +281,21 @@ function AnswerBody({ text }: { text: string }) {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+    <div className="rounded-2xl border border-white/8 bg-black/18 p-4">
       <div className="mb-3 flex items-center gap-2">
         <SparklesIcon className="size-4 text-[#0e5973]" />
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Generated narrative</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Narrativa</p>
       </div>
       <div className="space-y-3">
         {blocks.map((block, index) =>
           block.type === 'list' ? (
-            <ul key={index} className="list-disc space-y-1.5 pl-5 text-sm leading-7 text-slate-700">
+            <ul key={index} className="list-disc space-y-1.5 pl-5 text-sm leading-7 text-slate-200">
               {block.items.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
           ) : (
-            <p key={index} className="text-sm leading-7 text-slate-700 whitespace-pre-wrap">
+            <p key={index} className="text-sm leading-7 text-slate-200 whitespace-pre-wrap">
               {block.items[0]}
             </p>
           )
@@ -320,8 +329,8 @@ function IdleState() {
       <div className="mb-5 rounded-full bg-[#dff7ff] p-4 text-[#0e5973]">
         <CircleDashedIcon className="size-8" />
       </div>
-      <h3 className="text-2xl font-semibold tracking-tight text-[#112231]">Workspace pronto para analise</h3>
-      <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+      <h3 className="text-2xl font-semibold tracking-tight text-white">Workspace pronto para análise</h3>
+      <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
         Use o prompt principal para investigar tendencias, pedir comparacoes ou interrogar o proprio stack sobre
         vetorizacao, MLflow e as camadas bronze, silver e gold.
       </p>
@@ -331,7 +340,7 @@ function IdleState() {
           'Compare duas areas e cite as evidencias mais fortes.',
           'Explique como os documentos e runs do MLflow foram indexados.',
         ].map((example) => (
-          <div key={example} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+          <div key={example} className="rounded-2xl border border-white/8 bg-black/18 px-4 py-3 text-sm text-slate-400">
             <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
               <ArrowUpRightIcon className="size-3.5" />
               prompt
@@ -346,12 +355,12 @@ function IdleState() {
 
 function LoadingState() {
   return (
-    <div className="flex h-full flex-col items-center justify-center rounded-[32px] border border-slate-200 bg-white/80 text-center">
+    <div className="flex h-full flex-col items-center justify-center rounded-[32px] border border-white/8 bg-[#121821]/92 text-center">
       <div className="mb-4 flex items-center gap-3 text-[#112231]">
         <Spinner className="size-5" />
         <span className="text-lg font-semibold">Executando pipeline de analise</span>
       </div>
-      <p className="max-w-lg text-sm text-slate-600">
+      <p className="max-w-lg text-sm text-slate-400">
         Recuperando contexto no corpus vetorial, aplicando politicas de acesso e gerando a narrativa governada.
       </p>
     </div>
@@ -366,10 +375,10 @@ function ErrorState({
   onRetry: () => void
 }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center rounded-[32px] border border-rose-200 bg-rose-50 px-6 text-center">
+    <div className="flex h-full flex-col items-center justify-center rounded-[32px] border border-rose-500/30 bg-rose-500/10 px-6 text-center">
       <AlertTriangleIcon className="mb-4 size-10 text-rose-500" />
       <h3 className="text-xl font-semibold text-rose-950">Nao foi possivel concluir a analise</h3>
-      <p className="mt-3 max-w-lg text-sm text-rose-900/80">{error?.message || 'Ocorreu um erro inesperado.'}</p>
+      <p className="mt-3 max-w-lg text-sm text-rose-200">{error?.message || 'Ocorreu um erro inesperado.'}</p>
       <Button variant="outline" onClick={onRetry} className="mt-5 gap-2">
         <RefreshCcwIcon className="size-4" />
         Tentar novamente
@@ -380,10 +389,10 @@ function ErrorState({
 
 function EmptyState({ onReset }: { onReset: () => void }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center rounded-[32px] border border-slate-200 bg-white/80 px-6 text-center">
+    <div className="flex h-full flex-col items-center justify-center rounded-[32px] border border-white/8 bg-[#121821]/92 px-6 text-center">
       <FileSearchIcon className="mb-4 size-10 text-slate-400" />
-      <h3 className="text-xl font-semibold text-[#112231]">Nenhuma evidencia relevante encontrada</h3>
-      <p className="mt-3 max-w-lg text-sm text-slate-600">
+      <h3 className="text-xl font-semibold text-white">Nenhuma evidência relevante encontrada</h3>
+      <p className="mt-3 max-w-lg text-sm text-slate-400">
         Amplie o periodo, alivie os filtros ou reformule a pergunta para explorar outra janela de evidencia.
       </p>
       <Button variant="outline" onClick={onReset} className="mt-5">

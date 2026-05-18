@@ -1,6 +1,13 @@
 'use client'
 
-import { BotIcon, Clock3Icon, FilterIcon, HistoryIcon, ShieldCheckIcon, SlidersHorizontalIcon, TrashIcon } from 'lucide-react'
+import {
+  BotIcon,
+  Clock3Icon,
+  HistoryIcon,
+  ShieldCheckIcon,
+  SlidersHorizontalIcon,
+  TrashIcon,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +20,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
+import { validateLsoaCode, validateReferenceMonth } from '@/hooks/use-urban-lens'
+import { CRIME_TYPE_OPTIONS } from '@/lib/types'
 import type {
   CurrentUserResponse,
   HistoryItem,
@@ -20,8 +29,6 @@ import type {
   QueryFilters,
   UsageStatsResponse,
 } from '@/lib/types'
-import { CRIME_TYPE_OPTIONS } from '@/lib/types'
-import { validateLsoaCode, validateReferenceMonth } from '@/hooks/use-urban-lens'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
@@ -65,25 +72,29 @@ export function Sidebar({
     filters.reference_month && !validateReferenceMonth(filters.reference_month) ? 'Formato esperado: YYYY-MM' : null
 
   return (
-    <aside className="min-h-0 border-r border-white/10 bg-[#121c25] text-white lg:w-[360px] lg:min-w-[360px]">
+    <aside className="min-h-0 border-r border-white/8 bg-[#0f141b] text-white lg:w-[340px] lg:min-w-[340px]">
       <div className="flex h-full min-h-0 flex-col">
-        <div className="space-y-6 overflow-y-auto px-5 py-5">
+        <div className="space-y-5 overflow-y-auto px-4 py-4">
           <section className="rounded-2xl border border-white/8 bg-white/4 p-4">
             <div className="mb-3 flex items-center gap-2">
               <ShieldCheckIcon className="size-4 text-[#64d3ff]" />
-              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Access posture</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Credencial</h2>
             </div>
             <div className="grid gap-3 text-sm">
-              <Metric label="Modo" value={profile ? profile.auth_type.replaceAll('_', ' ') : 'sem credencial'} />
-              <Metric label="Role" value={profile?.role || 'visitor'} />
+              <Metric label="Tipo" value={profile ? profile.auth_type.replaceAll('_', ' ') : 'sessao obrigatoria'} />
+              <Metric label="Perfil" value={profile?.role || 'n/d'} />
               <Metric label="Plano" value={profile?.plan_code || 'n/a'} />
               <Metric
-                label="Quota diaria"
+                label="Hoje"
                 value={
-                  usage?.remaining_day !== undefined && usage?.remaining_day !== null
-                    ? `${usage.remaining_day} restante(s)`
+                  usage?.requests_per_day_limit
+                    ? `${usage.requests_last_day}/${usage.requests_per_day_limit}`
                     : 'indisponivel'
                 }
+              />
+              <Metric
+                label="Tokens/dia"
+                value={usage ? `${usage.tokens_last_day.toLocaleString('pt-BR')} usados` : '0'}
               />
             </div>
           </section>
@@ -91,11 +102,11 @@ export function Sidebar({
           <section className="rounded-2xl border border-white/8 bg-white/4 p-4">
             <div className="mb-4 flex items-center gap-2">
               <BotIcon className="size-4 text-[#f59e0b]" />
-              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Inference model</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Modelo de resposta</h2>
             </div>
             <div className="space-y-2">
               <Label htmlFor="chat-model" className="text-xs text-slate-300">
-                Runtime Ollama
+                Modelo Ollama
               </Label>
               <Select
                 value={selectedModel}
@@ -115,11 +126,11 @@ export function Sidebar({
               </Select>
               <p className="text-xs text-slate-400">
                 {needsApiKey
-                  ? 'Ative uma credencial para carregar o catalogo de modelos.'
+                  ? 'Conecte uma chave para carregar os modelos.'
                   : isLoadingModels
-                    ? 'Sincronizando modelos locais.'
+                    ? 'Sincronizando catalogo local.'
                     : availableModels.length > 0
-                      ? 'Selecione o LLM usado para gerar a resposta governada.'
+                      ? 'Selecione o modelo usado na geracao da resposta.'
                       : 'Nenhum modelo disponivel foi retornado pelo backend.'}
               </p>
             </div>
@@ -128,12 +139,12 @@ export function Sidebar({
           <section className="rounded-2xl border border-white/8 bg-white/4 p-4">
             <div className="mb-4 flex items-center gap-2">
               <SlidersHorizontalIcon className="size-4 text-[#64d3ff]" />
-              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Retrieval controls</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Filtros de busca</h2>
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="crime-type" className="text-xs text-slate-300">
-                  Crime type
+                  Categoria
                 </Label>
                 <Select
                   value={filters.crime_type || '__all__'}
@@ -160,7 +171,7 @@ export function Sidebar({
 
               <div className="space-y-2">
                 <Label htmlFor="lsoa-code" className="text-xs text-slate-300">
-                  LSOA code
+                  Codigo LSOA
                 </Label>
                 <Input
                   id="lsoa-code"
@@ -174,14 +185,17 @@ export function Sidebar({
                   }
                   disabled={disabled}
                   aria-invalid={!!lsoaError}
-                  className={cn('border-white/10 bg-[#0f171f] text-white placeholder:text-slate-500', lsoaError && 'border-rose-500')}
+                  className={cn(
+                    'border-white/10 bg-[#0f171f] text-white placeholder:text-slate-500',
+                    lsoaError && 'border-rose-500'
+                  )}
                 />
-                {lsoaError && <p className="text-xs text-rose-300">{lsoaError}</p>}
+                {lsoaError ? <p className="text-xs text-rose-300">{lsoaError}</p> : null}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="reference-month" className="text-xs text-slate-300">
-                  Reference month
+                  Mes de referencia
                 </Label>
                 <Input
                   id="reference-month"
@@ -195,9 +209,12 @@ export function Sidebar({
                   }
                   disabled={disabled}
                   aria-invalid={!!monthError}
-                  className={cn('border-white/10 bg-[#0f171f] text-white placeholder:text-slate-500', monthError && 'border-rose-500')}
+                  className={cn(
+                    'border-white/10 bg-[#0f171f] text-white placeholder:text-slate-500',
+                    monthError && 'border-rose-500'
+                  )}
                 />
-                {monthError && <p className="text-xs text-rose-300">{monthError}</p>}
+                {monthError ? <p className="text-xs text-rose-300">{monthError}</p> : null}
               </div>
 
               <div className="space-y-3">
@@ -218,7 +235,7 @@ export function Sidebar({
                 />
                 <div className="flex justify-between text-xs text-slate-400">
                   <span>precisao</span>
-                  <span>cobertura max {planMaxTopK}</span>
+                  <span>limite {planMaxTopK}</span>
                 </div>
               </div>
             </div>
@@ -228,9 +245,9 @@ export function Sidebar({
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <HistoryIcon className="size-4 text-[#f59e0b]" />
-                <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Recent prompts</h2>
+                <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Historico recente</h2>
               </div>
-              {history.length > 0 && (
+              {history.length > 0 ? (
                 <Button
                   variant="ghost"
                   size="icon-sm"
@@ -240,11 +257,11 @@ export function Sidebar({
                 >
                   <TrashIcon className="size-3.5" />
                 </Button>
-              )}
+              ) : null}
             </div>
 
             {history.length === 0 ? (
-              <p className="text-sm text-slate-400">As consultas recentes vao aparecer aqui.</p>
+              <p className="text-sm text-slate-400">As consultas recentes aparecerao aqui.</p>
             ) : (
               <div className="space-y-2">
                 {history.map((item) => (

@@ -14,6 +14,7 @@ import {
 } from '@/hooks/use-urban-lens'
 import type { HistoryItem, QueryFilters } from '@/lib/types'
 
+import { AccessGate } from './access-gate'
 import { QueryInput } from './query-input'
 import { ResultsArea } from './results-area'
 import { Sidebar } from './sidebar'
@@ -27,6 +28,10 @@ const DEFAULT_FILTERS: QueryFilters = {
 
 const DEFAULT_TOP_K = 5
 const FALLBACK_CHAT_MODEL = 'llama3'
+
+function normalizeModelName(value: string): string {
+  return value.split(':', 1)[0]?.toLowerCase() ?? value.toLowerCase()
+}
 
 export function UrbanLens() {
   const { apiKey } = useApiKey()
@@ -42,14 +47,20 @@ export function UrbanLens() {
   const { profile } = useAccessProfile(apiKey)
   const { usage } = useUsageStats(apiKey)
   const allowedModels = profile?.allowed_models ?? []
+
   const visibleModels = useMemo(
-    () => (allowedModels.length > 0 ? models.filter((model) => allowedModels.includes(model.name)) : models),
+    () =>
+      allowedModels.length > 0
+        ? models.filter((model) => allowedModels.map(normalizeModelName).includes(normalizeModelName(model.name)))
+        : models,
     [allowedModels, models]
   )
 
   useEffect(() => {
     if (visibleModels.length === 0) {
-      if (selectedModel !== defaultChatModel) setSelectedModel(defaultChatModel)
+      if (selectedModel !== defaultChatModel) {
+        setSelectedModel(defaultChatModel)
+      }
       return
     }
 
@@ -101,57 +112,61 @@ export function UrbanLens() {
   const isDisabled = state === 'loading'
 
   return (
-    <div className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top_left,_rgba(100,211,255,0.18),_transparent_30%),linear-gradient(180deg,#f4f7f8_0%,#eef3f6_52%,#f8fafb_100%)]">
+    <div className="flex min-h-screen flex-col">
       <TopBar />
 
-      <div className="flex flex-1 flex-col lg:flex-row">
-        <Sidebar
-          filters={filters}
-          onFiltersChange={setFilters}
-          topK={topK}
-          onTopKChange={setTopK}
-          availableModels={visibleModels}
-          selectedModel={selectedModel}
-          onSelectedModelChange={setSelectedModel}
-          isLoadingModels={isLoadingModels}
-          needsApiKey={needsApiKey}
-          profile={profile}
-          usage={usage}
-          history={history}
-          onHistorySelect={handleHistorySelect}
-          onClearHistory={clearHistory}
-          disabled={isDisabled}
-        />
+      {!apiKey ? (
+        <AccessGate />
+      ) : (
+        <div className="flex flex-1 flex-col lg:flex-row">
+          <Sidebar
+            filters={filters}
+            onFiltersChange={setFilters}
+            topK={topK}
+            onTopKChange={setTopK}
+            availableModels={visibleModels}
+            selectedModel={selectedModel}
+            onSelectedModelChange={setSelectedModel}
+            isLoadingModels={isLoadingModels}
+            needsApiKey={needsApiKey}
+            profile={profile}
+            usage={usage}
+            history={history}
+            onHistorySelect={handleHistorySelect}
+            onClearHistory={clearHistory}
+            disabled={isDisabled}
+          />
 
-        <main className="min-w-0 flex-1">
-          <div className="mx-auto flex h-full max-w-[1520px] flex-col gap-6 px-4 py-5 lg:px-8 lg:py-6">
-            <QueryInput
-              value={query}
-              onChange={setQuery}
-              onSubmit={handleSubmit}
-              disabled={isDisabled}
-              autoFocus={state === 'idle'}
-            />
-
-            <div className="min-h-0 flex-1">
-              <ResultsArea
-                state={state}
-                response={response}
-                error={error}
-                latency={latency}
-                onReset={reset}
-                onRetry={() => {
-                  if (query.trim()) {
-                    void executeQuery(query, filters, topK, selectedModel)
-                    return
-                  }
-                  reset()
-                }}
+          <main className="min-w-0 flex-1">
+            <div className="mx-auto flex h-full max-w-[1520px] flex-col gap-6 px-4 py-5 lg:px-8 lg:py-6">
+              <QueryInput
+                value={query}
+                onChange={setQuery}
+                onSubmit={handleSubmit}
+                disabled={isDisabled}
+                autoFocus={state === 'idle'}
               />
+
+              <div className="min-h-0 flex-1">
+                <ResultsArea
+                  state={state}
+                  response={response}
+                  error={error}
+                  latency={latency}
+                  onReset={reset}
+                  onRetry={() => {
+                    if (query.trim()) {
+                      void executeQuery(query, filters, topK, selectedModel)
+                      return
+                    }
+                    reset()
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        </main>
-      </div>
+          </main>
+        </div>
+      )}
     </div>
   )
 }
