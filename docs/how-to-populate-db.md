@@ -38,6 +38,8 @@ PostgreSQL automatically executes all scripts located in:
 
 In this project, `sql/init/` is mounted into that directory.
 
+The Docker Compose stack also runs those same SQL files through the `postgres-setup` service before application containers start. This keeps schema creation idempotent even when the PostgreSQL data volume already exists.
+
 ✅ Supported file types:
 - `.sql`
 - `.sh`

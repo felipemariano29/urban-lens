@@ -1,15 +1,14 @@
 # Urban-Lens Run Guide
 
-This guide explains how to start the local infrastructure and where to find the correct documentation for the governed data pipeline.
-
-For Sprint 3, the repository already contains a working Bronze -> Silver -> Gold pipeline implementation plus governance metadata registration. This document is the entry point. The detailed execution flow lives in the documents referenced below.
+This guide explains how to start the local platform and where to find the authoritative documentation for the governed data pipeline and the RAG workspace.
 
 ## What This Guide Covers
 
 - local infrastructure startup
-- database bootstrap location
+- environment file strategy
+- repository navigation
 - Python environment setup for pipeline jobs
-- links to the authoritative data-pipeline execution and governance documents
+- links to the authoritative pipeline, governance, and API documents
 
 ## Documentation Map
 
@@ -18,6 +17,7 @@ Use these documents together:
 | Document | Purpose |
 | --- | --- |
 | `docs/how-to-run.md` | Local environment startup and navigation hub |
+| `docs/api-endpoints.md` | Quick API endpoint summary, auth rules, and sample payloads |
 | `docs/how-to-populate-db.md` | How PostgreSQL initialization scripts work |
 | `docs/implementation-guide.md` | Step-by-step pipeline execution order |
 | `docs/ac2-sprint-closure.md` | Formal AC2 closure mapping for Sprints 1 to 8 |
@@ -36,33 +36,48 @@ The repository currently provides:
 - MLflow for experiment tracking and model registry UI
 - Attu for Milvus collection inspection
 - FastAPI internal API via `rag-api`
-- Next.js frontend with server-side proxy routes under `app/api/v1/*`
+- Next.js frontend under `apps/web`
 - Python pipeline jobs for Bronze, Silver, Gold, and forecast-model publication
 
-The repository now provisions the local platform components required by the implemented pipeline and RAG runtime, including Milvus and Ollama inside Docker Compose.
+The local runtime includes Milvus and Ollama inside Docker Compose.
 
 ## Repository Structure
 
-```bash
-.
-├── docker-compose.yml
-├── Makefile
-├── sql/init/
-├── pipelines/
-├── src/urban_lens/
-├── tests/
-└── docs/
-    ├── how-to-run.md
-    ├── how-to-populate-db.md
-    ├── implementation-guide.md
-    └── architecture/
+```text
+urban-lens/
+  apps/
+    api/
+      src/urban_lens/
+      tests/
+    web/
+      app/
+      components/
+      contexts/
+      hooks/
+      lib/
+  infra/
+    compose/
+    docker/
+  scripts/
+    demo/
+    ops/
+  sql/
+    init/
+  docs/
 ```
+
+Notes:
+
+- `apps/api` is the authoritative backend source tree.
+- `apps/web` is the only valid frontend application tree.
+- Windows helper scripts live under `scripts/ops/windows`.
+- The demo helper now lives at `scripts/demo/demo_rag.py`.
 
 ## Prerequisites
 
 Make sure these tools are installed locally:
 
-- Docker
+- Docker Desktop or Docker Engine
 - Docker Compose
 - GNU Make
 - Git
@@ -90,14 +105,24 @@ cp .env.example .env
 ```
 
 3. Review the values in `.env` if you need different ports or credentials.
-   The frontend proxy also reads:
-   - `URBAN_LENS_API_BASE_URL` for the FastAPI base URL
-   - `URBAN_LENS_INTERNAL_API_KEY` for server-side authenticated proxy calls
+
+Runtime strategy:
+
+- `.env` is the default file for local development and Compose startup.
+- `.env.prod` is reserved for the production overlay in `infra/compose/docker-compose.prod.yml`.
+- `.env.local` is intentionally not used in this monorepo because it created drift and duplicate sources of truth.
+
+Important variables:
+
+- `URBAN_LENS_API_BASE_URL` for the FastAPI base URL used by the Next.js server proxy
+- `URBAN_LENS_WEB_SESSION_SECRET` for encrypting the governed API key session cookie
+- `URBAN_LENS_CHAT_MODEL` for the default Ollama chat model
+- `OLLAMA_MODELS` for the list of Ollama models pre-downloaded by `ollama-setup`
 
 4. Install the Python package used by the pipeline jobs:
 
 ```bash
-python3 -m pip install -e ".[dev]"
+python3 -m pip install -e "apps/api[dev]"
 ```
 
 ## Start Local Infrastructure
@@ -108,10 +133,11 @@ Start the available containers with:
 make up
 ```
 
-Or directly:
+Or with explicit mode selection:
 
 ```bash
-docker compose up -d
+make up-cpu
+make up-gpu
 ```
 
 This starts:
@@ -125,14 +151,15 @@ This starts:
 - Attu
 - Ollama
 - rag-api
+- frontend
 
-To start the frontend locally, run:
+The Docker Compose stack waits for healthchecks and one-shot setup containers before starting downstream services, reducing cold-start race conditions between PostgreSQL, MinIO, MLflow, Milvus, Ollama, and the API.
+
+If you need to run the frontend outside Docker for local UI development, use:
 
 ```bash
 make frontend
 ```
-
-Or run `make fullstack` to start the backend stack and then launch the frontend dev server.
 
 ## Available Services
 
@@ -160,17 +187,20 @@ Credentials are defined in `.env`.
 
 - Base URL: `http://localhost:${RAG_API_HOST_PORT:-8000}`
 - Health check: `http://localhost:${RAG_API_HOST_PORT:-8000}/api/v1/health`
+- Ollama models endpoint: `http://localhost:${RAG_API_HOST_PORT:-8000}/api/v1/system/models`
 
 ### Attu
 
 - URL: `http://localhost:${ATTU_HOST_PORT:-3001}`
 - Milvus target: `milvus-standalone:19530`
-- Purpose: inspect collections such as `crime_chunks`, confirm row counts, and explore schema during local validation
+- Purpose: inspect collections such as `crime_chunks` and validate local vector data
 
 ### Frontend
 
-- URL: `http://localhost:3000`
-- The browser calls Next.js route handlers first, and those handlers proxy to FastAPI using the server-side API key.
+- URL: `http://localhost:${WEB_HOST_PORT:-3000}`
+- The browser calls Next.js route handlers first, and those handlers proxy to FastAPI.
+- Governed API keys are validated server-side and kept in an encrypted `httpOnly` session cookie.
+- The sidebar loads available Ollama generation models from the local API and lets the user choose the model per request.
 
 ### MLflow
 
@@ -181,9 +211,12 @@ Credentials are defined in `.env`.
 
 PostgreSQL loads SQL files from `sql/init/` on first startup because that directory is mounted into `/docker-entrypoint-initdb.d`.
 
+The Compose stack also runs an idempotent `postgres-setup` step before `mlflow` and `rag-api`, reapplying the SQL files with `psql` so local environments do not depend on a pristine volume for new tables to appear.
+
 The governance schema used by the pipeline is:
 
 - `sql/init/001_governance_schema.sql`
+- `sql/init/002_access_governance.sql`
 
 For details on naming, ordering, and re-running initialization scripts, see:
 
@@ -229,11 +262,12 @@ This is intentional and documented in:
 
 The runnable CLI entrypoints are:
 
-- `pipelines/ingest_manual.py`
-- `pipelines/process_snapshot.py`
-- `pipelines/bronze_to_silver.py`
-- `pipelines/silver_to_gold.py`
-- `pipelines/train_forecast_model.py`
+- `apps/api/pipelines/ingest_manual.py`
+- `apps/api/pipelines/process_snapshot.py`
+- `apps/api/pipelines/bronze_to_silver.py`
+- `apps/api/pipelines/silver_to_gold.py`
+- `apps/api/pipelines/train_forecast_model.py`
+- `scripts/demo/demo_rag.py`
 
 ### Layer Responsibilities
 
@@ -250,9 +284,14 @@ Use `docs/architecture/medallion-governance.md` as the source of truth for layer
 ```bash
 make help
 make up
+make up-cpu
+make up-gpu
 make down
 make reset
 make logs
+make logs-core
+make logs-app
+make logs-obs
 docker compose ps
 python3 -m pytest
 ```

@@ -39,6 +39,13 @@ Start all services with:
 make up
 ```
 
+For explicit runtime selection:
+
+```bash
+make up-cpu
+make up-gpu
+```
+
 Required services and their roles:
 
 | Service | Purpose | Default port |
@@ -48,8 +55,11 @@ Required services and their roles:
 | MLflow | Experiment tracking and model artifact storage | 5005 |
 | Milvus | Vector index for crime evidence and documentation chunks | 19530 |
 | Ollama | Local LLM and embedding model server | 11434 |
+| Frontend | Next.js query interface and proxy layer | 3000 |
 
-On first startup, `minio-setup` creates the `urban-lens` and `milvus` buckets, and `ollama-setup` downloads the `nomic-embed-text` embedding model. The model download requires internet access and may take several minutes.
+On first startup, `minio-setup` creates the `urban-lens` and `milvus` buckets, and `ollama-setup` downloads the models listed in `OLLAMA_MODELS`. The default `.env.example` now preloads `nomic-embed-text`, `llama3`, `mistral`, `qwen2.5`, and `phi3`. Model downloads require internet access and may take several minutes.
+
+Compose startup now uses healthchecks plus `service_completed_successfully` for setup containers, so MLflow, Milvus, and `rag-api` wait for their dependencies to be ready before starting.
 
 Show all service URLs:
 

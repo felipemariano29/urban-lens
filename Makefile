@@ -1,8 +1,8 @@
-SHELL := /bin/bash
-# Detect Windows and use 'python' instead of 'python3'
 ifeq ($(OS),Windows_NT)
+    SHELL := C:/Windows/System32/bash.exe
     SYSTEM_PYTHON ?= python
 else
+    SHELL := /bin/bash
     SYSTEM_PYTHON ?= python3
 endif
 PYTHON ?= $(shell if [ -x .venv/bin/python3 ]; then echo .venv/bin/python3; elif [ -x .venv/bin/python ]; then echo .venv/bin/python; elif [ -x .venv/Scripts/python.exe ]; then echo .venv/Scripts/python; else echo $(SYSTEM_PYTHON); fi)
@@ -16,21 +16,40 @@ ENV_EXPORT = __MLFLOW_TRACKING_URI="$${MLFLOW_TRACKING_URI:-}"; \
 	set -a; . ./.env; set +a; \
 	if [ -n "$$__MLFLOW_TRACKING_URI" ]; then export MLFLOW_TRACKING_URI="$$__MLFLOW_TRACKING_URI"; fi; \
 	if [ -n "$$__MLFLOW_HOST_PORT" ]; then export MLFLOW_HOST_PORT="$$__MLFLOW_HOST_PORT"; fi;
-PYTHON_RUN = $(ENV_EXPORT) PYTHONPATH="$(CURDIR)/src:$${PYTHONPATH:-}"
+PYTHON_RUN = $(ENV_EXPORT) PYTHONPATH="$(CURDIR)/apps/api/src:$${PYTHONPATH:-}"
 PIP_RUN = PIP_CONFIG_FILE="$(PIP_CONFIG_FILE)" PIP_INDEX_URL="$(PIP_INDEX_URL)"
 
-COMPOSE := $(shell \
-	if command -v podman-compose >/dev/null 2>&1; then \
-		echo "podman-compose"; \
-	elif command -v docker-compose >/dev/null 2>&1; then \
-		echo "docker-compose"; \
-	elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
-		echo "docker compose"; \
-	else \
-		echo ""; \
-	fi)
+ifeq ($(OS),Windows_NT)
+	COMPOSE := docker compose
+else
+	COMPOSE := $(shell \
+		if command -v podman-compose >/dev/null 2>&1; then \
+			echo "podman-compose"; \
+		elif command -v docker-compose >/dev/null 2>&1; then \
+			echo "docker-compose"; \
+		elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
+			echo "docker compose"; \
+		else \
+			echo ""; \
+		fi)
+endif
+CONTAINER_ENGINE := $(if $(filter podman-compose,$(COMPOSE)),podman,docker)
+COMPOSE_MODE ?= cpu
+COMPOSE_DIR := infra/compose
+COMPOSE_FILES := --env-file .env -f $(COMPOSE_DIR)/docker-compose.yml
+OBS_COMPOSE_FILES := --env-file .env -f $(COMPOSE_DIR)/docker-compose.yml -f $(COMPOSE_DIR)/docker-compose.observability.yml
+ifeq ($(COMPOSE_MODE),gpu)
+	COMPOSE_FILES += -f $(COMPOSE_DIR)/docker-compose.gpu.yml
+endif
+ifeq ($(COMPOSE_MODE),obs)
+	COMPOSE_FILES += -f $(COMPOSE_DIR)/docker-compose.observability.yml
+endif
+ifeq ($(COMPOSE_MODE),full)
+	COMPOSE_FILES += -f $(COMPOSE_DIR)/docker-compose.observability.yml
+endif
+ENGINE_OK := $(shell if [ "$(CONTAINER_ENGINE)" = "podman" ]; then podman info >/dev/null 2>&1 && echo 1 || echo 0; else docker info >/dev/null 2>&1 && echo 1 || echo 0; fi)
 
-.PHONY: help check-compose check-env check-python require-% venv install setup fullstack urls up up-core down destroy reset logs logs-mlflow ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs test frontend frontend-install
+.PHONY: help check-compose check-docker-engine check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-obs up-full up-core down destroy reset logs logs-core logs-app logs-mlflow logs-obs ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs index-mlflow eval-rag test frontend frontend-install
 
 help:
 	@printf "\n"
@@ -39,17 +58,24 @@ help:
 	@printf "\033[1;36m=======================================\033[0m\n\n"
 
 	@printf "\033[1;33mDocker\033[0m\n"
-	@printf "  \033[1;37mmake fullstack\033[0m -> Subir stack completa (backend + frontend) e mostrar URLs\n"
-	@printf "  \033[1;37mmake up\033[0m        -> Subir os containers\n"
+	@printf "  \033[1;37mmake fullstack\033[0m -> Subir stack completa no Docker e mostrar URLs\n"
+	@printf "  \033[1;37mmake up\033[0m        -> Subir os containers (modo atual: COMPOSE_MODE=$(COMPOSE_MODE))\n"
+	@printf "  \033[1;37mmake up-cpu\033[0m    -> Subir a stack completa sem overlay de GPU\n"
+	@printf "  \033[1;37mmake up-gpu\033[0m    -> Subir a stack completa com overlay de GPU para Ollama\n"
+	@printf "  \033[1;37mmake up-obs\033[0m    -> Subir stack com observabilidade (Prometheus, Grafana, Loki)\n"
+	@printf "  \033[1;37mmake up-full\033[0m   -> Subir stack completa com observabilidade\n"
 	@printf "  \033[1;37mmake up-core\033[0m   -> Subir Postgres + MinIO + MLflow\n"
 	@printf "  \033[1;37mmake down\033[0m      -> Parar containers sem remover estado local\n"
 	@printf "  \033[1;37mmake destroy\033[0m   -> Remover containers e rede local\n"
 	@printf "  \033[1;37mmake reset\033[0m     -> Reset completo (remove volumes)\n"
-	@printf "  \033[1;37mmake logs\033[0m      -> Ver logs em tempo real\n\n"
+	@printf "  \033[1;37mmake logs\033[0m      -> Ver logs de toda a stack em tempo real\n"
+	@printf "  \033[1;37mmake logs-core\033[0m -> Ver logs dos servicos principais de dados e backend\n"
+	@printf "  \033[1;37mmake logs-app\033[0m  -> Ver logs da aplicacao web e API\n"
+	@printf "  \033[1;37mmake logs-obs\033[0m  -> Ver logs da observabilidade (Prometheus, Grafana, Loki)\n\n"
 
 	@printf "\033[1;33mFrontend\033[0m\n"
-	@printf "  \033[1;37mmake frontend\033[0m  -> Subir frontend Next.js em http://localhost:3000\n"
-	@printf "  \033[1;37mmake frontend-install\033[0m -> Instalar dependencias do frontend\n\n"
+	@printf "  \033[1;37mmake frontend\033[0m  -> Rodar frontend Next.js localmente fora do Docker\n"
+	@printf "  \033[1;37mmake frontend-install\033[0m -> Instalar dependencias do frontend local\n\n"
 
 	@printf "\033[1;33mExperimentos / MLflow\033[0m\n"
 	@printf "  \033[1;37mmake train\033[0m     -> Treinar usando os datasets Gold ML mais recentes\n"
@@ -68,7 +94,11 @@ help:
 	@printf "  \033[1;37mmake index-embeddings\033[0m RAG_OBJECT_KEY=... RAG_DATASET_VERSION_ID=... [ACTOR=system]\n"
 	@printf "                      -> Indexar um crime_chunks especifico no Milvus\n"
 	@printf "  \033[1;37mmake index-docs\033[0m [DOCS_DIR=docs/] [ACTOR=system]\n"
-	@printf "                      -> Indexar todos os Markdowns de docs/ no Milvus\n\n"
+	@printf "                      -> Indexar todos os Markdowns de docs/ no Milvus\n"
+	@printf "  \033[1;37mmake index-mlflow\033[0m [MAX_RUNS=50]\n"
+	@printf "                      -> Indexar runs do MLflow no knowledge corpus\n"
+	@printf "  \033[1;37mmake eval-rag\033[0m [DATASET=path.json] [TAGS=crime platform] [MLFLOW=1]\n"
+	@printf "                      -> Executar avaliacao do RAG e logar no MLflow\n\n"
 
 	@printf "\033[1;33mPipeline de Dados\033[0m\n"
 	@printf "  \033[1;37mmake snapshots\033[0m -> Listar snapshots disponiveis em data/\n"
@@ -99,17 +129,34 @@ help:
 	@printf "\033[1;36m=======================================\033[0m\n\n"
 
 check-compose:
-	@if [ -z "$(COMPOSE)" ]; then \
-		echo "[ERR] Nenhum compose compativel foi encontrado."; \
-		echo "[INFO] Instale o podman-compose com:"; \
-		echo "   sudo apt update && sudo apt install podman-compose"; \
-		exit 1; \
-	fi
-	@if [ "$(COMPOSE)" = "podman-compose" ]; then \
-		echo "[OK] Usando podman-compose"; \
-	else \
-		echo "[WARN] Usando docker-compose"; \
-	fi
+ifeq ($(strip $(COMPOSE)),)
+	@echo [ERR] Nenhum compose compativel foi encontrado.
+	@echo [INFO] Instale o podman-compose com:
+	@echo    sudo apt update && sudo apt install podman-compose
+	@docker compose version
+else ifeq ($(COMPOSE),podman-compose)
+	@echo [OK] Usando podman-compose
+else ifeq ($(COMPOSE),docker compose)
+	@echo [OK] Usando docker compose
+else
+	@echo [WARN] Usando docker-compose
+endif
+
+check-docker-engine:
+ifeq ($(ENGINE_OK),1)
+	@echo [OK] $(CONTAINER_ENGINE) engine disponivel.
+else
+ifeq ($(CONTAINER_ENGINE),podman)
+	@echo [ERR] Podman Engine indisponivel.
+	@echo [INFO] Inicie o servico do Podman ou a maquina configurada antes de continuar.
+	$(error Podman Engine indisponivel. Inicie o Podman e tente novamente.)
+else
+	@echo [ERR] Docker Engine indisponivel.
+	@echo [INFO] Inicie o Docker Desktop e aguarde o engine ficar pronto.
+	@echo [INFO] No Windows, confirme tambem que o backend Linux/WSL2 esta ativo.
+	$(error Docker Engine indisponivel. Inicie o Docker Desktop e tente novamente.)
+endif
+endif
 
 check-env:
 	@if [ ! -f .env ]; then \
@@ -134,7 +181,7 @@ require-%:
 
 install: check-python
 	@echo "[INFO] Instalando dependencias Python..."
-	@$(PIP_RUN) $(PYTHON) -m pip install -e ".[dev]"
+	@$(PIP_RUN) $(PYTHON) -m pip install -e "apps/api[dev]"
 
 venv:
 	@if [ -x .venv/bin/python3 ] || [ -x .venv/bin/python ] || [ -x .venv/Scripts/python.exe ]; then \
@@ -155,21 +202,31 @@ endif
 
 fullstack:
 	@$(MAKE) up
-	@$(MAKE) frontend-install
 	@$(MAKE) urls
-	@printf "\n\033[1;32mIniciando frontend em http://localhost:3000...\033[0m\n\n"
-	@$(MAKE) frontend
 
-up: check-compose check-env
-	@echo "[INFO] Subindo containers..."
-	@$(COMPOSE) up -d
+up-cpu:
+	@$(MAKE) up COMPOSE_MODE=cpu
 
-up-core: check-compose check-env
-	@echo "[INFO] Subindo Postgres, MinIO e MLflow..."
-	@$(COMPOSE) up -d postgres minio minio-setup mlflow
+up-gpu:
+	@$(MAKE) up COMPOSE_MODE=gpu
+
+up-obs:
+	@$(MAKE) up COMPOSE_MODE=obs
+
+up-full:
+	@$(MAKE) up COMPOSE_MODE=full
+
+up: check-compose check-docker-engine check-env
+	@echo "[INFO] Subindo containers com COMPOSE_MODE=$(COMPOSE_MODE)..."
+	@$(COMPOSE) $(COMPOSE_FILES) up -d
+
+up-core: check-compose check-docker-engine check-env
+	@echo "[INFO] Subindo Postgres, MinIO e MLflow com COMPOSE_MODE=$(COMPOSE_MODE)..."
+	@$(COMPOSE) $(COMPOSE_FILES) up -d postgres minio minio-setup mlflow
 
 frontend-install:
-	@if [ -f package.json ]; then \
+	@if [ -f apps/web/package.json ]; then \
+		cd apps/web && \
 		if command -v pnpm >/dev/null 2>&1; then \
 			echo "[INFO] Instalando dependencias do frontend com pnpm..."; \
 			pnpm install; \
@@ -181,11 +238,12 @@ frontend-install:
 			exit 1; \
 		fi; \
 	else \
-		echo "[WARN] package.json nao encontrado. Pulando instalacao do frontend."; \
+		echo "[WARN] apps/web/package.json nao encontrado. Pulando instalacao do frontend."; \
 	fi
 
 frontend:
-	@if [ -f package.json ]; then \
+	@if [ -f apps/web/package.json ]; then \
+		cd apps/web && \
 		if command -v pnpm >/dev/null 2>&1; then \
 			echo "[INFO] Iniciando frontend Next.js com pnpm..."; \
 			pnpm dev; \
@@ -197,37 +255,49 @@ frontend:
 			exit 1; \
 		fi; \
 	else \
-		echo "[WARN] package.json nao encontrado. Frontend nao disponivel nesta branch."; \
+		echo "[WARN] apps/web/package.json nao encontrado. Frontend nao disponivel nesta branch."; \
 	fi
 
-down: check-compose check-env
+down: check-compose check-docker-engine check-env
 	@echo "[INFO] Parando containers sem remover dados..."
-	@$(COMPOSE) stop
+	@$(COMPOSE) $(COMPOSE_FILES) stop
 
-destroy: check-compose check-env
+destroy: check-compose check-docker-engine check-env
 	@echo "[INFO] Removendo containers e rede local..."
-	@$(COMPOSE) down
+	@$(COMPOSE) $(COMPOSE_FILES) down
 
-reset: check-compose check-env
+reset: check-compose check-docker-engine check-env
 	@echo "[INFO] Removendo containers e volumes..."
 	@if [ "$(COMPOSE)" = "podman-compose" ]; then \
-		$(COMPOSE) down -v; \
+		$(COMPOSE) $(COMPOSE_FILES) down -v; \
 	else \
-		$(COMPOSE) down -v --remove-orphans; \
+		$(COMPOSE) $(COMPOSE_FILES) down -v --remove-orphans; \
 	fi
 	@echo "[INFO] Subindo ambiente limpo..."
-	@$(COMPOSE) up -d --build
+	@$(COMPOSE) $(COMPOSE_FILES) up -d --build
 
-logs: check-compose check-env
+logs: check-compose check-docker-engine check-env
 	@echo "[INFO] Exibindo logs..."
-	@$(COMPOSE) logs -f
+	@$(COMPOSE) $(COMPOSE_FILES) logs -f
 
-logs-mlflow: check-compose check-env
+logs-core: check-compose check-docker-engine check-env
+	@echo "[INFO] Exibindo logs de postgres, minio, mlflow, milvus, ollama e rag-api..."
+	@$(COMPOSE) $(COMPOSE_FILES) logs -f postgres minio mlflow milvus ollama rag-api
+
+logs-app: check-compose check-docker-engine check-env
+	@echo "[INFO] Exibindo logs de frontend e rag-api..."
+	@$(COMPOSE) $(COMPOSE_FILES) logs -f frontend rag-api
+
+logs-mlflow: check-compose check-docker-engine check-env
 	@echo "[INFO] Exibindo logs do MLflow..."
-	@$(COMPOSE) logs -f mlflow
+	@$(COMPOSE) $(COMPOSE_FILES) logs -f mlflow
 
-ps: check-compose check-env
-	@$(COMPOSE) ps
+logs-obs: check-compose check-docker-engine check-env
+	@echo "[INFO] Exibindo logs da observabilidade (prometheus, grafana, loki)..."
+	@$(COMPOSE) $(OBS_COMPOSE_FILES) logs -f prometheus grafana loki promtail postgres-exporter
+
+ps: check-compose check-docker-engine check-env
+	@$(COMPOSE) $(COMPOSE_FILES) ps
 
 snapshots:
 	@if [ ! -d data ]; then \
@@ -247,7 +317,8 @@ urls: check-env
 	echo "Milvus REST:    http://localhost:$${MILVUS_REST_PORT:-9091}"; \
 	echo "Attu:           http://localhost:$${ATTU_HOST_PORT:-3001}"; \
 	echo "Ollama:         http://localhost:$${OLLAMA_HOST_PORT:-11434}"; \
-	echo "RAG API:        http://localhost:$${RAG_API_HOST_PORT:-8000}"
+	echo "RAG API:        http://localhost:$${RAG_API_HOST_PORT:-8000}"; \
+	echo "Frontend:       http://localhost:$${WEB_HOST_PORT:-3000}"
 
 mlflow-url: check-env
 	@$(ENV_EXPORT) echo "MLflow: http://localhost:$${MLFLOW_HOST_PORT:-5005}"
@@ -336,14 +407,26 @@ index-embeddings: check-env check-python require-RAG_OBJECT_KEY require-RAG_DATA
 		--batch-size "$(or $(BATCH_SIZE),32)" \
 		--actor "$(ACTOR)"
 
-index-docs: check-python
+index-docs: check-env check-python
 	@$(PYTHON_RUN) $(PYTHON) -m urban_lens.cli.index_docs \
 		--docs-dir "$(or $(DOCS_DIR),docs)" \
 		--batch-size "$(or $(BATCH_SIZE),32)" \
 		--actor "$(ACTOR)"
 
+index-mlflow: check-env check-python
+	@echo "[INFO] Indexando runs do MLflow no knowledge corpus..."
+	@$(PYTHON_RUN) $(PYTHON) apps/api/pipelines/index_mlflow_runs.py \
+		--max-runs "$(or $(MAX_RUNS),50)"
+
+eval-rag: check-env check-python
+	@echo "[INFO] Executando avaliacao do RAG..."
+	@$(PYTHON_RUN) $(PYTHON) apps/api/pipelines/evaluate_rag.py \
+		$(if $(DATASET),--dataset "$(DATASET)",) \
+		$(if $(TAGS),--tags $(TAGS),) \
+		$(if $(MLFLOW),--mlflow,)
+
 test: check-python
-	@$(PYTHON_RUN) $(PYTHON) -m pytest
+	@$(PYTHON_RUN) $(PYTHON) -m pytest apps/api/tests
 
 index-embeddings-latest: check-env check-python
 	@set -euo pipefail; \

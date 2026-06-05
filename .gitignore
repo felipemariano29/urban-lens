@@ -5,6 +5,7 @@ __pycache__/
 
 # Environment
 .env
+.env.local
 
 # MLflow
 mlflow.db
@@ -36,4 +37,6 @@ __v0_jsx-dev-runtime.ts
 # Common ignores
 node_modules
 .next/
+apps/web/.next/
+apps/web/tsconfig.tsbuildinfo
 .DS_Store

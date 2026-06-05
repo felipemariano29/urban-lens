@@ -111,7 +111,7 @@ Ordem recomendada da demonstracao:
 
 6. Mostrar o fluxo RAG por script
 - rodar:
-  - .\.venv\Scripts\python.exe demo_rag.py
+  - .\.venv\Scripts\python.exe scripts\demo\demo_rag.py
 - o script ja faz:
   - health check
   - POST /api/v1/query
@@ -205,7 +205,7 @@ Plano B se algo ficar lento:
 - se a ingestao atrasar, explique que a pasta foi reduzida exatamente para permitir a demonstracao ao vivo
 - se a indexacao atrasar, mostre primeiro a contagem da colecao e depois a consulta semantica
 - se o Attu nao abrir a conexao automaticamente, entre manualmente com `milvus-standalone:19530`
-- se o frontend falhar, siga com Swagger + demo_rag.py
+- se o frontend falhar, siga com Swagger + scripts\demo\demo_rag.py
 - se o Ollama demorar, rode primeiro /query e depois /chat/query
 
 Ordem mais segura, se voce quiser minimizar risco:
@@ -215,7 +215,7 @@ Ordem mais segura, se voce quiser minimizar risco:
 - abrir Attu e validar `crime_chunks`
 - validar count no Milvus
 - POST /api/v1/query no Swagger
-- .\.venv\Scripts\python.exe demo_rag.py
+- .\.venv\Scripts\python.exe scripts\demo\demo_rag.py
 - POST /api/v1/chat/query no Swagger
 - GET /api/v1/metadata
 - frontend
