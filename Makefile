@@ -11,6 +11,8 @@ PIP_INDEX_URL ?= https://pypi.org/simple
 SOURCE_NAME ?= data.police.uk
 ACTOR ?= system
 VERSION ?=
+DEMO_SNAPSHOT_DIR ?= data/demo-2026-01
+DEMO_VERSION ?= 2026-01
 ENV_EXPORT = __MLFLOW_TRACKING_URI="$${MLFLOW_TRACKING_URI:-}"; \
 	__MLFLOW_HOST_PORT="$${MLFLOW_HOST_PORT:-}"; \
 	set -a; . ./.env; set +a; \
@@ -49,7 +51,7 @@ ifeq ($(COMPOSE_MODE),full)
 endif
 ENGINE_OK := $(shell if [ "$(CONTAINER_ENGINE)" = "podman" ]; then podman info >/dev/null 2>&1 && echo 1 || echo 0; else docker info >/dev/null 2>&1 && echo 1 || echo 0; fi)
 
-.PHONY: help check-compose check-docker-engine check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-obs up-full up-core down destroy reset logs logs-core logs-app logs-mlflow logs-obs ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs index-mlflow eval-rag test frontend frontend-install
+.PHONY: help check-compose check-docker-engine check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-obs up-full up-core down destroy reset logs logs-core logs-app logs-mlflow logs-obs ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs index-mlflow eval-rag test frontend frontend-install demo-rag-setup
 
 help:
 	@printf "\n"
@@ -118,6 +120,8 @@ help:
 	@printf "                      -> Transformar Bronze em Silver\n"
 	@printf "  \033[1;37mmake silver-to-gold\033[0m SILVER_OBJECT_KEY=... SILVER_DATASET_VERSION_ID=... [ACTOR=system]\n"
 	@printf "                      -> Publicar Gold analytics/RAG/ML\n\n"
+	@printf "  \033[1;37mmake demo-rag-setup\033[0m [DEMO_SNAPSHOT_DIR=data/demo-2026-01] [DEMO_VERSION=2026-01] [ACTOR=system]\n"
+	@printf "                      -> Ingerir snapshot demo e indexar o crime_chunks correspondente no Milvus\n\n"
 
 	@printf "\033[1;33mUtilidades\033[0m\n"
 	@printf "  \033[1;37mmake setup\033[0m     -> Criar .venv, instalar dependencias e subir stack\n"
@@ -433,6 +437,18 @@ index-embeddings-latest: check-env check-python
 	DATASET=$$($(PYTHON_RUN) TARGET_VERSION="$(VERSION)" $(PYTHON) -c $$'import os\nfrom urban_lens.core.settings import AppConfig\nfrom urban_lens.governance.store import MetadataStore\nconfig = AppConfig.from_env()\nstore = MetadataStore(config.postgres_dsn)\nrequested_version = os.getenv("TARGET_VERSION") or None\nrows = store.list_dataset_versions(logical_name="crime_chunks", layer="gold")\nif not rows:\n    raise SystemExit("No Gold RAG crime_chunks datasets found.")\nversions = {str(r["version"]): r for r in rows}\nif requested_version:\n    if requested_version not in versions:\n        raise SystemExit(f"crime_chunks dataset not found for version {requested_version}.")\n    selected = versions[requested_version]\nelse:\n    selected = sorted(versions.values(), key=lambda r: str(r["version"]))[-1]\nprint("\\t".join([str(selected["object_path"]), str(selected["id"])]))'); \
 	IFS=$$'\t' read -r RAG_OBJECT_KEY RAG_DATASET_VERSION_ID <<< "$$DATASET"; \
 	echo "Indexando crime_chunks $$RAG_DATASET_VERSION_ID"; \
+	$(PYTHON_RUN) $(PYTHON) -m urban_lens.cli.index_embeddings \
+		--rag-object-key "$$RAG_OBJECT_KEY" \
+		--rag-dataset-version-id "$$RAG_DATASET_VERSION_ID" \
+		--batch-size "$(or $(BATCH_SIZE),32)" \
+		--actor "$(ACTOR)"
+demo-rag-setup: check-env check-python
+	@echo "[INFO] Processando snapshot demo $(DEMO_SNAPSHOT_DIR)..."
+	@$(MAKE) process-snapshot SNAPSHOT_DIR="$(DEMO_SNAPSHOT_DIR)" SOURCE_NAME="$(SOURCE_NAME)" ACTOR="$(ACTOR)" PYTHON="$(PYTHON)"
+	@set -euo pipefail; \
+	DATASET=$$($(PYTHON_RUN) TARGET_VERSION="$(DEMO_VERSION)" $(PYTHON) -c $$'import os\nfrom urban_lens.core.settings import AppConfig\nfrom urban_lens.governance.store import MetadataStore\nconfig = AppConfig.from_env()\nstore = MetadataStore(config.postgres_dsn)\nrequested_version = os.getenv("TARGET_VERSION")\nrows = [row for row in store.list_dataset_versions(logical_name="crime_chunks", layer="gold") if str(row["version"]) == requested_version]\nif not rows:\n    raise SystemExit(f"No Gold RAG crime_chunks datasets found for version {requested_version}.")\nselected = sorted(rows, key=lambda row: (row["created_at"] is not None, str(row["created_at"]), str(row["id"])))[-1]\nprint("\\t".join([str(selected["object_path"]), str(selected["id"]), str(selected["version"])]))'); \
+	IFS=$$'\t' read -r RAG_OBJECT_KEY RAG_DATASET_VERSION_ID SELECTED_VERSION <<< "$$DATASET"; \
+	echo "[INFO] Indexando crime_chunks demo da versao $$SELECTED_VERSION"; \
 	$(PYTHON_RUN) $(PYTHON) -m urban_lens.cli.index_embeddings \
 		--rag-object-key "$$RAG_OBJECT_KEY" \
 		--rag-dataset-version-id "$$RAG_DATASET_VERSION_ID" \
