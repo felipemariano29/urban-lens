@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import useSWR from 'swr'
 
+import { useApiKey } from '@/contexts/api-key-context'
 import { buildFrontendApiUrl } from '@/lib/api/client'
 import type {
   AccessRequestCreateRequest,
@@ -138,6 +139,7 @@ export async function submitAccessRequest(payload: AccessRequestCreateRequest): 
 }
 
 export function useQuery(apiKey: string | null = null) {
+  const { clearApiKey } = useApiKey()
   const [state, setState] = useState<AppState>('idle')
   const [response, setResponse] = useState<ChatQueryResponse | null>(null)
   const [error, setError] = useState<{ code: number; message: string } | null>(null)
@@ -190,9 +192,17 @@ export function useQuery(apiKey: string | null = null) {
         setLatency(Math.round(endTime - startTime))
 
         if (!apiResponse.ok) {
+          if (apiResponse.status === 401) {
+            await clearApiKey()
+            setState('idle')
+            return null
+          }
+
+          const errorMessage = await getApiErrorMessage(apiResponse)
+
           setError({
             code: apiResponse.status,
-            message: getErrorMessage(apiResponse.status),
+            message: errorMessage,
           })
           setState('error')
           return null
@@ -221,7 +231,7 @@ export function useQuery(apiKey: string | null = null) {
         return null
       }
     },
-    [apiKey]
+    [apiKey, clearApiKey]
   )
 
   const restoreResult = useCallback(
@@ -383,7 +393,7 @@ export function useHistory() {
 function getErrorMessage(code: number): string {
   switch (code) {
     case 401:
-      return 'Sessao expirada. Atualize a pagina para continuar.'
+      return 'Sessao ausente ou expirada. Reconecte sua credencial para continuar.'
     case 403:
       return 'Voce nao tem permissao para realizar esta consulta.'
     case 422:
@@ -393,6 +403,20 @@ function getErrorMessage(code: number): string {
     default:
       return 'Erro interno. Tente novamente em instantes.'
   }
+}
+
+async function getApiErrorMessage(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as { message?: string; detail?: string }
+    if (typeof body.message === 'string' && body.message.trim()) {
+      return body.message
+    }
+    if (typeof body.detail === 'string' && body.detail.trim()) {
+      return body.detail
+    }
+  } catch {}
+
+  return getErrorMessage(response.status)
 }
 
 export function validateLsoaCode(code: string): boolean {

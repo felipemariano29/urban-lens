@@ -6,7 +6,7 @@ import { cookies } from 'next/headers'
 import { decryptApiKey, getSessionCookieName } from '@/lib/api/session'
 
 const DEFAULT_BACKEND_API_BASE_URL = `http://localhost:${process.env.RAG_API_HOST_PORT || '8000'}`
-const DEFAULT_PROXY_TIMEOUT_MS = 180_000
+const DEFAULT_PROXY_TIMEOUT_MS = 330_000
 
 function trimTrailingSlash(value: string): string {
   return value.endsWith('/') ? value.slice(0, -1) : value
