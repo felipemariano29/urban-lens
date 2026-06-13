@@ -34,11 +34,15 @@ The indexing job reads crime_chunks from MinIO, sends texts to Ollama in batches
 
 ## Documentation indexing
 
-Architecture and process documents (Markdown files in docs/) are chunked by H2 heading and indexed into Milvus alongside crime evidence. This makes the system's own architecture and training decisions searchable via RAG. Each documentation chunk has chunk_type=documentation, empty reference_month and lsoa_code, and uses the document category as crime_type. CLI: `urban-lens-index-docs` or `make index-docs`.
+Architecture and process documents (Markdown files in docs/) are chunked by H2 heading and indexed into the Milvus `knowledge_chunks` collection. This makes the system's own architecture, setup, and training decisions searchable via RAG. Each documentation chunk has chunk_type=documentation, source_type=docs, a stable reference derived from the section title, and a document category field for filtering. CLI: `urban-lens-index-docs` or `make index-docs`.
+
+## MLflow knowledge indexing
+
+Completed MLflow runs are formatted into human-readable summaries and indexed into the same `knowledge_chunks` collection with chunk_type=mlflow_run and source_type=mlflow. Sensitive parameter keys such as prompts, secrets, and artifact URIs are excluded before indexing. This corpus is what allows the RAG to answer questions about trained models, metrics, and experiment history. CLI: `make index-mlflow` or `make index-knowledge`.
 
 ## ML training
 
-The training job reads forecast_training_set, splits it temporally (last two partitions as holdout, earlier partitions for training), trains three regression candidates (Ridge, RandomForest, ExtraTreesRegressor), evaluates each on the holdout with MAE, RMSE, and MAPE, selects the best, logs all three runs to MLflow, registers the winning model in PostgreSQL model_versions, runs inference on forecast_scoring_set, and publishes forecast_predictions at `gold/ml/forecast_predictions/prediction_month=YYYY-MM/part-000.parquet`. CLI: `urban-lens-train-forecast` or `make train-latest`.
+The training job reads forecast_training_set, splits it temporally (the most recent partition is used as holdout and all earlier partitions are used for training), trains three regression candidates (Ridge, RandomForest, ExtraTreesRegressor), evaluates each on the holdout with MAE, RMSE, and MAPE, selects the best, logs all three runs to MLflow, registers the winning model in PostgreSQL model_versions, runs inference on forecast_scoring_set, and publishes forecast_predictions at `gold/ml/forecast_predictions/prediction_month=YYYY-MM/part-000.parquet`. CLI: `urban-lens-train-forecast` or `make train-latest`.
 
 ## Governance events timeline
 
@@ -68,4 +72,6 @@ Each pipeline step emits structured audit_events in PostgreSQL. The sequence for
 | `urban-lens-silver-to-gold` | `make silver-to-gold` | Publish Gold analytics, RAG, and ML datasets |
 | `urban-lens-train-forecast` | `make train-latest` | Train and register forecast model |
 | `urban-lens-index-embeddings` | `make index-embeddings-latest` | Index crime_chunks into Milvus |
-| `urban-lens-index-docs` | `make index-docs` | Index documentation files into Milvus |
+| `urban-lens-index-docs` | `make index-docs` | Index documentation files into `knowledge_chunks` |
+| n/a | `make index-mlflow` | Index MLflow run summaries into `knowledge_chunks` |
+| n/a | `make index-knowledge` | Refresh docs plus MLflow summaries in `knowledge_chunks` |

@@ -294,7 +294,19 @@ make index-docs ACTOR=smoke-test
 make train-latest ACTOR=smoke-test
 ```
 
-### 13. Confirmar que o ambiente esta pronto
+### 13. Atualizar o knowledge corpus com documentacao e runs do MLflow
+
+```powershell
+make index-knowledge ACTOR=smoke-test
+```
+
+Esse passo deve:
+
+- garantir que perguntas institucionais usem `knowledge_chunks`
+- indexar a documentacao operacional e metodologica
+- indexar os runs ja existentes no MLflow para perguntas sobre modelos e metricas
+
+### 14. Confirmar que o ambiente esta pronto
 
 Checklist final:
 
@@ -305,8 +317,9 @@ Checklist final:
 - `make test` passa
 - `make demo-rag-setup` conclui com sucesso
 - `make train-latest` conclui com sucesso
+- `make index-knowledge` conclui com sucesso
 - MLflow mostra runs
-- Attu consegue visualizar colecoes do Milvus
+- Attu consegue visualizar as colecoes `crime_chunks` e `knowledge_chunks`
 
 ## URLs esperadas por padrao
 
@@ -478,6 +491,7 @@ Conferir especialmente:
 - se `rag_vector_store` esta `ok`
 - se o `ollama-setup` terminou com sucesso
 - se existe a colecao `crime_chunks` no Attu
+- se existe a colecao `knowledge_chunks` no Attu quando a pergunta for sobre plataforma, modelos ou pre-processamento
 
 ### Erro: frontend abre mas nao conversa com a API
 
@@ -519,7 +533,8 @@ Considere o setup completo apenas quando:
 3. o `make demo-rag-setup` tiver sido executado com sucesso
 4. os embeddings demo tiverem sido indexados
 5. o treinamento baseline tiver sido executado
-6. frontend e Swagger estiverem acessiveis
+6. o knowledge corpus tiver sido atualizado com docs e MLflow
+7. frontend e Swagger estiverem acessiveis
 
 ## Resultado esperado
 

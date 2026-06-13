@@ -51,7 +51,13 @@ sequenceDiagram
 
 ## Retrieval Design
 
-The pipeline creates an embedding for the user query through Ollama and searches the Milvus `crime_chunks` collection. Supported filters are mapped to Milvus fields:
+The pipeline creates an embedding for the user query through Ollama and selects the retrieval corpus by intent:
+
+- `crime_chunks` for crime evidence questions
+- `knowledge_chunks` for platform, model, metric, and preprocessing questions
+- hybrid retrieval when the question is generic
+
+Supported crime-side filters are mapped to Milvus fields:
 
 | User filter | Milvus field |
 |---|---|
@@ -95,7 +101,7 @@ Each returned evidence includes:
 
 | Profile | Allowed context | Restricted fields |
 |---|---|---|
-| `intel_user` | Operational crime evidence | experiment runs, raw prompts, metrics, artifact URIs, technical documentation chunks |
+| `intel_user` | Operational crime evidence plus authorized platform knowledge | raw prompts, artifact URIs, secret-bearing params, and restricted experiment metadata |
 | `developer` | Operational evidence plus authorized technical/experiment metadata | raw prompts and artifact URIs |
 | `admin` | Operational, governance, and technical context available in retrieved evidence | hidden system prompt |
 

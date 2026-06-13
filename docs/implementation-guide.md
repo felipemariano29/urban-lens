@@ -7,7 +7,7 @@ This guide covers every step to run the Urban-Lens pipeline from a clean environ
 - PostgreSQL governance schema
 - Bronze to Silver to Gold pipeline
 - Gold ML dataset generation and baseline forecast training
-- Embedding indexing (crime data and documentation)
+- Embedding indexing (crime data, documentation, and MLflow knowledge)
 
 Current ingestion scope:
 - the MVP pipeline supports `DATA.POLICE.UK` `street` CSV files
@@ -53,7 +53,7 @@ Required services and their roles:
 | PostgreSQL | Governance metadata, lineage, audit, access policies | 5432 |
 | MinIO | Data lake (Bronze, Silver, Gold Parquet and CSV artifacts) | 9012 |
 | MLflow | Experiment tracking and model artifact storage | 5005 |
-| Milvus | Vector index for crime evidence and documentation chunks | 19530 |
+| Milvus | Vector index for crime evidence and knowledge chunks | 19530 |
 | Ollama | Local LLM and embedding model server | 11434 |
 | Frontend | Next.js query interface and proxy layer | 3000 |
 
@@ -137,7 +137,7 @@ Reads the most recent `crime_chunks` dataset, generates embeddings via Ollama (`
 make index-docs
 ```
 
-Reads all Markdown files in `docs/`, splits them by H2 heading, and indexes each section as a `documentation` chunk in Milvus. This makes architecture and process documentation queryable via RAG.
+Reads all Markdown files in `docs/`, splits them by H2 heading, and indexes each section as a `documentation` chunk in `knowledge_chunks`. This makes architecture and process documentation queryable via RAG.
 
 ### 7. Train the baseline forecast model
 
@@ -157,6 +157,22 @@ make train-forecast \
   SCORING_DATASET_VERSION_ID=<id>
 ```
 
+### 8. Index MLflow run summaries into the knowledge corpus
+
+```bash
+make index-mlflow
+```
+
+Reads completed MLflow runs, removes sensitive parameter keys, formats run summaries, and indexes them into `knowledge_chunks`. This step is required if the RAG should answer questions about trained models, metrics, and run history from actual executions.
+
+### 9. Refresh the full knowledge corpus
+
+```bash
+make index-knowledge
+```
+
+Runs both `make index-docs` and `make index-mlflow` so institutional and model-governance questions are answerable by the RAG.
+
 ## What the Pipeline Produces
 
 | Artifact | Storage | Description |
@@ -168,7 +184,7 @@ make train-forecast \
 | Gold ML training set | MinIO | Engineered features + target |
 | Gold ML scoring set | MinIO | Engineered features (no target) |
 | Forecast predictions | MinIO | Next-period incident count estimates |
-| Vector index | Milvus | Embedded crime chunks and documentation |
+| Vector index | Milvus | Embedded crime chunks and knowledge chunks |
 | Experiment runs | MLflow | Model parameters, metrics, and artifacts |
 | Governance metadata | PostgreSQL | dataset_versions, pipeline_runs, lineage_edges, audit_events, model_versions |
 
@@ -203,12 +219,13 @@ Use the January 2026 snapshot already present in the repository:
 ```bash
 make process-snapshot SNAPSHOT_DIR=data/2026-01 ACTOR=smoke-test
 make index-embeddings-latest ACTOR=smoke-test
-make index-docs ACTOR=smoke-test
 make train-latest ACTOR=smoke-test
+make index-knowledge ACTOR=smoke-test
 ```
 
 Validate success by checking:
 - MinIO console: Silver and Gold Parquet files exist for `year=2026/month=01`
 - MLflow UI: a completed experiment run appears under `crime_forecasting`
 - Milvus: the `crime_chunks` collection has records (check with `make urls` and inspect Attu at `http://localhost:${ATTU_HOST_PORT:-3001}`)
+- Milvus: the `knowledge_chunks` collection has records after `make index-knowledge`
 - PostgreSQL: `SELECT COUNT(*) FROM governance.dataset_versions` returns non-zero rows
