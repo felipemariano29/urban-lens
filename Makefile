@@ -1,8 +1,10 @@
 ifeq ($(OS),Windows_NT)
-    SHELL := C:/Windows/System32/bash.exe
+    SHELL := C:/Progra~1/Git/bin/bash.exe
+    .SHELLFLAGS := -lc
     SYSTEM_PYTHON ?= python
 else
     SHELL := /bin/bash
+    .SHELLFLAGS := -lc
     SYSTEM_PYTHON ?= python3
 endif
 PYTHON ?= $(shell if [ -x .venv/bin/python3 ]; then echo .venv/bin/python3; elif [ -x .venv/bin/python ]; then echo .venv/bin/python; elif [ -x .venv/Scripts/python.exe ]; then echo .venv/Scripts/python; else echo $(SYSTEM_PYTHON); fi)
@@ -51,7 +53,7 @@ ifeq ($(COMPOSE_MODE),full)
 endif
 ENGINE_OK := $(shell if [ "$(CONTAINER_ENGINE)" = "podman" ]; then podman info >/dev/null 2>&1 && echo 1 || echo 0; else docker info >/dev/null 2>&1 && echo 1 || echo 0; fi)
 
-.PHONY: help check-compose check-docker-engine check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-obs up-full up-core down destroy reset logs logs-core logs-app logs-mlflow logs-obs ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs index-mlflow eval-rag test frontend frontend-install demo-rag-setup
+.PHONY: help check-compose check-docker-engine check-env check-python require-% venv install setup fullstack urls up up-cpu up-gpu up-obs up-full up-core down destroy reset logs logs-core logs-app logs-mlflow logs-obs ps snapshots ingest ingest-all ingest-year ingest-file ingest-manual process-snapshot bronze-to-silver silver-to-gold train train-latest train-forecast experiment-forecast mlflow-url index-embeddings index-embeddings-latest index-docs index-mlflow index-knowledge eval-rag test frontend frontend-install demo-rag-setup
 
 help:
 	@printf "\n"
@@ -99,6 +101,8 @@ help:
 	@printf "                      -> Indexar todos os Markdowns de docs/ no Milvus\n"
 	@printf "  \033[1;37mmake index-mlflow\033[0m [MAX_RUNS=50]\n"
 	@printf "                      -> Indexar runs do MLflow no knowledge corpus\n"
+	@printf "  \033[1;37mmake index-knowledge\033[0m [DOCS_DIR=docs/] [MAX_RUNS=50] [ACTOR=system]\n"
+	@printf "                      -> Atualizar o knowledge corpus com docs e runs do MLflow\n"
 	@printf "  \033[1;37mmake eval-rag\033[0m [DATASET=path.json] [TAGS=crime platform] [MLFLOW=1]\n"
 	@printf "                      -> Executar avaliacao do RAG e logar no MLflow\n\n"
 
@@ -147,19 +151,21 @@ else
 endif
 
 check-docker-engine:
-ifeq ($(ENGINE_OK),1)
+ifeq ($(CONTAINER_ENGINE),podman)
+	@if ! podman info >/dev/null 2>&1; then \
+		echo [ERR] Podman Engine indisponivel.; \
+		echo [INFO] Inicie o servico do Podman ou a maquina configurada antes de continuar.; \
+		exit 1; \
+	fi
 	@echo [OK] $(CONTAINER_ENGINE) engine disponivel.
 else
-ifeq ($(CONTAINER_ENGINE),podman)
-	@echo [ERR] Podman Engine indisponivel.
-	@echo [INFO] Inicie o servico do Podman ou a maquina configurada antes de continuar.
-	$(error Podman Engine indisponivel. Inicie o Podman e tente novamente.)
-else
-	@echo [ERR] Docker Engine indisponivel.
-	@echo [INFO] Inicie o Docker Desktop e aguarde o engine ficar pronto.
-	@echo [INFO] No Windows, confirme tambem que o backend Linux/WSL2 esta ativo.
-	$(error Docker Engine indisponivel. Inicie o Docker Desktop e tente novamente.)
-endif
+	@if ! docker info >/dev/null 2>&1; then \
+		echo [ERR] Docker Engine indisponivel.; \
+		echo [INFO] Inicie o Docker Desktop e aguarde o engine ficar pronto.; \
+		echo [INFO] No Windows, confirme tambem que o backend Linux/WSL2 esta ativo.; \
+		exit 1; \
+	fi
+	@echo [OK] $(CONTAINER_ENGINE) engine disponivel.
 endif
 
 check-env:
@@ -421,6 +427,8 @@ index-mlflow: check-env check-python
 	@echo "[INFO] Indexando runs do MLflow no knowledge corpus..."
 	@$(PYTHON_RUN) $(PYTHON) apps/api/pipelines/index_mlflow_runs.py \
 		--max-runs "$(or $(MAX_RUNS),50)"
+
+index-knowledge: index-docs index-mlflow
 
 eval-rag: check-env check-python
 	@echo "[INFO] Executando avaliacao do RAG..."
