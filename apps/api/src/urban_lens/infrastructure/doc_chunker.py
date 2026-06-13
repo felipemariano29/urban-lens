@@ -15,6 +15,7 @@ _H2_PATTERN = re.compile(r"^## (.+)$", re.MULTILINE)
 _DOC_CATEGORY = {
     "data-flow": "data_flow",
     "training-process": "training",
+    "assistant-knowledge": "platform",
     "implementation-guide": "operations",
     "medallion-governance": "architecture",
     "metadata-contract": "governance",

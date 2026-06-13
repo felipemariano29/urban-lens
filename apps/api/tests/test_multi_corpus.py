@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
-
 from urban_lens.rag.query_understanding import (
     CorpusSelection,
     QueryIntent,
     detect_query_intent,
     intent_to_corpus,
+    preferred_knowledge_filters,
 )
 
 
@@ -18,7 +17,7 @@ class TestQueryIntentDetection:
     def test_platform_knowledge_mlflow(self) -> None:
         assert detect_query_intent("What MLflow experiments exist?") == "platform_knowledge"
         assert detect_query_intent("Show me the MLflow run metrics") == "platform_knowledge"
-        assert detect_query_intent("Quais experimentos do MLflow estão disponíveis?") == "platform_knowledge"
+        assert detect_query_intent("Quais experimentos do MLflow estao disponiveis?") == "platform_knowledge"
 
     def test_platform_knowledge_urban_lens(self) -> None:
         assert detect_query_intent("How does Urban Lens work?") == "platform_knowledge"
@@ -33,7 +32,12 @@ class TestQueryIntentDetection:
     def test_platform_knowledge_models(self) -> None:
         assert detect_query_intent("What are the model metrics?") == "platform_knowledge"
         assert detect_query_intent("Show forecast model hyperparameters") == "platform_knowledge"
-        assert detect_query_intent("Quais são as métricas do modelo treinado?") == "platform_knowledge"
+        assert detect_query_intent("Quais sao as metricas do modelo treinado?") == "platform_knowledge"
+
+    def test_platform_knowledge_exact_portuguese_questions(self) -> None:
+        assert detect_query_intent("Quem e voce?") == "platform_knowledge"
+        assert detect_query_intent("Quais modelos foram treinados e quais metricas foram utilizadas?") == "platform_knowledge"
+        assert detect_query_intent("Qual foi o pre-processamento realizado nos dados?") == "platform_knowledge"
 
     def test_crime_type_listing_still_works(self) -> None:
         assert detect_query_intent("What crime types exist in London?") == "crime_type_listing"
@@ -41,7 +45,7 @@ class TestQueryIntentDetection:
 
     def test_dominant_crime_still_works(self) -> None:
         assert detect_query_intent("What is the dominant crime type?") == "dominant_crime"
-        assert detect_query_intent("Qual é o crime mais comum?") == "dominant_crime"
+        assert detect_query_intent("Qual e o crime mais comum?") == "dominant_crime"
 
     def test_comparison_still_works(self) -> None:
         assert detect_query_intent("Compare crime in 2023 vs 2024") == "comparison"
@@ -65,6 +69,10 @@ class TestIntentToCorpus:
 
     def test_generic_uses_hybrid(self) -> None:
         assert intent_to_corpus("generic") == "hybrid"
+
+    def test_faq_questions_prefer_platform_docs(self) -> None:
+        filters = preferred_knowledge_filters("Qual foi o pre-processamento realizado nos dados?")
+        assert filters == {"source_type": "docs", "document_category": "platform"}
 
 
 class TestCorpusSelectionTypes:

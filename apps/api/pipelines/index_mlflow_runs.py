@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import argparse
-import json
 import logging
-import urllib.request
 from typing import Any
+
+from mlflow.client import MlflowClient
 
 from urban_lens.core.settings import AppConfig
 from urban_lens.infrastructure.embedder import OllamaEmbedder
@@ -15,59 +15,64 @@ from urban_lens.infrastructure.vector_store import MilvusVectorStore
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+_SENSITIVE_PARAM_MARKERS = {
+    "prompt",
+    "system_prompt",
+    "template",
+    "artifact_uri",
+    "secret",
+    "token",
+    "password",
+    "key",
+}
 
-def _fetch_mlflow_experiments(mlflow_uri: str) -> list[dict[str, Any]]:
-    """Fetch all experiments from MLflow."""
-    url = f"{mlflow_uri.rstrip('/')}/api/2.0/mlflow/experiments/search"
-    request = urllib.request.Request(
-        url,
-        data=json.dumps({}).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
+
+def _fetch_mlflow_experiments(client: MlflowClient) -> list[Any]:
+    """Fetch all experiments from MLflow using the official client."""
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-            return payload.get("experiments", [])
-    except Exception as e:
-        logger.error("Failed to fetch experiments: %s", e)
+        return list(client.search_experiments())
+    except Exception as exc:
+        logger.error("Failed to fetch experiments: %s", exc)
         return []
 
 
-def _fetch_mlflow_runs(mlflow_uri: str, experiment_id: str, max_results: int = 100) -> list[dict[str, Any]]:
-    """Fetch runs for an experiment from MLflow."""
-    url = f"{mlflow_uri.rstrip('/')}/api/2.0/mlflow/runs/search"
-    request = urllib.request.Request(
-        url,
-        data=json.dumps({
-            "experiment_ids": [experiment_id],
-            "max_results": max_results,
-        }).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
+def _fetch_mlflow_runs(client: MlflowClient, experiment_id: str, max_results: int = 100) -> list[Any]:
+    """Fetch runs for an experiment from MLflow using the official client."""
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-            return payload.get("runs", [])
-    except Exception as e:
-        logger.error("Failed to fetch runs for experiment %s: %s", experiment_id, e)
+        return list(client.search_runs(experiment_ids=[experiment_id], max_results=max_results))
+    except Exception as exc:
+        logger.error("Failed to fetch runs for experiment %s: %s", experiment_id, exc)
         return []
 
 
-def _format_run_content(run: dict[str, Any], experiment_name: str) -> str:
+def _run_info(run: Any) -> Any:
+    return run.info if hasattr(run, "info") else run.get("info", {})
+
+
+def _run_data(run: Any) -> Any:
+    return run.data if hasattr(run, "data") else run.get("data", {})
+
+
+def _format_run_content(run: Any, experiment_name: str) -> str:
     """Format MLflow run data into readable content for RAG."""
-    info = run.get("info", {})
-    data = run.get("data", {})
+    info = _run_info(run)
+    data = _run_data(run)
 
-    run_id = info.get("run_id", "unknown")
-    run_name = info.get("run_name", run_id[:8])
-    status = info.get("status", "unknown")
-    start_time = info.get("start_time", "")
-    end_time = info.get("end_time", "")
+    run_id = getattr(info, "run_id", None) or info.get("run_id", "unknown")
+    run_name = getattr(info, "run_name", None) or info.get("run_name", run_id[:8])
+    status = getattr(info, "status", None) or info.get("status", "unknown")
+    start_time = getattr(info, "start_time", None) or info.get("start_time", "")
+    end_time = getattr(info, "end_time", None) or info.get("end_time", "")
 
-    metrics = data.get("metrics", [])
-    params = data.get("params", [])
+    raw_metrics = getattr(data, "metrics", None) or data.get("metrics", {})
+    if isinstance(raw_metrics, dict):
+        metrics = [{"key": key, "value": value} for key, value in raw_metrics.items()]
+    else:
+        metrics = list(raw_metrics)
+    params = [
+        p for p in _params_as_rows(data)
+        if not _is_sensitive_param_key(str(p.get("key", "")))
+    ]
 
     # Format metrics
     metrics_text = "\n".join([
@@ -99,11 +104,24 @@ This run is part of the Urban Lens forecasting pipeline which predicts crime tre
     return content
 
 
-def _format_run_title(run: dict[str, Any], experiment_name: str) -> str:
+def _format_run_title(run: Any, experiment_name: str) -> str:
     """Generate a title for the run chunk."""
-    info = run.get("info", {})
-    run_name = info.get("run_name", info.get("run_id", "unknown")[:8])
+    info = _run_info(run)
+    run_id = getattr(info, "run_id", None) or info.get("run_id", "unknown")
+    run_name = getattr(info, "run_name", None) or info.get("run_name", run_id[:8])
     return f"MLflow Run: {run_name} ({experiment_name})"
+
+
+def _is_sensitive_param_key(key: str) -> bool:
+    normalized = key.strip().lower()
+    return any(marker in normalized for marker in _SENSITIVE_PARAM_MARKERS)
+
+
+def _params_as_rows(data: Any) -> list[dict[str, Any]]:
+    raw_params = getattr(data, "params", None) or data.get("params", {})
+    if isinstance(raw_params, dict):
+        return [{"key": key, "value": value} for key, value in raw_params.items()]
+    return list(raw_params)
 
 
 def index_mlflow_runs(config: AppConfig, max_runs_per_experiment: int = 50) -> int:
@@ -117,25 +135,25 @@ def index_mlflow_runs(config: AppConfig, max_runs_per_experiment: int = 50) -> i
     # Ensure knowledge collection exists
     vector_store.ensure_knowledge_collection()
 
-    mlflow_uri = config.mlflow_tracking_uri
-    experiments = _fetch_mlflow_experiments(mlflow_uri)
+    client = MlflowClient(tracking_uri=config.mlflow_tracking_uri)
+    experiments = _fetch_mlflow_experiments(client)
     logger.info("Found %d experiments in MLflow", len(experiments))
 
     records: list[dict[str, object]] = []
 
     for exp in experiments:
-        exp_id = exp.get("experiment_id", "")
-        exp_name = exp.get("name", "unknown")
+        exp_id = getattr(exp, "experiment_id", None) or exp.get("experiment_id", "")
+        exp_name = getattr(exp, "name", None) or exp.get("name", "unknown")
 
         if exp_name.startswith("_"):  # Skip internal experiments
             continue
 
-        runs = _fetch_mlflow_runs(mlflow_uri, exp_id, max_runs_per_experiment)
+        runs = _fetch_mlflow_runs(client, exp_id, max_runs_per_experiment)
         logger.info("Found %d runs in experiment %s", len(runs), exp_name)
 
         for run in runs:
-            info = run.get("info", {})
-            run_id = info.get("run_id", "")
+            info = _run_info(run)
+            run_id = getattr(info, "run_id", None) or info.get("run_id", "")
             if not run_id:
                 continue
 
@@ -156,6 +174,7 @@ def index_mlflow_runs(config: AppConfig, max_runs_per_experiment: int = 50) -> i
                 "content": content,
                 "run_id": run_id,
                 "experiment_id": exp_id,
+                "reference": f"mlflow:{exp_name}:{run_id}",
                 "embedding": embeddings[0],
             })
 

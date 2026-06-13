@@ -23,9 +23,9 @@ def docs_to_vector_index(
 ) -> dict[str, object]:
     """Chunk Markdown files, embed via Ollama, and upsert into Milvus.
 
-    Documentation chunks use chunk_type='documentation' and empty
-    reference_month/lsoa_code fields. The crime_type field stores
-    the document category (e.g. 'data_flow', 'training', 'architecture').
+    Documentation chunks are indexed into the knowledge corpus with
+    chunk_type='documentation'. The original document category is kept as a
+    searchable dynamic field and the chunk title becomes the user-facing source.
     """
     vector_store = vector_store or MilvusVectorStore(config.milvus_uri)
     embedder = embedder or OllamaEmbedder(config.ollama_base_url, config.embedding_model)
@@ -54,7 +54,7 @@ def docs_to_vector_index(
     )
 
     chunks_frame = chunk_markdown_files(doc_paths)
-    vector_store.ensure_collection()
+    vector_store.ensure_knowledge_collection()
 
     records = chunks_frame.to_dict("records")
     total_indexed = 0
@@ -68,18 +68,19 @@ def docs_to_vector_index(
             {
                 "chunk_id": r["chunk_id"],
                 "chunk_type": r["chunk_type"],
-                "reference_month": r["reference_month"],
-                "lsoa_code": r["lsoa_code"],
-                "crime_type": r["crime_type"],
+                "source_type": "docs",
                 "title": r["title"],
                 "content": r["content"],
-                # No upstream dataset_version; use pipeline_run_id as stable reference.
+                "run_id": "",
+                "experiment_id": "",
+                "document_category": r["crime_type"],
+                "reference": f"docs:{r['title']}",
                 "dataset_version_id": pipeline_run_id[:36],
                 "embedding": embedding,
             }
             for r, embedding in zip(batch, embeddings)
         ]
-        total_indexed += vector_store.upsert_chunks(milvus_records)
+        total_indexed += vector_store.upsert_knowledge_chunks(milvus_records)
 
     metadata_store.register_audit_event(
         AuditEventPayload(

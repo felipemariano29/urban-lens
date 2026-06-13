@@ -15,7 +15,7 @@ ROLE_TO_PROFILE = {
     "internal_service": AccessProfile.admin,
 }
 
-TECHNICAL_CHUNK_TYPES = {"documentation", "experiment_metadata", "mlflow_run"}
+TECHNICAL_CHUNK_TYPES = {"experiment_metadata"}
 SENSITIVE_METADATA_KEYS = {
     "artifact_uri",
     "prompt",

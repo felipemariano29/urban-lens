@@ -16,7 +16,7 @@ CRIME_COLLECTION = "crime_chunks"
 KNOWLEDGE_COLLECTION = "knowledge_chunks"
 CollectionType = Literal["crime", "knowledge"]
 
-KNOWLEDGE_FILTERABLE_FIELDS = {"chunk_type", "source_type", "run_id", "experiment_id"}
+KNOWLEDGE_FILTERABLE_FIELDS = {"chunk_type", "source_type", "run_id", "experiment_id", "document_category", "reference"}
 
 
 def _escape_filter_value(value: str) -> str:
@@ -66,6 +66,7 @@ class MilvusVectorStore:
         """Upsert records into the collection. Returns the number of records written."""
         client = self._get_client()
         result = client.upsert(collection_name=COLLECTION_NAME, data=records)
+        client.flush(collection_name=COLLECTION_NAME)
         return result.get("upsert_count", len(records))
 
     def count(self) -> int:
@@ -149,6 +150,7 @@ class MilvusVectorStore:
         """Upsert records into the knowledge_chunks collection."""
         client = self._get_client()
         result = client.upsert(collection_name=KNOWLEDGE_COLLECTION, data=records)
+        client.flush(collection_name=KNOWLEDGE_COLLECTION)
         return result.get("upsert_count", len(records))
 
     def count_knowledge(self) -> int:
@@ -193,6 +195,9 @@ class MilvusVectorStore:
                 "content",
                 "run_id",
                 "experiment_id",
+                "reference",
+                "dataset_version_id",
+                "document_category",
             ],
         )
         return list(results[0]) if results else []

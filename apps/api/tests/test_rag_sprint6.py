@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from unittest.mock import patch
 
@@ -8,7 +9,13 @@ from fastapi.testclient import TestClient
 
 from urban_lens.core.settings import AppConfig
 from urban_lens.rag.contracts import AccessProfile, RagQuery
-from urban_lens.rag.generation import build_prompt, detect_question_language, infer_answer_shape, remove_repeated_question_prefix
+from urban_lens.rag.generation import (
+    OllamaGenerator,
+    build_prompt,
+    detect_question_language,
+    infer_answer_shape,
+    remove_repeated_question_prefix,
+)
 from urban_lens.rag.pipeline import RagPipeline
 from urban_lens.rag.retrieval import milvus_hits_to_context
 
@@ -57,6 +64,10 @@ class FakeVectorStore:
         self.search_calls.append({"top_k": top_k, "filters": filters})
         return self.hits[:top_k]
 
+    def search_knowledge(self, query_embedding, top_k=5, filters=None):
+        self.search_calls.append({"top_k": top_k, "filters": filters, "corpus": "knowledge"})
+        return self.hits[:top_k]
+
 
 class FakeGenerator:
     def __init__(self):
@@ -88,12 +99,28 @@ def _technical_hit():
         "distance": 0.91,
         "entity": {
             "chunk_id": "run-1",
-            "chunk_type": "experiment_metadata",
+            "chunk_type": "mlflow_run",
             "title": "Forecast experiment",
             "content": "Forecast model run finished with quality metrics.",
             "dataset_version_id": "run-ref",
             "run_id": "secret-run",
             "artifact_uri": "s3://private-artifacts/run",
+        },
+    }
+
+
+def _platform_doc_hit():
+    return {
+        "distance": 0.93,
+        "entity": {
+            "chunk_id": "doc-1",
+            "chunk_type": "documentation",
+            "source_type": "docs",
+            "title": "assistant-knowledge > Quais modelos foram treinados e quais metricas foram utilizadas",
+            "content": "O pipeline baseline avalia Ridge, RandomForestRegressor e ExtraTreesRegressor com MAE, RMSE e MAPE.",
+            "dataset_version_id": "docs-run",
+            "document_category": "platform",
+            "reference": "docs:assistant-knowledge > Quais modelos foram treinados e quais metricas foram utilizadas",
         },
     }
 
@@ -169,18 +196,23 @@ def test_pipeline_uses_portuguese_fallback_for_portuguese_question():
     assert response.answer.text.startswith("Nao ha evidencia suficiente")
 
 
-def test_intel_user_cannot_receive_technical_experiment_metadata():
+def test_intel_user_receives_authorized_platform_knowledge_without_sensitive_metadata():
+    vector_store = FakeVectorStore([_platform_doc_hit()])
     pipeline = RagPipeline(
         FAKE_CONFIG,
         embedder=FakeEmbedder(),
-        vector_store=FakeVectorStore([_technical_hit(), _crime_hit()]),
+        vector_store=vector_store,
         generator=FakeGenerator(),
     )
 
-    response = pipeline.run(RagQuery(query="experimento?", profile=AccessProfile.intel_user))
+    response = pipeline.run(
+        RagQuery(query="Quais modelos foram treinados e quais metricas foram utilizadas?", profile=AccessProfile.intel_user)
+    )
 
-    assert [chunk.id for chunk in response.context] == ["crime-1"]
+    assert [chunk.id for chunk in response.context] == ["doc-1"]
     assert all("run_id" not in evidence.metadata for evidence in response.evidences)
+    assert response.context[0].metadata["source_type"] == "docs"
+    assert vector_store.search_calls[0]["filters"] == {"source_type": "docs", "document_category": "platform"}
 
 
 def test_developer_receives_authorized_technical_metadata_without_private_fields():
@@ -310,7 +342,10 @@ def test_chat_endpoint_accepts_sprint6_profiles(monkeypatch):
     ).run(RagQuery(query="burglary?", profile=AccessProfile.developer))
 
     with TestClient(app, raise_server_exceptions=False) as client:
-        with patch("urban_lens.api.services.rag_service.run_chat_query", return_value=mock_response):
+        with (
+            patch("urban_lens.api.services.rag_service.run_chat_query", return_value=mock_response),
+            patch("urban_lens.governance.store.MetadataStore.record_request_audit"),
+        ):
             response = client.post("/api/v1/chat/query", json={"query": "burglary?"}, headers=_auth("developer"))
 
     assert response.status_code == 200
@@ -345,3 +380,30 @@ def test_answer_shape_prefers_bulleted_listing_for_crime_type_queries():
     shape = infer_answer_shape("Quais tipos de crime foram registrados em E01000001?", "pt")
 
     assert "Liste os tipos de crime em bullets" in shape
+
+
+def test_ollama_generator_uses_deterministic_options(monkeypatch):
+    captured = {}
+
+    class _FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b'{"response":"ok","prompt_eval_count":12,"eval_count":4}'
+
+    def _fake_urlopen(request, timeout):
+        captured["payload"] = json.loads(request.data.decode("utf-8"))
+        captured["timeout"] = timeout
+        return _FakeResponse()
+
+    monkeypatch.setattr("urban_lens.rag.generation.urllib.request.urlopen", _fake_urlopen)
+
+    result = OllamaGenerator("http://localhost:11434").generate("prompt", "llama3")
+
+    assert result.text == "ok"
+    assert captured["timeout"] == 300
+    assert captured["payload"]["options"] == {"temperature": 0, "seed": 42}

@@ -10,7 +10,12 @@ from urban_lens.infrastructure.vector_store import MilvusVectorStore
 from urban_lens.rag.composition import compose_structured_answer
 from urban_lens.rag.contracts import AccessProfile, EvidenceCitation, RagAnswer, RagQuery, RagResponse, RagTimings, RagTokenUsage
 from urban_lens.rag.generation import GenerationResult, OllamaGenerator, build_prompt, detect_question_language, remove_repeated_question_prefix
-from urban_lens.rag.query_understanding import detect_query_intent, enrich_filters_from_question, intent_to_corpus
+from urban_lens.rag.query_understanding import (
+    detect_query_intent,
+    enrich_filters_from_question,
+    intent_to_corpus,
+    preferred_knowledge_filters,
+)
 from urban_lens.rag.retrieval import build_context_text, filters_to_vector_store, milvus_hits_to_context
 
 FALLBACK_TEXT_PT = (
@@ -65,6 +70,7 @@ class RagPipeline:
         # Select corpus based on query intent
         corpus_selection = intent_to_corpus(intent)
         crime_filters = filters_to_vector_store(effective_filters, request.profile)
+        knowledge_filters = preferred_knowledge_filters(request.query)
 
         if corpus_selection == "knowledge":
             # Platform/MLflow queries - search only knowledge corpus
@@ -72,6 +78,7 @@ class RagPipeline:
                 raw_hits = self.vector_store.search_knowledge(
                     query_embedding=embeddings[0],
                     top_k=request.top_k,
+                    filters=knowledge_filters,
                 )
             else:
                 raw_hits = self.vector_store.search(
@@ -87,6 +94,7 @@ class RagPipeline:
                     collections=["crime", "knowledge"],
                     top_k=request.top_k,
                     crime_filters=crime_filters,
+                    knowledge_filters=knowledge_filters,
                 )
             else:
                 raw_hits = self.vector_store.search(

@@ -26,7 +26,7 @@ from urban_lens.workflows import (
 )
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 REAL_STREET_FILE = REPO_ROOT / "data" / "2026-01" / "2026-01-avon-and-somerset-street.csv"
 REAL_OUTCOMES_FILE = REPO_ROOT / "data" / "2026-01" / "2026-01-avon-and-somerset-outcomes.csv"
 

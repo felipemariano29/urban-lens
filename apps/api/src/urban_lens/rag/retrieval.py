@@ -21,11 +21,13 @@ def _score_from_hit(hit: dict[str, Any]) -> float:
 def _metadata_from_entity(entity: dict[str, Any]) -> dict[str, Any]:
     keys = (
         "chunk_type",
+        "source_type",
         "reference_month",
         "lsoa_code",
         "crime_type",
         "title",
         "dataset_version_id",
+        "document_category",
         "run_id",
         "experiment_id",
         "artifact_uri",
@@ -44,7 +46,10 @@ def milvus_hits_to_context(raw_hits: list[dict[str, Any]], profile: AccessProfil
         title = str(entity.get("title") or metadata.get("chunk_type") or "Urban Lens evidence")
         dataset_version_id = str(entity.get("dataset_version_id") or "unknown")
         reference_month = str(entity.get("reference_month") or "")
-        reference = dataset_version_id if not reference_month else f"{dataset_version_id}:{reference_month}"
+        explicit_reference = str(entity.get("reference") or "")
+        reference = explicit_reference or dataset_version_id
+        if reference_month:
+            reference = f"{reference}:{reference_month}"
         chunks.append(
             RagContextChunk(
                 id=chunk_id,

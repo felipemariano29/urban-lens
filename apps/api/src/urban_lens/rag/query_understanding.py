@@ -30,12 +30,21 @@ def detect_query_intent(question: str) -> QueryIntent:
     platform_markers = {
         "urban lens",
         "urban-lens",
+        "quem e voce",
+        "o que voce faz",
+        "o que e o urban lens",
+        "what are you",
+        "who are you",
+        "what do you do",
         "mlflow",
         "ml flow",
         "experimento",
         "experiment",
         "modelo treinado",
+        "modelos treinados",
+        "quais modelos foram treinados",
         "trained model",
+        "trained models",
         "forecast model",
         "modelo de previsao",
         "como funciona",
@@ -47,9 +56,17 @@ def detect_query_intent(question: str) -> QueryIntent:
         "documentacao",
         "documentation",
         "metricas do modelo",
+        "metricas foram utilizadas",
+        "metricas foram usadas",
+        "quais metricas foram utilizadas",
         "model metrics",
         "hyperparameters",
         "hiperparametros",
+        "pre-processamento",
+        "pre processamento",
+        "preprocessamento",
+        "qual foi o pre-processamento realizado nos dados",
+        "data preprocessing",
         "run id",
         "artifact",
         "artefato",
@@ -140,3 +157,25 @@ def intent_to_corpus(intent: QueryIntent) -> CorpusSelection:
 
     # Generic queries may benefit from both corpora
     return "hybrid"
+
+
+def preferred_knowledge_filters(question: str) -> dict[str, str] | None:
+    normalized = _normalized_text(question)
+    faq_markers = {
+        "quem e voce",
+        "who are you",
+        "what are you",
+        "o que voce faz",
+        "quais modelos foram treinados",
+        "trained models",
+        "modelos treinados",
+        "metricas foram utilizadas",
+        "model metrics",
+        "pre-processamento",
+        "pre processamento",
+        "preprocessamento",
+        "data preprocessing",
+    }
+    if any(marker in normalized for marker in faq_markers):
+        return {"source_type": "docs", "document_category": "platform"}
+    return None

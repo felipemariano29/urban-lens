@@ -107,6 +107,27 @@ DEFAULT_EVAL_QUESTIONS = [
         expected_keywords=["forecast", "model", "metrics"],
         tags=["platform", "mlflow"],
     ),
+    EvalQuestion(
+        question="Quem e voce?",
+        expected_intent="platform_knowledge",
+        expected_corpus="knowledge",
+        expected_keywords=["urban", "lens"],
+        tags=["platform", "pt"],
+    ),
+    EvalQuestion(
+        question="Quais modelos foram treinados e quais metricas foram utilizadas?",
+        expected_intent="platform_knowledge",
+        expected_corpus="knowledge",
+        expected_keywords=["ridge", "randomforest", "mae"],
+        tags=["platform", "pt", "mlflow"],
+    ),
+    EvalQuestion(
+        question="Qual foi o pre-processamento realizado nos dados?",
+        expected_intent="platform_knowledge",
+        expected_corpus="knowledge",
+        expected_keywords=["snake_case", "lag", "onehotencoder"],
+        tags=["platform", "pt"],
+    ),
     # Generic questions
     EvalQuestion(
         question="Tell me about crime trends",
